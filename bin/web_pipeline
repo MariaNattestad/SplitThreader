@@ -1,0 +1,60 @@
+#!/bin/bash
+USAGE="web_pipeline variants copynumber output_prefix "
+if [ -z "$1" ]
+  then
+    echo "ERROR in SplitThreader: No variants file given"
+    echo "Usage:"
+    echo $USAGE
+    exit
+fi
+if [ -z "$2" ]
+  then
+    echo "ERROR in SplitThreader: No copy number file given"
+    echo "Usage:"
+    echo $USAGE
+    exit
+fi
+if [ -z "$3" ]
+  then
+    echo "ERROR in SplitThreader: No output prefix given"
+    echo "Usage:"
+    echo $USAGE
+    exit
+fi
+
+# Author: Maria Nattestad
+# Email: mnattest@cshl.edu
+
+VARIANTS=${1?"$USAGE"}
+COPYNUMBER=${2?"$USAGE"}
+OUTPUT_PREFIX=${3?"$USAGE"}
+
+
+# Log file contains all reporting that is shown to the user
+LOG_FILE=${OUTPUT_PREFIX%/*}/progress.log
+# Add description to first line of log file, which will be shown as the header
+echo "${OUTPUT_PREFIX##*/}" >> $LOG_FILE 
+
+./bin/standardize_variants.py -bedpe $VARIANTS -out $OUTPUT_PREFIX.variants.csv >> $LOG_FILE
+
+./bin/standardize_copynumber.py -csv $COPYNUMBER -out $OUTPUT_PREFIX.copynumber.csv -genome_out $OUTPUT_PREFIX.genome.csv >> $LOG_FILE
+
+
+
+
+
+if [ -e $OUTPUT_PREFIX.variants.csv ];
+then 
+    if [ -e $OUTPUT_PREFIX.copynumber.csv ];
+    then
+        echo "done" >> $LOG_FILE
+    else
+        echo "Error: copynumber.csv missing" >> $LOG_FILE
+        echo "fail" >> $LOG_FILE
+    fi
+else
+    echo "Error: variants.csv missing" >> $LOG_FILE
+    echo "fail" >> $LOG_FILE
+fi
+
+
