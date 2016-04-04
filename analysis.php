@@ -5,28 +5,33 @@
 
 <!--    NAVIGATION BAR-->
     <?php include "header.html";?>
+
+    <link href="css/custom_styles.css" rel="stylesheet">
+
     <link rel="stylesheet" type="text/css" media="screen" href="http://cdnjs.cloudflare.com/ajax/libs/fancybox/1.3.4/jquery.fancybox-1.3.4.css" />
 
-                    <!-- ////////////////////////////////////////////////// -->
-                    <!-- ////////////////      RESULTS     //////////////// -->
-                    <!-- ////////////////////////////////////////////////// -->
-                    
-                     <!--  HEADER -->
-                    <div class="thumbnail frame">
-                        <div class = "caption" style="text-align: center"><h3 id="nickname_header"></h3></div>
-                    </div>
 
-                    
-                    <div id="results">
-                       
-                        <!--  All plots  -->
-                        <div class="thumbnail plot_frame frame">
-                            <form name="show_visualizer" id="show_visualizer" action="vis.html"  method="get">
-                                <!-- add hidden fields for code and nickname, as well as submit button from analysis_page_script.js-->
-                            </form>
-                            
-                        </div>
-                    </div>
+
+    <!-- ////////////////////////////////////////////////// -->
+    <!-- ////////////////      RESULTS     //////////////// -->
+    <!-- ////////////////////////////////////////////////// -->
+    
+     <!--  HEADER -->
+    <div class="thumbnail frame">
+        <div class = "caption" style="text-align: center"><h3 id="nickname_header"></h3></div>
+    </div>
+
+    
+    <div id="results">
+       
+        <!--  All plots  -->
+        <div class="thumbnail plot_frame frame">
+            <form name="show_visualizer" id="show_visualizer" action="vis.php"  method="get">
+                <!-- add hidden fields for code and nickname, as well as submit button from analysis_page_script.js-->
+            </form>
+            
+        </div>
+    </div>
            
     <!--View analysis later-->
     <div id="codepanel" >
