@@ -400,8 +400,9 @@ var read_coverage_file = function() {
         // Make columns numerical:
         coverage_input[i].start = +coverage_input[i].start
         coverage_input[i].end = +coverage_input[i].end
-        coverage_input[i].unsegmented_coverage = +coverage_input[i].unsegmented_coverage
-        coverage_input[i].coverage = +coverage_input[i].coverage
+        coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage // fix until we have both unsegmented and segmented coverage again
+        // coverage_input[i].unsegmented_coverage = +coverage_input[i].unsegmented_coverage
+        // coverage_input[i].coverage = +coverage_input[i].coverage
         
       }
       coverage = coverage_input; // set global variable for accessing this elsewhere
