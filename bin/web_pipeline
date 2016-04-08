@@ -39,7 +39,9 @@ echo "${OUTPUT_PREFIX##*/}" >> $LOG_FILE
 
 ./bin/standardize_copynumber.py -csv $COPYNUMBER -out $OUTPUT_PREFIX.copynumber.csv -genome_out $OUTPUT_PREFIX.genome.csv >> $LOG_FILE
 
+Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
 
+SplitThreader.py Evolution --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --out $OUTPUT_PREFIX
 
 
 

@@ -41,7 +41,7 @@ function showProgress() {
                 if (last_line.indexOf('done') > -1) {
                     document.getElementById("progress_panel").className = "panel panel-success center";
                     document.getElementById("results").style.visibility= 'visible';
-                    document.getElementById("show_visualizer").innerHTML = '<input type="hidden" name="code" value="' + run_id_code + '"><input type="hidden" name="nickname" value="' + nickname + '"><button type="submit" class="btn btn-lg btn-primary">Show visualizer</button>';
+                    document.getElementById("hidden_fields_and_submit").innerHTML = '<input type="hidden" name="code" value="' + run_id_code + '"><input type="hidden" name="nickname" value="' + nickname + '"><button type="submit" class="btn btn-lg btn-primary">Show visualizer</button>';
                     // check_plot_exists(0);
                 }
                 else if (last_line.indexOf("fail") > -1) { // SOMETHING FAILED

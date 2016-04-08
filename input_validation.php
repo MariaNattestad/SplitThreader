@@ -19,6 +19,7 @@
         $nickname = preg_replace('/[^a-zA-Z0-9]/', '_', $nickname);
     }
 
+    
     $url="analysis.php?code=$code";
     $run_url="run_algorithm.php";
     $filename_variants="user_uploads/$code.variants";
@@ -53,6 +54,14 @@
         exit;
     } else {
         echo "<div class=\"alert center alert-success\" role=\"alert\">Great! Both files were uploaded</div>";
+        if(   isset($_POST['min_variant_size']) && isset($_POST['min_split_reads'])    ) {
+            $data = "parameter,val\nmin_variant_size," . $_POST['min_variant_size'] . "\n" . "min_split_reads," . $_POST['min_split_reads'] . "\n";
+            $ret = file_put_contents('user_uploads/' . $code . '.config', $data, FILE_APPEND | LOCK_EX);
+            if($ret === false) {
+                die('There was an error writing this file');
+            }
+        }
+
         echo "$continue_button";
     }
 ?>

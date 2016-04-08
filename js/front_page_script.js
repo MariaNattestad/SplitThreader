@@ -18,15 +18,15 @@ function makeid()
 function showCode() {
     var code = makeid();
     var url = analysis_path + code
-    // document.getElementById("code").innerHTML = "Return to view your results at any time: <input type=\"text\" class=\"form-control\" value=\"http://qb.cshl.edu/assemblytics/" + url + "\"></input>";
+    document.getElementById("code").innerHTML = "Return to view your results at any time: <input type=\"text\" class=\"form-control\" value=\"http://qb.cshl.edu/splitthreader/" + url + "\"></input>";
     document.getElementById("analysis_form").innerHTML = '<input type="hidden" name="code" value="' + code + '"><button type="submit" id="submit_button" class="btn btn-lg btn-primary">Submit</button>';
+
     
     var x = document.getElementsByClassName("code_keeper");
     var i;
     for (i = 0; i < x.length; i++) {
         x[i].value = code;
     }
-
 
 }
 

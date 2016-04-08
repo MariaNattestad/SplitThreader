@@ -23,14 +23,23 @@
 
     
     <div id="results">
-       
-        <!--  All plots  -->
-        <div class="thumbnail plot_frame frame">
-            <form name="show_visualizer" id="show_visualizer" action="vis.php"  method="get">
-                <!-- add hidden fields for code and nickname, as well as submit button from analysis_page_script.js-->
-            </form>
             
-        </div>
+
+            
+            <div class=" thumbnail plot_frame frame">
+
+                <!--  SHOW VISUALIZER BUTTON  -->
+                <form name="show_visualizer" id="show_visualizer" action="vis.php"  method="get">
+                    <p id="hidden_fields_and_submit">
+                    <!-- add hidden fields for code and nickname, as well as submit button from analysis_page_script.js-->
+                    </p>
+                </form>
+            
+            </div> 
+            <!-- End of frame -->
+
+            
+        
     </div>
            
     <!--View analysis later-->

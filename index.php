@@ -10,33 +10,24 @@
   <div class="row">
           <div class="col-lg-7"> 
                   <div class="panel panel-default">
-                      <div class="panel-heading"> <h3 class="panel-title">Instructions</h3></div>
-                      <div class="panel-body">
-                        <p>Upload variant calls and a copy number profile</p>
-                        <ol>
-                          <li>Run Sniffles (for PacBio data) or Lumpy (for Illumina data, select output as bedpe format) and upload the .bedpe file</li>
-                          <li>Run this script [to be created] on your bam file to convert to binned copy numbers, and upload the resulting .csv file</li>
-                        </ol>
-                      </div>
-                  </div>
-          </div>
-          <div class="col-lg-5"> 
-                  <div class="panel panel-default">
                           <div class="panel-heading"> <h3 class="panel-title">Run SplitThreader</h3></div>
                           <div class="panel-body">
-                                    <h3>Variant calls</h3>
-                                  	<!--    DROPZONE   -->
-                                  	<div class="frame"> 
-                                      	<form action="file_upload.php"
-                                      	    class="dropzone"
-                                      	    id="variants_dropzone">
-                                      	    <input class="code_keeper" type="hidden" name="code_hidden" value="">
+                              <div class="row">
+                                <div class="col-lg-6">
+                                    <h3> Variant calls</h3>
+                                    <!--    DROPZONE   -->
+                                    <div class="frame"> 
+                                        <form action="file_upload.php"
+                                            class="dropzone"
+                                            id="variants_dropzone">
+                                            <input class="code_keeper" type="hidden" name="code_hidden" value="">
                                             <input type="hidden" name="file_type" value="variants">
-                                      	</form>
-                                  	</div>
+                                        </form>
+                                    </div>
                                     <!--   end of DROPZONE   -->
-                                    <br>
-                                    <h3>Copy number profile</h3>
+                                </div>
+                                <div class="col-lg-6">
+                                    <h3> Copy number profile</h3>
                                     <!--    DROPZONE   -->
                                     <div class="frame"> 
                                         <form action="file_upload.php"
@@ -47,7 +38,9 @@
                                         </form>
                                     </div>
                                     <!--   end of DROPZONE   -->
-                                  <br>
+                                </div>
+                              </div> 
+                              <!-- end of row containing 2 dropzones -->
 
                                   <div class="frame"> 
                                       <!--    SUBMIT BUTTON with hidden field to transport code to next page   -->
@@ -58,19 +51,33 @@
                                                  <input type="text" name="nickname" class="form-control" value = "description of dataset, cell line, data type, etc. ">
                                               </div>
                                             </p>
-                                            <!-- <p>
-                                              <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">Unique sequence length required</span>
-                                                 <input type="number" max="100000" step="1000" min="1000" name="uniqlength" class="form-control" value = "10000">
-                                              </div>
-                                            </p> -->
 
-                                            <!-- <p>
-                                              <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">Read length</span>
-                                                 <input type="number" step="1" name="read_length" class="form-control" value = "100">
-                                              </div>
-                                            </p> -->
+                                            <!-- BUTTON FOR OPTIONAL PARAMETERS -->
+                                            <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample">
+                                                <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters
+                                                <!-- http://glyphicons.com/ -->
+                                            </a></p>
+                                            <!-- Collapsible area containing optional parameters -->
+                                                <div class="collapse" id="collapseExample">
+                                                    <div class=" thumbnail plot_frame frame">
+                                                        <div class="card card-block">
+                                                              <table class="table" id="config_table" style="display: table;">
+                                                                  <tr class="active">
+                                                                      <th colspan="2">Variant filtering</th></tr>
+                                                                  <tr>
+                                                                      <td><label for="min_variant_size" class="form-control-label" >Minimum variant size</label></td>
+                                                                      <td><input name="min_variant_size" id="min_variant_size" type="number" step="1" min="0" class="form-control" value = "0"></td>
+                                                                  </tr>
+                                                                  <tr>
+                                                                      <td><label for="min_split_reads" class="form-control-label">Minimum split reads supporting variant</label></td>
+                                                                      <td><input name="min_split_reads" id="min_split_reads" type="number" step="1" min="0" class="form-control" value = "0"></td>
+                                                                  </tr>>
+                                                              </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <!-- End of collapse area -->
+                                            
                                             <p id="analysis_form">
                                           <!--  submit button set from within front_page_script.js --> 
                                             </p>
@@ -79,6 +86,19 @@
                           </div>
                   </div>
           </div>
+          <div class="col-lg-5"> 
+                  <div class="panel panel-default">
+                      <div class="panel-heading"> <h3 class="panel-title">Instructions</h3></div>
+                      <div class="panel-body">
+                        <p>Upload variant calls and a copy number profile</p>
+                        <ol>
+                          <li>Run Sniffles (for PacBio data) or Lumpy (for Illumina data, select output as bedpe format) and upload the .bedpe file</li>
+                          <li>Run this script [to be created] on your bam file to convert to binned copy numbers, and upload the resulting .csv file</li>
+                        </ol>
+                      </div>
+                  </div>
+          </div>
+          
   </div>
 <!-- </div> -->
 

@@ -10,10 +10,11 @@ function getUrlVars() {
 var run_id_code=getUrlVars()["code"];
 
 var directory="user_data/" + run_id_code + "/";
+var config_path="user_uploads/" + run_id_code + ".config";
 var nickname=getUrlVars()["nickname"];
 
 console.log("directory:" + directory);
-console.log("nickname:" + nickname); 
+console.log("nickname:" + nickname);
 
 var w = window,
     d = document,
@@ -63,13 +64,8 @@ var panel_canvas;
 
 function responsive_sizing() {
 
-
-  
-
   svg_width = (w.innerWidth || e.clientWidth || g.clientWidth)*0.98;
   svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96;
-
-  console.log(svg_width)
 
   top_edge_padding = svg_width*0.08; 
   bottom_edge_padding = svg_width*0.04; 
@@ -123,9 +119,9 @@ function responsive_sizing() {
 
   ////////  Set up panel canvas  ////////
 
-  panel_top_position = radius*2+top_edge_padding+bottom_edge_padding;
+  panel_top_position = radius*2+top_edge_padding+between_circos_and_zoom_plots_padding;
   panel_height = svg_height - panel_top_position - bottom_edge_padding;
-  panel_width = radius*2;
+  panel_width = radius*2 - between_circos_and_zoom_plots_padding;
 
   panel_canvas = svg.append("g")
     .attr("transform", "translate(" + left_edge_padding + "," + panel_top_position + ")")
@@ -147,12 +143,9 @@ var color = d3.scale.ordinal()
     .range(chromosome_colors); // output range
 
 
-// Calculate total number of base-pairs in genome
-// Turn chromosome, position into an absolute base-pair location
-// Divide this base-pair location by the total genome size and multiply by 2*pi
 var genome_size_total = 0;
 
-var pixels_per_bin = 1;
+var pixels_per_bin = 1; 
 
 var plot_spansplit_counts = false;
 var segment_copy_number = false;
@@ -237,18 +230,16 @@ var annotation_done = false;
 
 /////////  Gene fusions  /////////////
 
-var gene_fusion_to_highlight = null;
+// var gene_fusion_to_highlight = null;
 var variants_to_highlight = [];
 var color_for_highlighted_connections = "black";
 
-//////////   Oncogenes   /////////////
+//////////   Evolution boxes   /////////////
 
 var box_colors = d3.scale.category20();
 
-var region_to_show_boxes_for = null;
 var show_boxes = true;
 
-var available_oncogenes = ["ERBB2","MYC","MET","BCAS1","TPD52","chr3","chrX","chr7"];
 
 
 ////////// Calculate polar coordinates ///////////
@@ -293,7 +284,7 @@ var box_tip = d3.tip()
   .attr('class', 'd3-tip')
   .offset([-10, 0])
   .html(function(d) {
-    return "<strong>Coverage: </strong>" + d.height + "";
+    return "" + d.height + " reads";
   }
 )
 var variant_tip = d3.tip()
@@ -301,7 +292,7 @@ var variant_tip = d3.tip()
   .offset([-10, 0])
   .html(function(d) {
     // return "<strong>Reads: </strong>" + d.split + "";
-    return "<strong>Reads: </strong>" + d.split; // + " Flow: "+  d.flow_category + "";
+    return "" + d.split + " reads"; // + " Flow: "+  d.flow_category + "";
   }
 )
 
@@ -312,12 +303,14 @@ svg.call(variant_tip);
 ///////////  Run the whole program by loading all files and when they are loaded drawing everything ///////////
 
 var run = function(){
+  populate_navbar();
+
+  // read_config_file();
   read_genome_file();
   read_coverage_file();
   read_spansplit_file();
-  // if (show_boxes & region_to_show_boxes_for!=null) {
-  //   read_splitthreader_boxes_file();
-  // }
+  read_splitthreader_boxes_file();
+
   // read_annotation_file();
   // read_fusion_report_file();
   // show_oncogene_dropdown();
@@ -346,7 +339,33 @@ function wait_then_run_when_all_data_loaded() {
   }
 }
 
+///////////   Make these adjustable by user   ////////////
+
+var max_zoom = 50; //Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
+
 ///////////////////////////   Read input files   //////////////////////////////////
+// Set default configuration
+var config = {};
+config["min_variant_size"] = 0;
+config["min_split_reads"] = 0;
+
+
+// var read_config_file = function() {
+//   d3.csv(config_path, function(error,config_input) {
+//     if (error) throw error;
+//     for (var i=0;i<config_input.length;i++){
+//       console.log(config_input[i]);
+//       if (isNaN(config_input[i].val)) {
+//         config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
+//       } else {
+//         config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
+//       }
+//     }
+//     console.log(config);
+//   });
+// }
+
+
 
 var read_genome_file = function() {
     d3.csv(directory + nickname + ".genome.csv", function(error,genome_input) {
@@ -371,23 +390,24 @@ var read_genome_file = function() {
     });
 }
 
-// var read_splitthreader_boxes_file = function() {
-//   d3.csv(directory + region_to_show_boxes_for + ".boxes.csv?id=" + Math.random(), function(error,boxes_input) {
-//     if (error) throw error;
+var read_splitthreader_boxes_file = function() {
+  d3.csv(directory + nickname + ".SplitThreader.evolution.csv?id=" + Math.random(), function(error,boxes_input) {
+    if (error) throw error;
     
-//     for (var i=0; i<boxes_input.length; i++){
-//       boxes_input[i].start = +boxes_input[i].start
-//       boxes_input[i].end = +boxes_input[i].end
-//       boxes_input[i].y_start = +boxes_input[i].y_start
-//       boxes_input[i].height = +boxes_input[i].height
-//     }
+    for (var i=0; i<boxes_input.length; i++){
+      boxes_input[i].start = +boxes_input[i].start
+      boxes_input[i].end = +boxes_input[i].end
+      boxes_input[i].y_start = +boxes_input[i].y_start
+      boxes_input[i].height = +boxes_input[i].height
+    }
 
-//     boxes_data = boxes_input;
-//     boxes_done = true;
+    boxes_data = boxes_input;
+    boxes_done = true;
+    show_boxes = true;
     
-//     console.log("finished reading in boxes data")
-//   });
-// }
+    console.log("finished reading in boxes data")
+  });
+}
 
 
 /////////////////   Load coverage  ////////////////////////////////
@@ -432,6 +452,7 @@ var read_spansplit_file = function() {
       // spansplit_input[i].span2 = +spansplit_input[i].span2
     }
     connection_data = spansplit_input;
+
     
     spansplit_done = true;
   });
@@ -462,7 +483,7 @@ var read_spansplit_file = function() {
 
 //     for (var i=0;i<fusions_input.length;i++) {
 //       fusions_input[i].variant_count = +fusions_input[i].variant_count
-//       fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
+//      ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
 //     }
 //     gene_fusion_data = fusions_input;
 //     show_gene_fusion_dropdown();
@@ -566,18 +587,6 @@ var draw_circos = function() {
         .attr("class","chromosome_label")
         .text(function(d, i) { return d.chromosome; })
         // .call(drag)
-
-    //////////////////// Draw test points //////////////////////
-
-    // var points = [{chromosome:"1",position:50000000},{chromosome:"17",position:50000000},{chromosome:"8",position:50000000}];
-
-    // var test_points = circos_canvas.selectAll("circle")
-    //   .data(points).enter()
-    //   .append("circle")
-    //   .attr('cx', function(d) { return(  radius * genome_to_circos_x(d.chromosome,d.position) ); })
-    //   .attr('cy', function(d) { return(  radius * genome_to_circos_y(d.chromosome,d.position) ); })
-    //   .attr("r",4)
-
 }
 
 ///////////    Add connections to the circos plot   /////////////////////
@@ -603,16 +612,23 @@ function draw_circos_connections() {
      + ", S " + xmid                        + "," + ymid + "," + x2                          + "," + y2)
   }
 
+  circos_canvas.selectAll("path.circos_connection").remove()
+
+
   circos_canvas.selectAll("path.circos_connection")
     .data(connection_data)
     .enter()
     .append("path")
-    .attr("class","circos_connection")
-    .style("stroke-width",1)
-    .style("stroke",function(d){return color(d.chrom1);})
-    .style("fill","none")
-    .attr("d",circos_connection_path_generator)
-    
+    .filter(function(d){
+      var variant_size = Math.abs(d.pos2-d.pos1);
+      return d.split > config["min_split_reads"] && (variant_size > config["min_variant_size"] || d.chrom1 != d.chrom2);
+    })
+      .attr("class","circos_connection")
+      .style("stroke-width",1)
+      .style("stroke",function(d){return color(d.chrom1);})
+      .style("fill","none")
+      .attr("d",circos_connection_path_generator)
+      
 }
 
 ////////////////  Draw the top zoom plot  ////////////////////
@@ -644,9 +660,10 @@ var draw_top_zoom = function() {
       var x_bin_size_domain = top_chrom_coverage_data[0].end-top_chrom_coverage_data[0].start;
 
       var genomic_bins_per_pixel = Math.ceil((zoom_top_position_end-zoom_top_position_start)/x_bin_size_domain/both_zoom_canvas_width);
+      console.log("genomic_bins_per_pixel:")
+      console.log(genomic_bins_per_pixel)
 
-      
-
+      // file_bins/display_bins = (file_bins/pixels)*(pixels/display_bins)
       genomic_bins_per_zoom_top_bin = genomic_bins_per_pixel*pixels_per_bin;
 
       var new_coverage = []
@@ -725,7 +742,7 @@ var draw_top_zoom = function() {
       var zoom = d3.behavior.zoom()
         .x(top_zoom_x_scale)
         // .y(top_zoom_y_scale)
-        .scaleExtent([1,genomic_bins_per_pixel])
+        .scaleExtent([1,genomic_bins_per_pixel*max_zoom])
         .duration(100)
         .on("zoom",
             zoom_handler
@@ -832,7 +849,7 @@ var draw_bottom_zoom = function() {
       var zoom = d3.behavior.zoom()
         .x(bottom_zoom_x_scale)
         // .y(bottom_zoom_y_scale)
-        .scaleExtent([1,genomic_bins_per_pixel])
+        .scaleExtent([1,genomic_bins_per_pixel*max_zoom])
         .on("zoom",
             function() {
                 bottom_zoom_x_axis_label.call(bottom_zoom_x_axis)
@@ -850,16 +867,19 @@ var draw_bottom_zoom = function() {
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
 
 var top_update_coverage = function(genomic_bins_per_bar) {
-
       // console.log("updating coverage")
+
+      // console.log("genomic_bins_per_bar:")
+      // console.log(genomic_bins_per_bar)
+
       var new_coverage = []
       if (segment_copy_number==true) {
         for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
+          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
         }
       } else {
         for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
+          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
         }
       }
 
@@ -875,7 +895,7 @@ var top_update_coverage = function(genomic_bins_per_bar) {
         .attr("class","coverage_rect")
         .attr("x",function(d){return top_zoom_x_scale(d.start)})
         .attr("y",function(d){return top_zoom_y_scale(d.coverage)})
-        .attr("width",pixels_per_bin)
+        .attr("width",function(d){return Math.ceil(top_zoom_x_scale(d.end)-top_zoom_x_scale(d.start))})
         .attr("height",function(d){return both_zoom_canvas_height-top_zoom_y_scale(d.coverage)})
         .style("fill",function(d){return color(top_zoom_chromosome)})
         .style("stroke",function(d){return color(top_zoom_chromosome)})
@@ -897,11 +917,11 @@ var bottom_update_coverage = function(genomic_bins_per_bar) {
       var new_coverage = []
       if (segment_copy_number==true) {
         for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
+          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
         }
       } else {
         for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
+          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
         }
       }
 
@@ -917,7 +937,7 @@ var bottom_update_coverage = function(genomic_bins_per_bar) {
         .attr("class","coverage_rect")
         .attr("x",function(d){return bottom_zoom_x_scale(d.start)})
         .attr("y", 0)
-        .attr("width",pixels_per_bin)
+        .attr("width",function(d){return bottom_zoom_x_scale(d.end)-bottom_zoom_x_scale(d.start)})
         .attr("height",function(d){return bottom_zoom_y_scale(d.coverage)})
         .style("fill",function(d){return color(bottom_zoom_chromosome)})
         .style("stroke",function(d){return color(bottom_zoom_chromosome)})
@@ -1020,99 +1040,102 @@ var draw_connections = function() {
       var within_view_1_bottom = false;
       var within_view_2_bottom = false;
 
+      var variant_size = Math.abs(d.pos2-d.pos1);
+      if (d.split > config["min_split_reads"] && (variant_size > config["min_variant_size"] || d.chrom1 != d.chrom2)) {
 
-      var scaled_position_1_top = scale_position_by_chromosome(d.chrom1,d.pos1,"top");
-      var scaled_position_1_bottom = scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
+        var scaled_position_1_top = scale_position_by_chromosome(d.chrom1,d.pos1,"top");
+        var scaled_position_1_bottom = scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 
-      var scaled_position_2_top = scale_position_by_chromosome(d.chrom2,d.pos2,"top");
-      var scaled_position_2_bottom = scale_position_by_chromosome(d.chrom2,d.pos2,"bottom");
+        var scaled_position_2_top = scale_position_by_chromosome(d.chrom2,d.pos2,"top");
+        var scaled_position_2_bottom = scale_position_by_chromosome(d.chrom2,d.pos2,"bottom");
 
-      if (scaled_position_1_top > 0 && scaled_position_1_top < both_zoom_canvas_width)  {
-        within_view_1_top = true;
-      }
-      if (scaled_position_1_bottom > 0 && scaled_position_1_bottom < both_zoom_canvas_width){
-        within_view_1_bottom = true;
-      }
-      if (scaled_position_2_top > 0 && scaled_position_2_top < both_zoom_canvas_width) {
-        within_view_2_top = true;
-      }
-      if (scaled_position_2_bottom > 0 && scaled_position_2_bottom < both_zoom_canvas_width) {
-        within_view_2_bottom = true;
-      }
-
-
-      //  1. Both within view looping on top chromosome
-      //  2. Both within view looping on bottom chromosome
-      //  3. Both within view as connection
-      //  4. Both within view as reverse connection
-      //  5. Others
-
-
-      if ( (d.chrom1 == top_zoom_chromosome && d.chrom2 == top_zoom_chromosome) && (within_view_1_top && within_view_2_top) ){
-        within_top_chrom.push(d)
-      } else if ( (d.chrom1 == top_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) && (within_view_1_top && within_view_2_bottom) ){
-        top_chrom_to_bottom_chrom.push(d) // save as a connection
-      } else if ( (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == top_zoom_chromosome) && (within_view_1_bottom && within_view_2_top) ){
-        top_chrom_to_bottom_chrom.push(reverse_chrom1_and_chrom2(d)) // save as a connection
-      } else if ( (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) && (within_view_1_bottom && within_view_2_bottom)) {
-        within_bottom_chrom.push(d)
-      } else {
-        // Within top chromosome  
-        if (d.chrom1 == top_zoom_chromosome && d.chrom2 == top_zoom_chromosome) {
-          if (within_view_1_top && within_view_2_top) { ///////////////
-              within_top_chrom.push(d) /////////////////////
-            } else if (within_view_1_top) {
-              top_chrom_to_other.push(d) // save 1 as top stub
-            } else if (within_view_2_top) {
-              top_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-            } // else: don't save it anywhere since it won't be shown even as a stub 
-        // Between the top and bottom plots
-        } else if (d.chrom1 == top_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) {
-            if (within_view_1_top && within_view_2_bottom) { ///////////////////
-              top_chrom_to_bottom_chrom.push(d) // save as a connection ///////////////
-            } else if (within_view_1_top) {
-              top_chrom_to_other.push(d) // save 1 as top stub
-            } else if (within_view_2_bottom) {
-              bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-            } // else: don't save it anywhere since it won't be shown even as a stub 
-        // Within bottom chromosome
-        } else if (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) {
-          if (within_view_1_bottom && within_view_2_bottom) { //////////////////
-              within_bottom_chrom.push(d) //////////////////
-            } else if (within_view_1_bottom) {
-              bottom_chrom_to_other.push(d) // save 1 as top stub
-            } else if (within_view_2_bottom) {
-              bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-            } // else: don't save it anywhere since it won't be shown even as a stub 
-        
-        } else if (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == top_zoom_chromosome) {
-            if (within_view_1_bottom && within_view_2_top) { ///////////////////
-              top_chrom_to_bottom_chrom.push(reverse_chrom1_and_chrom2(d)) // save as a connection ////////////////////
-            } else if (within_view_2_top) { // 2 is top this time
-              top_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as top stub 
-            } else if (within_view_1_bottom) { // 1 is bottom this time
-              bottom_chrom_to_other.push(d) // save as bottom stub, 1 is already bottom, so no need to flip
-            } // else: don't save it anywhere since it won't be shown even as a stub 
-        // Top chromosome to another chromosome
-        } else if (d.chrom1 == top_zoom_chromosome) {
-          top_chrom_to_other.push(d)
-          // console.log("top to other")
-          // console.log(d)
-        } else if (d.chrom2 == top_zoom_chromosome) {
-          top_chrom_to_other.push(reverse_chrom1_and_chrom2(d))
-          // console.log("top to other reversed")
-          // console.log(reverse_chrom1_and_chrom2(d))
-        // Bottom chromosome to another chromosome
-        } else if (d.chrom1 == bottom_zoom_chromosome) {
-          bottom_chrom_to_other.push(d)
-          // console.log("bottom to other")
-          // console.log(d)
-        } else if (d.chrom2 == bottom_zoom_chromosome) {
-          bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d))
-          // console.log("bottom to other reversed")
-          // console.log(reverse_chrom1_and_chrom2(d))
+        if (scaled_position_1_top > 0 && scaled_position_1_top < both_zoom_canvas_width)  {
+          within_view_1_top = true;
         }
-      }
+        if (scaled_position_1_bottom > 0 && scaled_position_1_bottom < both_zoom_canvas_width){
+          within_view_1_bottom = true;
+        }
+        if (scaled_position_2_top > 0 && scaled_position_2_top < both_zoom_canvas_width) {
+          within_view_2_top = true;
+        }
+        if (scaled_position_2_bottom > 0 && scaled_position_2_bottom < both_zoom_canvas_width) {
+          within_view_2_bottom = true;
+        }
+
+
+        //  1. Both within view looping on top chromosome
+        //  2. Both within view looping on bottom chromosome
+        //  3. Both within view as connection
+        //  4. Both within view as reverse connection
+        //  5. Others
+
+
+        if ( (d.chrom1 == top_zoom_chromosome && d.chrom2 == top_zoom_chromosome) && (within_view_1_top && within_view_2_top) ){
+          within_top_chrom.push(d)
+        } else if ( (d.chrom1 == top_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) && (within_view_1_top && within_view_2_bottom) ){
+          top_chrom_to_bottom_chrom.push(d) // save as a connection
+        } else if ( (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == top_zoom_chromosome) && (within_view_1_bottom && within_view_2_top) ){
+          top_chrom_to_bottom_chrom.push(reverse_chrom1_and_chrom2(d)) // save as a connection
+        } else if ( (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) && (within_view_1_bottom && within_view_2_bottom)) {
+          within_bottom_chrom.push(d)
+        } else {
+          // Within top chromosome  
+          if (d.chrom1 == top_zoom_chromosome && d.chrom2 == top_zoom_chromosome) {
+            if (within_view_1_top && within_view_2_top) { ///////////////
+                within_top_chrom.push(d) /////////////////////
+              } else if (within_view_1_top) {
+                top_chrom_to_other.push(d) // save 1 as top stub
+              } else if (within_view_2_top) {
+                top_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+              } // else: don't save it anywhere since it won't be shown even as a stub 
+          // Between the top and bottom plots
+          } else if (d.chrom1 == top_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) {
+              if (within_view_1_top && within_view_2_bottom) { ///////////////////
+                top_chrom_to_bottom_chrom.push(d) // save as a connection ///////////////
+              } else if (within_view_1_top) {
+                top_chrom_to_other.push(d) // save 1 as top stub
+              } else if (within_view_2_bottom) {
+                bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+              } // else: don't save it anywhere since it won't be shown even as a stub 
+          // Within bottom chromosome
+          } else if (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == bottom_zoom_chromosome) {
+            if (within_view_1_bottom && within_view_2_bottom) { //////////////////
+                within_bottom_chrom.push(d) //////////////////
+              } else if (within_view_1_bottom) {
+                bottom_chrom_to_other.push(d) // save 1 as top stub
+              } else if (within_view_2_bottom) {
+                bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+              } // else: don't save it anywhere since it won't be shown even as a stub 
+          
+          } else if (d.chrom1 == bottom_zoom_chromosome && d.chrom2 == top_zoom_chromosome) {
+              if (within_view_1_bottom && within_view_2_top) { ///////////////////
+                top_chrom_to_bottom_chrom.push(reverse_chrom1_and_chrom2(d)) // save as a connection ////////////////////
+              } else if (within_view_2_top) { // 2 is top this time
+                top_chrom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as top stub 
+              } else if (within_view_1_bottom) { // 1 is bottom this time
+                bottom_chrom_to_other.push(d) // save as bottom stub, 1 is already bottom, so no need to flip
+              } // else: don't save it anywhere since it won't be shown even as a stub 
+          // Top chromosome to another chromosome
+          } else if (d.chrom1 == top_zoom_chromosome) {
+            top_chrom_to_other.push(d)
+            // console.log("top to other")
+            // console.log(d)
+          } else if (d.chrom2 == top_zoom_chromosome) {
+            top_chrom_to_other.push(reverse_chrom1_and_chrom2(d))
+            // console.log("top to other reversed")
+            // console.log(reverse_chrom1_and_chrom2(d))
+          // Bottom chromosome to another chromosome
+          } else if (d.chrom1 == bottom_zoom_chromosome) {
+            bottom_chrom_to_other.push(d)
+            // console.log("bottom to other")
+            // console.log(d)
+          } else if (d.chrom2 == bottom_zoom_chromosome) {
+            bottom_chrom_to_other.push(reverse_chrom1_and_chrom2(d))
+            // console.log("bottom to other reversed")
+            // console.log(reverse_chrom1_and_chrom2(d))
+          }
+        }
+      } // end check for config["min_variant_size"] and config["min_split_reads"]
     }
 
 
@@ -1506,7 +1529,7 @@ var draw_splitthreader_boxes_top = function() {
 
   top_zoom_canvas.selectAll("rect.splitthreader_box").remove()
   
-  if (show_boxes & region_to_show_boxes_for!=null) {
+  if (show_boxes) {
       var splitthreader_boxes_top = top_zoom_canvas.selectAll("splitthreader_box")
           .data(boxes_data).enter()
           .append("rect")
@@ -1519,6 +1542,7 @@ var draw_splitthreader_boxes_top = function() {
           .style("fill",function(d){return box_colors(d.path_ID)})
           .on('mouseover', box_tip.show)
           .on('mouseout', box_tip.hide)
+          .on('click',function(d) {highlight_variants(d.variant_names)})
           // .style("stroke","black")
   }
   
@@ -1530,7 +1554,7 @@ var draw_splitthreader_boxes_bottom = function() {
 
   bottom_zoom_canvas.selectAll("rect.splitthreader_box").remove()
 
-  if (show_boxes & region_to_show_boxes_for!=null) {
+  if (show_boxes) {
       var splitthreader_boxes_bottom = bottom_zoom_canvas.selectAll("splitthreader_box")
           .data(boxes_data).enter()
           .append("rect")
@@ -1543,6 +1567,7 @@ var draw_splitthreader_boxes_bottom = function() {
           .style("fill",function(d){return box_colors(d.path_ID)})
           .on('mouseover', box_tip.show)
           .on('mouseout', box_tip.hide)
+          .on('click',function(d) {highlight_variants(d.variant_names)})
           // .style("stroke","black")
   }
 
@@ -1605,7 +1630,7 @@ var draw_genes_top = function() {
       .attr("class","top_gene_label")
       .style('text-anchor',"middle")
       .attr("dominant-baseline","middle")
-      .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
+      // .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
 
 
     var gene_arrows_top = top_zoom_canvas.selectAll("path.top_gene_arrow")
@@ -1635,7 +1660,7 @@ var draw_genes_bottom = function() {
       .attr("class","bottom_gene_label")
       .style('text-anchor',"middle")
       .attr("dominant-baseline","middle")
-      .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
+      // .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
 
   var gene_arrows_bottom = bottom_zoom_canvas.selectAll("path.bottom_gene_arrow")
     .data(relevant_annotation).enter()
@@ -1649,7 +1674,6 @@ var draw_genes_bottom = function() {
       .style("fill","none")
 
 }
-
 
 
 var select_chrom_for_zoom_top = function(d) {
@@ -1694,26 +1718,31 @@ var show_gene_fusion_dropdown = function() {
 
 }
 
-var show_oncogene_dropdown = function() {
-   var oncogene_dropdown = d3.select("#oncogene_dropdown_menu").html("");
-
-    oncogene_dropdown
-      .selectAll("li")
-      .data(available_oncogenes)
-      .enter()
-      .append("li")
-      .append("a")
-        .text(function(d){return d})
-        .on("click",highlight_oncogene_with_boxes)
-
+function arraysEqual(arr1, arr2) {
+    if(arr1.length !== arr2.length)
+        return false;
+    for(var i = arr1.length; i--;) {
+        if(arr1[i] !== arr2[i])
+            return false;
+    }
+    return true;
 }
 
+var highlight_variants = function(delimited_variant_string) {
+  
+  //  Toggle off
+  if (arraysEqual(variants_to_highlight, delimited_variant_string.split("|"))) {
+    variants_to_highlight = []
+
+  } else { // Toggle on
+    variants_to_highlight = delimited_variant_string.split("|")
+  }
+  draw_connections();
+}
 
 var zoom_distance_around_gene = 5000000;
 
 var highlight_gene_fusion = function(d) {
-
-  region_to_show_boxes_for = null;
 
   if (top_zoom_chromosome != d.chrom1) {
     select_chrom_for_zoom_top(d.chrom1);
@@ -1741,11 +1770,10 @@ var highlight_gene_fusion = function(d) {
 
   update_genes();
 
-  variants_to_highlight = d.variant_names;
+  variants_to_highlight = d.variant_names.split("|");
   draw_connections();
 
-  gene_fusion_to_highlight = d;
-
+  // gene_fusion_to_highlight = d;
 
 }
 
@@ -1757,42 +1785,6 @@ var get_annotation_by_gene_name = function(gene) {
     return null;
   }
 }
-
-var highlight_oncogene_with_boxes = function(gene) {
-
-  if (available_oncogenes.indexOf(gene) != -1) {
-    variants_to_highlight = []
-    region_to_show_boxes_for = gene;
-
-    if (show_boxes) {
-      boxes_done = false;
-      read_splitthreader_boxes_file();
-      wait_then_draw_boxes();  
-    }
-
-    var annotation_index = annotation_genes_available.indexOf(gene);
-
-    if (annotation_index != -1){
-      change_genes_shown([gene])
-      update_genes();
-      var oncogene_chromosome = get_annotation_by_gene_name(gene).chromosome;
-      if (top_zoom_chromosome != oncogene_chromosome) {
-        select_chrom_for_zoom_top(oncogene_chromosome);
-      } else {
-        var coordinate = top_zoom_x_scale(get_annotation_by_gene_name(gene).start);
-        if (coordinate < 0 || coordinate > both_zoom_canvas_width) {
-          select_chrom_for_zoom_top(oncogene_chromosome);
-        }
-      }
-
-      message_to_user("Selected gene: " + gene)
-    } else {
-      message_to_user("Gene not found in annotation file: " + gene)
-    }
-  }
-}
-
-
 
 var color_connections = function(d) {
 
@@ -1823,45 +1815,27 @@ var wait_then_draw_boxes = function() {
 
 
 
-var base_title = "SKBR3 Breast Cancer Cell Line\n";
-
-var message_to_user = function(message) {
-  console.log(message)
-  panel_canvas.selectAll("text").remove()
-
-  panel_canvas.append("text")
-    .attr("class","user_message")
-    .attr("y",50)
-    .text(message);
-
-  panel_canvas.append("text")
-    .attr("class","sample_title")
-    .text(base_title);
-
-}
-
-
 //////////    Settings    ////////////////
 
-
 var toggle_boxes = function() {
-
-  if (region_to_show_boxes_for == null) {
-    message_to_user("Select a gene first from the Evolution menu");
+  if (show_boxes) {
+    toggle_boxes_off()
   } else {
-    if (show_boxes) {
-      toggle_boxes_off()
-    } else {
-      toggle_boxes_on()
-    }
+    toggle_boxes_on()
   }
+}
+
+var show_evolution_boxes = function() {
+  read_splitthreader_boxes_file();
+  wait_then_draw_boxes();  
 }
 
 var toggle_boxes_on = function() {
   show_boxes = true;
   d3.select("#toggle_boxes")
     .text("Hide boxes from SplitThreader Evolution")
-  highlight_oncogene_with_boxes(region_to_show_boxes_for)
+  // highlight_oncogene_with_boxes(region_to_show_boxes_for)
+  show_evolution_boxes()
 }
 
 var toggle_boxes_off = function() {
@@ -1877,7 +1851,7 @@ var remove_boxes = function() {
 }
 
 
-var toggle_spansplit_lines = function() {
+function toggle_spansplit_lines() {
   if (plot_spansplit_counts == false) {
     plot_spansplit_counts = true;
     draw_connections();
@@ -1892,7 +1866,7 @@ var toggle_spansplit_lines = function() {
 }
 
 
-var toggle_segment_copy_number = function() {
+function toggle_segment_copy_number() {
   if (segment_copy_number == false) {
     segment_copy_number = true;
     //  REDRAW copy number:
@@ -1912,6 +1886,179 @@ var toggle_segment_copy_number = function() {
     d3.select("#toggle_segment_copy_number")
       .text("Show segmented read coverage")
   }
+}
+
+
+
+//////////    Printing messages to user in bottom left corner    ////////////////
+
+function message_to_user(message) {
+  console.log(message)
+  panel_canvas.selectAll("text").remove()
+
+  var formatted_nickname = nickname.replace(/_/g ," "); // replace underscores with spaces in nickname
+
+  // var parameters_to_print = "";
+  // Object.keys(config).forEach(function(key,index) {
+  //   parameters_to_print += key + ": " + config[key] + ', ';
+  // })
+  
+  var whole_message = message; //+ "\n" + parameters_to_print;
+
+  
+  panel_canvas.append("text")
+    .attr("class","sample_title")
+    .text(formatted_nickname)
+    .attr('y',0)
+    .attr('dy',1)
+    // .call(wrap,panel_width)
+
+  panel_canvas.append("text")
+    .attr("class","user_message")
+    .text(whole_message)
+    .attr('y',90)
+    .attr("dy",1);
+
+  panel_canvas.selectAll("text")
+    .call(wrap,panel_width);
+
+    // panel_canvas.append("text")
+    // .attr("class","user_message")
+    // .attr("y",50)
+    // .text(parameters_to_print);
+}
+
+
+
+//  Taken from https://bl.ocks.org/mbostock/7555321
+//  Used for message_to_user()
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+}
+
+function user_set_min_variant_size() {
+  console.log("user_set_min_variant_size")
+
+  config["min_variant_size"] = prompt("set minimum variant size:",config["min_variant_size"])
+
+  d3.select("#user_set_min_variant_size")
+      .text("Minimum variant size = " + config["min_variant_size"])
+
+  draw_connections();
+  draw_circos_connections();
+
+}
+
+function user_set_min_split_reads() {
+  console.log("user_set_min_split_reads")
+
+  config["min_split_reads"] = prompt("set minimum number of split reads per variant: ",config["min_split_reads"])
+
+  d3.select("#user_set_min_split_reads")
+      .text("Minimum split reads = " + config["min_split_reads"])
+
+  draw_connections();
+  draw_circos_connections();
+
+}
+
+//////////    Populate navbar with visualizer settings    ////////////////
+
+function populate_navbar() {
+
+  // Separating bar
+  
+  // Settings
+  settings_link = d3.select("#navbar")
+    .append("li")
+      .attr("class","dropdown")
+
+  settings_link
+      .append("a")
+        .html("Settings <span class='caret'></span>")
+        .attr("class","dropdown-toggle")
+        .attr("data-toggle","dropdown")
+        .attr("href","")
+    
+  settings = settings_link.append("ul")
+      .attr("class","dropdown-menu")
+      .attr("id", "settings_dropdown_menu")
+      .attr("role","menu")
+
+  settings.append("li").append("a")
+    .attr("href",void(0))
+    .attr("id","toggle_boxes")
+    .on("click",toggle_boxes)
+    .text("Hide boxes from SplitThreader Evolution")
+
+
+  settings.append("li").append("a")
+    .attr("href",void(0))
+    .attr("id","user_set_min_variant_size")
+    .on("click",user_set_min_variant_size)
+    .text("Minimum variant size = " + config["min_variant_size"])
+
+
+  settings.append("li").append("a")
+    .attr("href",void(0))
+    .attr("id","user_set_min_split_reads")
+    .on("click",user_set_min_split_reads)
+    .text("Minimum split reads = " + config["min_split_reads"])
+
+
+
+
+// config["min_split_reads"]
+
+
+
+
+
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","toggle_spansplit_lines")
+  //   .on("click",toggle_spansplit_lines)
+  //   .text("Show span/split count lines")
+
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","toggle_segment_copy_number")
+  //   .on("click",toggle_segment_copy_number)
+  //   .text("Show segmented read coverage")
+
+
+  // Add also variant numreads and min_size filters (maybe a dialog box that user can type a number into)
+
+
+
+
+
+  // settings.html('<li><a href="javascript:void(0)" onclick="toggle_boxes()" id="toggle_boxes">Hide boxes from SplitThreader Evolution</a></li>
+  //             <li><a href="javascript:void(0)" onclick="toggle_spansplit_lines()" id="toggle_spansplit_lines">Show span/split count lines</a></li>
+  //             <li><a href="javascript:void(0)" onclick="toggle_segment_copy_number()" id="toggle_segment_copy_number">Show segmented read coverage</a></li></ul>')
+
+
+
 }
 
 
