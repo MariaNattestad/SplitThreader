@@ -6,6 +6,7 @@
 <?php include "header.html";?>
 <?php include "title.html";?>
 
+<div class="panel">
 <?php
     $aResult = array();
     if( !isset($_POST['code']) ) { $aResult['error'] = 'ERROR: No code passed to input_validation.php';}
@@ -54,8 +55,8 @@
         exit;
     } else {
         echo "<div class=\"alert center alert-success\" role=\"alert\">Great! Both files were uploaded</div>";
-        if(   isset($_POST['min_variant_size']) && isset($_POST['min_split_reads'])    ) {
-            $data = "parameter,val\nmin_variant_size," . $_POST['min_variant_size'] . "\n" . "min_split_reads," . $_POST['min_split_reads'] . "\n";
+        if(   isset($_POST['min_variant_size']) && isset($_POST['min_split_reads'])   && isset($_POST['annotation'])   ) {
+            $data = "parameter,val\nmin_variant_size," . $_POST['min_variant_size'] . "\n" . "min_split_reads," . $_POST['min_split_reads'] . "\n"  . "annotation," . $_POST['annotation'] . "\n";
             $ret = file_put_contents('user_uploads/' . $code . '.config', $data, FILE_APPEND | LOCK_EX);
             if($ret === false) {
                 die('There was an error writing this file');
@@ -65,5 +66,7 @@
         echo "$continue_button";
     }
 ?>
+
+</div>
 </body>
 </html>

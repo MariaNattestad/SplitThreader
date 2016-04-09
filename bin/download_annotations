@@ -1,0 +1,32 @@
+
+
+DIRECTORY=resources/annotation/
+
+ORGANISM=Human_hg19
+curl ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz -o $DIRECTORY/$ORGANISM.gtf.gz
+gunzip $DIRECTORY/$ORGANISM.gtf.gz
+cat <(echo "chromosome,start,end,name,strand,type,gene") <(cat $DIRECTORY/$ORGANISM.gtf | awk '$3=="gene"' | awk -F '[\t:,;" ]' '{print $1,$4,$5,$16,$7,$21,$31}' OFS=',' | sed 's/^chr//g') > $DIRECTORY/$ORGANISM.genes.csv
+
+
+
+
+ORGANISM=Human_GRCh38
+curl ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_23/gencode.v23.annotation.gtf.gz -o $DIRECTORY/$ORGANISM.gtf.gz
+gunzip $DIRECTORY/$ORGANISM.gtf.gz
+cat <(echo "chromosome,start,end,name,strand,type,gene") <(cat $DIRECTORY/$ORGANISM.gtf | awk '$3=="gene"' | awk -F '[\t:,;" ]' '{print $1,$4,$5,$16,$7,$21,$31}' OFS=',' | sed 's/^chr//g') > $DIRECTORY/$ORGANISM.genes.csv
+
+
+
+ORGANISM=Mouse_GRCm38
+curl ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_M9/gencode.vM9.annotation.gtf.gz -o $DIRECTORY/$ORGANISM.gtf.gz
+gunzip $DIRECTORY/$ORGANISM.gtf.gz
+cat <(echo "chromosome,start,end,name,strand,type,gene") <(cat $DIRECTORY/$ORGANISM.gtf | awk '$3=="gene"' | awk -F '[\t:,;" ]' '{print $1,$4,$5,$16,$7,$21,$31}' OFS=',' | sed 's/^chr//g') > $DIRECTORY/$ORGANISM.genes.csv
+
+
+
+
+
+
+
+
+

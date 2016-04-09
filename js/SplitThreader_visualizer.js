@@ -305,13 +305,13 @@ svg.call(variant_tip);
 var run = function(){
   populate_navbar();
 
-  // read_config_file();
+  read_config_file();
   read_genome_file();
   read_coverage_file();
   read_spansplit_file();
   read_splitthreader_boxes_file();
 
-  // read_annotation_file();
+  read_annotation_file();
   // read_fusion_report_file();
   // show_oncogene_dropdown();
   message_to_user("Loading data");
@@ -348,22 +348,23 @@ var max_zoom = 50; //Max number of pixels a genomic bin can be zoomed to (used t
 var config = {};
 config["min_variant_size"] = 0;
 config["min_split_reads"] = 0;
+config["annotation"] = "";
 
 
-// var read_config_file = function() {
-//   d3.csv(config_path, function(error,config_input) {
-//     if (error) throw error;
-//     for (var i=0;i<config_input.length;i++){
-//       console.log(config_input[i]);
-//       if (isNaN(config_input[i].val)) {
-//         config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
-//       } else {
-//         config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
-//       }
-//     }
-//     console.log(config);
-//   });
-// }
+var read_config_file = function() {
+  d3.csv(config_path, function(error,config_input) {
+    if (error) throw error;
+    for (var i=0;i<config_input.length;i++){
+      console.log(config_input[i]);
+      if (isNaN(config_input[i].val)) {
+        config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
+      } else {
+        config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
+      }
+    }
+    console.log(config);
+  });
+}
 
 
 
@@ -458,22 +459,27 @@ var read_spansplit_file = function() {
   });
 }
 
-// var read_annotation_file = function() {
-//   d3.csv(directory+"annotation.csv", function(error,annotation_input) {
+var read_annotation_file = function() {
+  if (config["annotation"] != "") {
+    console.log("Reading annotation");
 
-//     if (error) throw error;
+    d3.csv(config["annotation"], function(error,annotation_input) {
 
-//     annotation_genes_available = []
-//     for (var i=0;i<annotation_input.length;i++) {
-//       annotation_input[i].start = +annotation_input[i].start
-//       annotation_input[i].end = +annotation_input[i].end
-//       annotation_genes_available.push(annotation_input[i].gene)
-//     }
-//     annotation_data = annotation_input;
-//     annotation_done = true;
-//   });
+      if (error) throw error;
 
-// }
+      annotation_genes_available = []
+      for (var i=0;i<annotation_input.length;i++) {
+        annotation_input[i].start = +annotation_input[i].start
+        annotation_input[i].end = +annotation_input[i].end
+        annotation_genes_available.push(annotation_input[i].gene)
+      }
+      annotation_data = annotation_input;
+      annotation_done = true;
+    });
+  } else {
+    console.log("No annotation chosen");
+  }
+}
 
 
 // var read_fusion_report_file = function() {
@@ -1533,11 +1539,15 @@ var draw_splitthreader_boxes_top = function() {
       var splitthreader_boxes_top = top_zoom_canvas.selectAll("splitthreader_box")
           .data(boxes_data).enter()
           .append("rect")
-          .filter(function(d){return d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
+          .filter(function(d){return d.chromosome == top_zoom_chromosome && (
+              (top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.start) < both_zoom_canvas_width) || 
+              (top_zoom_x_scale(d.end) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width)
+            )
+          }) 
           .attr("class","splitthreader_box")
-          .attr("x",function(d){return top_zoom_x_scale(d.start)})
+          .attr("x",function(d){return Math.max(0, top_zoom_x_scale(d.start))})
           .attr("y",function(d){return top_zoom_y_scale(d.y_start+d.height)})
-          .attr("width",function(d){return top_zoom_x_scale(d.end) - top_zoom_x_scale(d.start)})
+          .attr("width",function(d){return Math.min(top_zoom_x_scale(d.end),both_zoom_canvas_width) - Math.max(0, top_zoom_x_scale(d.start))})
           .attr("height",function(d){return both_zoom_canvas_height-top_zoom_y_scale(d.height)})
           .style("fill",function(d){return box_colors(d.path_ID)})
           .on('mouseover', box_tip.show)
@@ -1558,11 +1568,16 @@ var draw_splitthreader_boxes_bottom = function() {
       var splitthreader_boxes_bottom = bottom_zoom_canvas.selectAll("splitthreader_box")
           .data(boxes_data).enter()
           .append("rect")
-          .filter(function(d){return d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
+          .filter(function(d){
+            return  d.chromosome == bottom_zoom_chromosome && (
+              (bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.start) < both_zoom_canvas_width) || 
+              (bottom_zoom_x_scale(d.end) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width)
+            )
+          })
           .attr("class","splitthreader_box")
-          .attr("x",function(d){return bottom_zoom_x_scale(d.start)})
+          .attr("x",function(d){return Math.max(0,bottom_zoom_x_scale(d.start))})
           .attr("y",function(d){return bottom_zoom_y_scale(d.y_start)})
-          .attr("width",function(d){return bottom_zoom_x_scale(d.end) - bottom_zoom_x_scale(d.start)})
+          .attr("width",function(d){return Math.min(bottom_zoom_x_scale(d.end),both_zoom_canvas_width) - Math.max(0,bottom_zoom_x_scale(d.start))})
           .attr("height",function(d){return bottom_zoom_y_scale(d.height)})
           .style("fill",function(d){return box_colors(d.path_ID)})
           .on('mouseover', box_tip.show)

@@ -19,7 +19,7 @@
                                     <div class="frame"> 
                                         <form action="file_upload.php"
                                             class="dropzone"
-                                            id="variants_dropzone">
+                                            id="VariantsDropzone">
                                             <input class="code_keeper" type="hidden" name="code_hidden" value="">
                                             <input type="hidden" name="file_type" value="variants">
                                         </form>
@@ -32,7 +32,8 @@
                                     <div class="frame"> 
                                         <form action="file_upload.php"
                                             class="dropzone"
-                                            id="copynumber_dropzone">
+                                            id="CopyNumberDropzone">
+
                                             <input class="code_keeper" type="hidden" name="code_hidden" value="">
                                             <input type="hidden" name="file_type" value="copynumber">
                                         </form>
@@ -71,7 +72,15 @@
                                                                   <tr>
                                                                       <td><label for="min_split_reads" class="form-control-label">Minimum split reads supporting variant</label></td>
                                                                       <td><input name="min_split_reads" id="min_split_reads" type="number" step="1" min="0" class="form-control" value = "0"></td>
-                                                                  </tr>>
+                                                                  </tr>
+                                                                  <tr class="active">
+                                                                      <th colspan="2">Annotation</th></tr>
+                                                                  <tr>
+                                                                    <td colspan="2">                                                                      
+                                                                          <div class="radio"><label><input type="radio" checked name="annotation" value=""> None </label></div>
+                                                                          <?php $filenames = glob("resources/annotation/*.genes.csv"); foreach ($filenames as $value) {$output=str_replace("resources/annotation/","",$value); $output=str_replace(".genes.csv","",$output); echo '<div class="radio"><label><input type="radio" name="annotation" value="' . $value .'"> ' . $output. ' (Gencode) </label></div>';}; ?>
+                                                                    </td>
+                                                                  </tr>
                                                               </table>
                                                         </div>
                                                     </div>
@@ -123,23 +132,40 @@
 
 <script src="js/front_page_script.js"></script>
 <script src="js/dropzone.js"></script>
-
    
-
 <script type="text/javascript">
-Dropzone.options.myAwesomeDropzone = {
+
+console.log("in bottom javascript");
+
+Dropzone.options.CopyNumberDropzone = {
   accept: function(file, done) {
     console.log("uploaded");
     done();
   },
   init: function() {
     this.on("addedfile", function() {
+      console.log("file added");
       if (this.files[1]!=null){
         this.removeFile(this.files[0]);
       }
     });
   }
 };  
+
+Dropzone.options.VariantsDropzone = {
+  accept: function(file, done) {
+    console.log("uploaded");
+    done();
+  },
+  init: function() {
+    this.on("addedfile", function() {
+      console.log("file added");
+      if (this.files[1]!=null){
+        this.removeFile(this.files[0]);
+      }
+    });
+  }
+};
 
 </script>
 </body>

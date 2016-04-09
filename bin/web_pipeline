@@ -35,13 +35,17 @@ LOG_FILE=${OUTPUT_PREFIX%/*}/progress.log
 # Add description to first line of log file, which will be shown as the header
 echo "${OUTPUT_PREFIX##*/}" >> $LOG_FILE 
 
+echo "1. Standardizing input files" >> $LOG_FILE
+
 ./bin/standardize_variants.py -bedpe $VARIANTS -out $OUTPUT_PREFIX.variants.csv >> $LOG_FILE
 
 ./bin/standardize_copynumber.py -csv $COPYNUMBER -out $OUTPUT_PREFIX.copynumber.csv -genome_out $OUTPUT_PREFIX.genome.csv >> $LOG_FILE
 
-Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
+echo "2. Segmenting copy number" >> $LOG_FILE
+./bin/Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
 
-SplitThreader.py Evolution --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --out $OUTPUT_PREFIX
+echo "3. Running SplitThreader Evolution" >> $LOG_FILE
+./bin/SplitThreader.py Evolution --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --out $OUTPUT_PREFIX
 
 
 
