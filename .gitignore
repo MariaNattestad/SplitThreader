@@ -1,3 +1,5 @@
 user_data/*
 user_uploads/*
 !user_data/example*
+resources/annotation/*.gtf
+
