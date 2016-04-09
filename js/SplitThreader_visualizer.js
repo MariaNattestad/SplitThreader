@@ -311,7 +311,7 @@ var run = function(){
   read_spansplit_file();
   read_splitthreader_boxes_file();
 
-  read_annotation_file();
+  
   // read_fusion_report_file();
   // show_oncogene_dropdown();
   message_to_user("Loading data");
@@ -363,6 +363,7 @@ var read_config_file = function() {
       }
     }
     console.log(config);
+    read_annotation_file();
   });
 }
 
