@@ -1,5 +1,5 @@
 #!/bin/bash
-USAGE="web_pipeline variants copynumber output_prefix "
+USAGE="web_pipeline variants copynumber output_prefix annotation email url"
 if [ -z "$1" ]
   then
     echo "ERROR in SplitThreader: No variants file given"
@@ -25,42 +25,90 @@ fi
 # Author: Maria Nattestad
 # Email: mnattest@cshl.edu
 
+echo $0
+echo $1
+echo $2
+echo $3
+echo $4
+echo $5
+echo $6
+
 VARIANTS=${1?"$USAGE"}
 COPYNUMBER=${2?"$USAGE"}
 OUTPUT_PREFIX=${3?"$USAGE"}
+ANNOTATION=${4?"$USAGE"}
+EMAIL=${5?"$USAGE"}
+LINK=${6?"$USAGE"}
+
+# GENE_FUSION_LIST=${7?"$USAGE"} ####### Add optional file upload for gene fusion list (gene1\tgene2\tnum_IsoSeq_reads_of_support)
+
+URL_PREFIX="qb.cshl.edu/splitthreader"
 
 
 # Log file contains all reporting that is shown to the user
 LOG_FILE=${OUTPUT_PREFIX%/*}/progress.log
 # Add description to first line of log file, which will be shown as the header
-echo "${OUTPUT_PREFIX##*/}" >> $LOG_FILE 
+echo "${OUTPUT_PREFIX##*/}" > $LOG_FILE 
 
-echo "1. Standardizing input files" >> $LOG_FILE
+if [ "$EMAIL" = "none" ]; 
+then 
+    echo "No email"; 
+else 
+    echo "Email: $EMAIL"
+fi
 
+echo "1. Reading input files" >> $LOG_FILE
 ./bin/standardize_variants.py -bedpe $VARIANTS -out $OUTPUT_PREFIX.variants.csv >> $LOG_FILE
-
-./bin/standardize_copynumber.py -csv $COPYNUMBER -out $OUTPUT_PREFIX.copynumber.csv -genome_out $OUTPUT_PREFIX.genome.csv >> $LOG_FILE
-
-echo "2. Segmenting copy number" >> $LOG_FILE
-./bin/Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
-
-echo "3. Running SplitThreader Evolution" >> $LOG_FILE
-./bin/SplitThreader.py Evolution --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --out $OUTPUT_PREFIX
-
-
 
 if [ -e $OUTPUT_PREFIX.variants.csv ];
 then 
+    # if variants worked, then run copy number
+    ./bin/standardize_copynumber.py -csv $COPYNUMBER -out $OUTPUT_PREFIX.copynumber.csv -genome_out $OUTPUT_PREFIX.genome.csv >> $LOG_FILE
+
     if [ -e $OUTPUT_PREFIX.copynumber.csv ];
     then
-        echo "done" >> $LOG_FILE
+        echo "2. Segmenting copy number" >> $LOG_FILE
+        ./bin/Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
+        if [ -e $OUTPUT_PREFIX.copynumber.segmented.csv ];
+        then
+            echo "done" >> $LOG_FILE
+            if [ "$EMAIL" = "none" ]; 
+            then 
+                echo "No email"; 
+            else 
+                echo "SENDING EMAIL";
+                mail -s "SplitThreader finished on ${OUTPUT_PREFIX##*/}" $EMAIL <<END_MAIL
+SplitThreader is ready on: ${OUTPUT_PREFIX##*/}
+Results are available at: $URL_PREFIX/$LINK
+END_MAIL
+
+            fi
+
+        else
+            echo "Error: Copy number segmentation failed"
+            echo "fail" >> $LOG_FILE
+        fi
     else
-        echo "Error: copynumber.csv missing" >> $LOG_FILE
+        echo "Error: No standardized copy number file created" >> $LOG_FILE
         echo "fail" >> $LOG_FILE
     fi
 else
-    echo "Error: variants.csv missing" >> $LOG_FILE
+    echo "Error: No standardized variant file created" >> $LOG_FILE
     echo "fail" >> $LOG_FILE
 fi
+
+
+
+
+# echo "3. Running SplitThreader Evolution" >> $LOG_FILE
+# ./bin/SplitThreader.py Evolution --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --out $OUTPUT_PREFIX
+# if [ $ANNOTATION = "none" ];
+# then
+#     echo "No annotation chosen";
+# else
+#     echo "4. Running SplitThreader Gene Fusion" >> $LOG_FILE
+#     ./bin/SplitThreader.py Fusions --variants $OUTPUT_PREFIX.variants.csv --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.segmented.csv --annotation $ANNOTATION --list $GENE_FUSION_LIST --out $OUTPUT_PREFIX
+# fi
+
 
 

@@ -56,7 +56,7 @@ var panel_width;
 
 var panel_canvas;
 
-
+var DEBUG_MODE = false;
 
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
 
@@ -160,8 +160,8 @@ var chromosome_position_scale = d3.scale.ordinal()
 var genome_data = [];
 var coverage = null;
 
-var top_chrom_coverage_data = null;
-var bottom_chrom_coverage_data = null;
+var coverage_by_chromosome = {};
+
 
 var connection_data = null;
 var boxes_data = [];
@@ -222,6 +222,10 @@ var dragging_chromosome = null; // Which chromosome are you dragging from the ci
 var hover_plot = null; // Which plot (top or bottom) are you about to drop the chromosome onto?
 
 var coverage_done = false;
+
+var top_coverage_loaded = false;
+var bottom_coverage_loaded = false;
+
 var spansplit_done = false;
 var boxes_done = false;
 var annotation_done = false;
@@ -307,10 +311,14 @@ var run = function(){
 
   read_config_file();
   read_genome_file();
-  read_coverage_file();
-  read_spansplit_file();
-  read_splitthreader_boxes_file();
 
+  // read_coverage_file();
+  
+
+  read_spansplit_file();
+  if (DEBUG_MODE == true) {
+    read_splitthreader_boxes_file(".SplitThreader.evolution.csv");
+  }
   
   // read_fusion_report_file();
   // show_oncogene_dropdown();
@@ -329,7 +337,7 @@ var draw_everything = function() {
 
 function wait_then_run_when_all_data_loaded() {
   console.log("checking")
-  if (coverage_done & spansplit_done) {
+  if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
     console.log("ready")
     draw_everything();
     message_to_user("Loading data is complete")
@@ -348,12 +356,13 @@ var max_zoom = 50; //Max number of pixels a genomic bin can be zoomed to (used t
 var config = {};
 config["min_variant_size"] = 0;
 config["min_split_reads"] = 0;
-config["annotation"] = "";
+config["annotation"] = "none";
 
 
 var read_config_file = function() {
   d3.csv(config_path, function(error,config_input) {
     if (error) throw error;
+    console.log("CONFIG FILE:");
     for (var i=0;i<config_input.length;i++){
       console.log(config_input[i]);
       if (isNaN(config_input[i].val)) {
@@ -389,11 +398,27 @@ var read_genome_file = function() {
 
     draw_circos();
 
-    });
+    if (genome_data.length == 0) {
+      message_to_user("No genome file");
+    }
+    else {
+      top_zoom_chromosome = genome_data[0].chromosome;
+      load_coverage(genome_data[0].chromosome,top_or_bottom="top")
+      if (genome_data.length > 1) {
+        bottom_zoom_chromosome = genome_data[1].chromosome;
+        load_coverage(genome_data[1].chromosome,top_or_bottom="bottom")
+      } else {
+        bottom_zoom_chromosome = genome_data[0].chromosome;
+        load_coverage(genome_data[0].chromosome,top_or_bottom="bottom")
+      }
+    }
+    
+  });
 }
 
-var read_splitthreader_boxes_file = function() {
-  d3.csv(directory + nickname + ".SplitThreader.evolution.csv?id=" + Math.random(), function(error,boxes_input) {
+var read_splitthreader_boxes_file = function(file_to_use) {
+  boxes_done = false;
+  d3.csv(directory + nickname + file_to_use + "?id=" + Math.random(), function(error,boxes_input) {
     if (error) throw error;
     
     for (var i=0; i<boxes_input.length; i++){
@@ -412,30 +437,53 @@ var read_splitthreader_boxes_file = function() {
 }
 
 
-/////////////////   Load coverage  ////////////////////////////////
-var read_coverage_file = function() {
-    d3.csv(directory + nickname + ".copynumber.csv?id=" + Math.random(), function(error,coverage_input) {
+///////////////////   Load coverage  ////////////////////////////////
 
+var load_coverage = function(chromosome,top_or_bottom) {
+
+  console.log("loading chromosome coverage from file");
+  d3.csv(directory + nickname + ".copynumber.segmented." + chromosome + ".csv?id=" + Math.random(), function(error,coverage_input) {
       if (error) throw error;
 
+      coverage_by_chromosome[chromosome] = [];
       for (var i=0;i<coverage_input.length;i++) {
         // Make columns numerical:
-        coverage_input[i].start = +coverage_input[i].start
-        coverage_input[i].end = +coverage_input[i].end
-        coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage // fix until we have both unsegmented and segmented coverage again
-        // coverage_input[i].unsegmented_coverage = +coverage_input[i].unsegmented_coverage
-        // coverage_input[i].coverage = +coverage_input[i].coverage
-        
+        coverage_by_chromosome[chromosome].push({});
+        coverage_by_chromosome[chromosome][i].start = +coverage_input[i].start
+        coverage_by_chromosome[chromosome][i].end = +coverage_input[i].end
+        coverage_by_chromosome[chromosome][i].unsegmented_coverage = +coverage_input[i].coverage
+        coverage_by_chromosome[chromosome][i].coverage = +coverage_input[i].segmented_coverage
       }
-      coverage = coverage_input; // set global variable for accessing this elsewhere
-      top_zoom_chromosome = "17";//coverage[0].chromosome;
-      bottom_zoom_chromosome = "8"; //coverage[0].chromosome;
+      if (top_or_bottom == "top") {
+        console.log("Coverage for TOP finished loading");
+        top_coverage_loaded = true;
 
-
-      coverage_done = true;
-      
-    });
+      } else {
+        console.log("Coverage for BOTTOM finished loading")
+        bottom_coverage_loaded = true;
+      }
+  });
 }
+
+
+// var read_coverage_file = function() {
+//     d3.csv(directory + nickname + ".copynumber.segmented.csv?id=" + Math.random(), function(error,coverage_input) {
+//       if (error) throw error;
+//       for (var i=0;i<coverage_input.length;i++) {
+//         // Make columns numerical:
+//         coverage_input[i].start = +coverage_input[i].start
+//         coverage_input[i].end = +coverage_input[i].end
+//         // coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage // fix until we have both unsegmented and segmented coverage again
+//         coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage
+//         coverage_input[i].coverage = +coverage_input[i].segmented_coverage
+//       }
+//       coverage = coverage_input; // set global variable for accessing this elsewhere
+//       top_zoom_chromosome = coverage[0].chromosome; // top_zoom_chromosome = "17";//
+//       bottom_zoom_chromosome =coverage[0].chromosome; // bottom_zoom_chromosome = "8"; //
+//       coverage_done = true;
+//     });
+// }
+
 
 var read_spansplit_file = function() {
   d3.csv(directory + nickname + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
@@ -455,13 +503,12 @@ var read_spansplit_file = function() {
     }
     connection_data = spansplit_input;
 
-    
     spansplit_done = true;
   });
 }
 
 var read_annotation_file = function() {
-  if (config["annotation"] != "") {
+  if (config["annotation"] != "none") {
     console.log("Reading annotation");
 
     d3.csv(config["annotation"], function(error,annotation_input) {
@@ -476,6 +523,8 @@ var read_annotation_file = function() {
       }
       annotation_data = annotation_input;
       annotation_done = true;
+      console.log("Finished reading annotation")
+      console.log(annotation_data[0])
     });
   } else {
     console.log("No annotation chosen");
@@ -496,6 +545,7 @@ var read_annotation_file = function() {
 //     show_gene_fusion_dropdown();
 //   });
 // }
+
 
 //////////////  Handle dragging chromosomes from circos onto zoom plots to select chromosomes to show /////////////////
 
@@ -642,29 +692,17 @@ function draw_circos_connections() {
 
 var draw_top_zoom = function() {
 
-      top_chrom_coverage_data = []
-      for (var i=0;i<coverage.length;i++){
-        if (coverage[i].chromosome == top_zoom_chromosome) {
-          top_chrom_coverage_data.push(coverage[i])
-        }
-      }
-
-      if (top_chrom_coverage_data.length == 0) {
-        console.log(top_zoom_chromosome)
-        throw "No coverage for any chromosome with that name"
-      }
-
       top_zoom_container.selectAll("*").remove()
       top_zoom_canvas = top_zoom_container.append("g");
 
-      var zoom_top_position_start = d3.min(top_chrom_coverage_data,function(d){return d.start});
+      var zoom_top_position_start = d3.min(coverage_by_chromosome[top_zoom_chromosome],function(d){return d.start});
 
-      var zoom_top_position_end = d3.max(top_chrom_coverage_data,function(d){return d.start});
+      var zoom_top_position_end = d3.max(coverage_by_chromosome[top_zoom_chromosome],function(d){return d.start});
       
 
   //////////////// Bin data to at most one bin per pixel ////////////////////////////
       
-      var x_bin_size_domain = top_chrom_coverage_data[0].end-top_chrom_coverage_data[0].start;
+      var x_bin_size_domain = coverage_by_chromosome[top_zoom_chromosome][0].end-coverage_by_chromosome[top_zoom_chromosome][0].start;
 
       var genomic_bins_per_pixel = Math.ceil((zoom_top_position_end-zoom_top_position_start)/x_bin_size_domain/both_zoom_canvas_width);
       console.log("genomic_bins_per_pixel:")
@@ -675,12 +713,12 @@ var draw_top_zoom = function() {
 
       var new_coverage = []
       if (segment_copy_number==true) {
-        for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.coverage})})
+        for (var i=0;i<coverage_by_chromosome[top_zoom_chromosome].length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
+          new_coverage.push({"start":coverage_by_chromosome[top_zoom_chromosome][i].start,"end":coverage_by_chromosome[top_zoom_chromosome][i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(coverage_by_chromosome[top_zoom_chromosome].slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.coverage})})
         }
       } else {
-        for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.unsegmented_coverage})})
+        for (var i=0;i<coverage_by_chromosome[top_zoom_chromosome].length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
+          new_coverage.push({"start":coverage_by_chromosome[top_zoom_chromosome][i].start,"end":coverage_by_chromosome[top_zoom_chromosome][i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(coverage_by_chromosome[top_zoom_chromosome].slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.unsegmented_coverage})})
         }
       }
       
@@ -766,31 +804,18 @@ var draw_top_zoom = function() {
 
 var draw_bottom_zoom = function() {
 
-      bottom_chrom_coverage_data = []
-      for (var i=0;i<coverage.length;i++){
-        if (coverage[i].chromosome == bottom_zoom_chromosome) {
-          bottom_chrom_coverage_data.push(coverage[i])
-        }
-      }
-
-      if (bottom_chrom_coverage_data.length == 0) {
-        console.log(bottom_zoom_chromosome)
-        throw "No coverage for any chromosome with that name"
-      }
-
-
       bottom_zoom_container.selectAll("*").remove()
       bottom_zoom_canvas = bottom_zoom_container.append("g");
 
 
-      var zoom_bottom_position_start = d3.min(bottom_chrom_coverage_data,function(d){return d.start});
+      var zoom_bottom_position_start = d3.min(coverage_by_chromosome[bottom_zoom_chromosome],function(d){return d.start});
 
-      var zoom_bottom_position_end = d3.max(bottom_chrom_coverage_data,function(d){return d.start});
+      var zoom_bottom_position_end = d3.max(coverage_by_chromosome[bottom_zoom_chromosome],function(d){return d.start});
       
 
   //////////////// Bin data to at most one bin per pixel ////////////////////////////
       
-      var x_bin_size_domain = bottom_chrom_coverage_data[0].end-bottom_chrom_coverage_data[0].start;
+      var x_bin_size_domain = coverage_by_chromosome[bottom_zoom_chromosome][0].end-coverage_by_chromosome[bottom_zoom_chromosome][0].start;
 
       var genomic_bins_per_pixel = Math.ceil((zoom_bottom_position_end-zoom_bottom_position_start)/x_bin_size_domain/both_zoom_canvas_width);
 
@@ -800,12 +825,12 @@ var draw_bottom_zoom = function() {
 
       var new_coverage = []
       if (segment_copy_number==true) {
-        for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_zoom_bottom_bin;i=i+genomic_bins_per_zoom_bottom_bin) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_zoom_bottom_bin].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_zoom_bottom_bin),function(d){return d.coverage})})
+        for (var i=0;i<coverage_by_chromosome[bottom_zoom_chromosome].length-genomic_bins_per_zoom_bottom_bin;i=i+genomic_bins_per_zoom_bottom_bin) {
+          new_coverage.push({"start":coverage_by_chromosome[bottom_zoom_chromosome][i].start,"end":coverage_by_chromosome[bottom_zoom_chromosome][i+genomic_bins_per_zoom_bottom_bin].end,"coverage":d3.mean(coverage_by_chromosome[bottom_zoom_chromosome].slice(i,i+genomic_bins_per_zoom_bottom_bin),function(d){return d.coverage})})
         }
       } else {
-        for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_zoom_bottom_bin;i=i+genomic_bins_per_zoom_bottom_bin) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_zoom_bottom_bin].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_zoom_bottom_bin),function(d){return d.unsegmented_coverage})})
+        for (var i=0;i<coverage_by_chromosome[bottom_zoom_chromosome].length-genomic_bins_per_zoom_bottom_bin;i=i+genomic_bins_per_zoom_bottom_bin) {
+          new_coverage.push({"start":coverage_by_chromosome[bottom_zoom_chromosome][i].start,"end":coverage_by_chromosome[bottom_zoom_chromosome][i+genomic_bins_per_zoom_bottom_bin].end,"coverage":d3.mean(coverage_by_chromosome[bottom_zoom_chromosome].slice(i,i+genomic_bins_per_zoom_bottom_bin),function(d){return d.unsegmented_coverage})})
         }
       }
       
@@ -851,7 +876,6 @@ var draw_bottom_zoom = function() {
       ////// Draw canvas for bottom zoom plot /////////////////
       bottom_update_coverage(genomic_bins_per_zoom_bottom_bin)
 
-
       var zoom_scale_factor = 1;
       var zoom = d3.behavior.zoom()
         .x(bottom_zoom_x_scale)
@@ -859,17 +883,18 @@ var draw_bottom_zoom = function() {
         .scaleExtent([1,genomic_bins_per_pixel*max_zoom])
         .on("zoom",
             function() {
+                console.log("zoom")
                 bottom_zoom_x_axis_label.call(bottom_zoom_x_axis)
                 zoom_scale_factor = d3.event.scale;
                 // When replotting it uses the scales, which have just been automatically updated already, so there is no need to translate/scale the plot too
                 bottom_bins_per_bar = Math.ceil(genomic_bins_per_zoom_bottom_bin/zoom_scale_factor);
-                bottom_update_coverage(bottom_bins_per_bar)
+                bottom_update_coverage(bottom_bins_per_bar);
             }
         )
 
       bottom_zoom_canvas.call(zoom);
-
 }
+
 
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
 
@@ -881,12 +906,12 @@ var top_update_coverage = function(genomic_bins_per_bar) {
 
       var new_coverage = []
       if (segment_copy_number==true) {
-        for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
+        for (var i=0;i<coverage_by_chromosome[top_zoom_chromosome].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
+          new_coverage.push({"start":coverage_by_chromosome[top_zoom_chromosome][i].start,"end":coverage_by_chromosome[top_zoom_chromosome][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(coverage_by_chromosome[top_zoom_chromosome].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
         }
       } else {
-        for (var i=0;i<top_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":top_chrom_coverage_data[i].start,"end":top_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(top_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
+        for (var i=0;i<coverage_by_chromosome[top_zoom_chromosome].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
+          new_coverage.push({"start":coverage_by_chromosome[top_zoom_chromosome][i].start,"end":coverage_by_chromosome[top_zoom_chromosome][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(coverage_by_chromosome[top_zoom_chromosome].slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
         }
       }
 
@@ -908,8 +933,6 @@ var top_update_coverage = function(genomic_bins_per_bar) {
         .style("stroke",function(d){return color(top_zoom_chromosome)})
 
 
-
-
       draw_connections();
       draw_splitthreader_boxes_top();
       draw_genes_top();
@@ -920,15 +943,15 @@ var top_update_coverage = function(genomic_bins_per_bar) {
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
 
 var bottom_update_coverage = function(genomic_bins_per_bar) {
-      // console.log("updating coverage")
+
       var new_coverage = []
       if (segment_copy_number==true) {
-        for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
+        for (var i=0;i<coverage_by_chromosome[bottom_zoom_chromosome].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
+          new_coverage.push({"start":coverage_by_chromosome[bottom_zoom_chromosome][i].start,"end":coverage_by_chromosome[bottom_zoom_chromosome][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(coverage_by_chromosome[bottom_zoom_chromosome].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})})
         }
       } else {
-        for (var i=0;i<bottom_chrom_coverage_data.length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-          new_coverage.push({"start":bottom_chrom_coverage_data[i].start,"end":bottom_chrom_coverage_data[i+genomic_bins_per_bar-1].end,"coverage":d3.mean(bottom_chrom_coverage_data.slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
+        for (var i=0;i<coverage_by_chromosome[bottom_zoom_chromosome].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
+          new_coverage.push({"start":coverage_by_chromosome[bottom_zoom_chromosome][i].start,"end":coverage_by_chromosome[bottom_zoom_chromosome][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(coverage_by_chromosome[bottom_zoom_chromosome].slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})})
         }
       }
 
@@ -1691,15 +1714,46 @@ var draw_genes_bottom = function() {
 
 }
 
-
 var select_chrom_for_zoom_top = function(d) {
   top_zoom_chromosome = d;
-  draw_top_zoom();
+  if (coverage_by_chromosome[d] == undefined) {
+    console.log("Loading " + d + " from file");
+    top_coverage_loaded = false;
+    load_coverage(d,"top");
+    wait_then_draw_top();
+  } else {
+    console.log(d+" already loaded");
+    draw_top_zoom();
+  }
+}
+
+function wait_then_draw_top() {
+  if (top_coverage_loaded) {
+    draw_top_zoom();
+  } else {
+    window.setTimeout(wait_then_draw_top,300)  
+  }
 }
 
 var select_chrom_for_zoom_bottom = function(d) {
   bottom_zoom_chromosome = d;
-  draw_bottom_zoom();
+  if (coverage_by_chromosome[d] == undefined) {
+    console.log("Loading " + d + " from file");
+    bottom_coverage_loaded = false;
+    load_coverage(d,"bottom");
+    wait_then_draw_bottom();
+  } else {
+    console.log(d+" already loaded");
+    draw_bottom_zoom();
+  }
+}
+
+function wait_then_draw_bottom() {
+  if (bottom_coverage_loaded) {
+    draw_bottom_zoom();
+  } else {
+    window.setTimeout(wait_then_draw_bottom,300)  
+  }
 }
 
 var update_genes = function() {
@@ -1790,7 +1844,6 @@ var highlight_gene_fusion = function(d) {
   draw_connections();
 
   // gene_fusion_to_highlight = d;
-
 }
 
 var get_annotation_by_gene_name = function(gene) {
@@ -1798,6 +1851,8 @@ var get_annotation_by_gene_name = function(gene) {
   if (annotation_index != -1){
     return annotation_data[annotation_index]
   } else {
+    // message_to_user("Gene is not in annotation");
+    alert("Gene is not in annotation");
     return null;
   }
 }
@@ -1833,33 +1888,73 @@ var wait_then_draw_boxes = function() {
 
 //////////    Settings    ////////////////
 
-var toggle_boxes = function() {
-  if (show_boxes) {
-    toggle_boxes_off()
+var toggle_evolution_boxes = function() {
+  if (bool_show_evolution_boxes) {
+    toggle_evolution_boxes_off()
   } else {
-    toggle_boxes_on()
+    toggle_evolution_boxes_on()
   }
 }
 
+var toggle_node_boxes = function() {
+  if (bool_show_node_boxes) {
+    toggle_node_boxes_off()
+  } else {
+    toggle_node_boxes_on()
+  }
+}
+
+
+bool_show_evolution_boxes = true
+bool_show_node_boxes = false
+
+
 var show_evolution_boxes = function() {
-  read_splitthreader_boxes_file();
+  read_splitthreader_boxes_file(".SplitThreader.evolution.csv");
   wait_then_draw_boxes();  
 }
 
-var toggle_boxes_on = function() {
+
+var show_node_boxes = function() {
+  read_splitthreader_boxes_file(".nodes.boxes.csv");
+  wait_then_draw_boxes();
+}
+
+
+var toggle_evolution_boxes_on = function() {
+  toggle_node_boxes_off();
   show_boxes = true;
-  d3.select("#toggle_boxes")
+  bool_show_evolution_boxes = true;
+  d3.select("#toggle_evolution_boxes")
     .text("Hide boxes from SplitThreader Evolution")
-  // highlight_oncogene_with_boxes(region_to_show_boxes_for)
   show_evolution_boxes()
 }
 
-var toggle_boxes_off = function() {
+var toggle_evolution_boxes_off = function() {
   show_boxes = false;
-  d3.select("#toggle_boxes")
+  bool_show_evolution_boxes = false;
+  d3.select("#toggle_evolution_boxes")
     .text("Show boxes from SplitThreader Evolution")
   remove_boxes()
 }
+
+var toggle_node_boxes_on = function() {
+  toggle_evolution_boxes_off();
+  show_boxes = true;
+  bool_show_node_boxes = true;
+  d3.select("#toggle_node_boxes")
+    .text("Hide boxes on SplitThreader nodes")
+  show_node_boxes()
+}
+
+var toggle_node_boxes_off = function() {
+  show_boxes = false;
+  bool_show_node_boxes = false
+  d3.select("#toggle_node_boxes")
+    .text("Show boxes on SplitThreader nodes")
+  remove_boxes()
+}
+
 
 var remove_boxes = function() {
   top_zoom_canvas.selectAll("rect.splitthreader_box").remove()
@@ -1995,7 +2090,69 @@ function user_set_min_split_reads() {
 
   draw_connections();
   draw_circos_connections();
+}
 
+function user_add_gene() {
+  console.log("user_add_gene")
+  var new_gene = prompt("Label gene: ","ERBB2")
+  
+  
+
+  annotation_for_new_gene = get_annotation_by_gene_name(new_gene)
+  console.log("annotation_for_new_gene")
+  console.log(annotation_for_new_gene)
+
+  if (annotation_for_new_gene != null) {
+    genes_to_show = genes_to_show + new_gene;
+      
+    relevant_annotation.push(annotation_for_new_gene)
+    console.log(annotation_for_new_gene.chromosome)
+
+    shown_already = false
+    top_chromosome_readjust = false
+    bottom_chromosome_readjust = false
+
+    // Is the gene already in view at the top?
+    if (top_zoom_chromosome == annotation_for_new_gene.chromosome) {
+      var coordinate = top_zoom_x_scale(get_annotation_by_gene_name(new_gene).start);
+      if (coordinate > 0 && coordinate < both_zoom_canvas_width) {
+        shown_already = true;
+      } else {
+        // Top chromosome doesn't show the gene, but is on the right chromosome
+        top_chromosome_readjust = true;
+      }
+    }
+    // Is the gene already in view at the bottom?
+    if (shown_already == false) {
+      if (bottom_zoom_chromosome == annotation_for_new_gene.chromosome) {
+        var coordinate = bottom_zoom_x_scale(get_annotation_by_gene_name(new_gene).start);
+        if (coordinate > 0 && coordinate < both_zoom_canvas_width) {
+          shown_already = true;
+        } else {
+          // Bottom chromosome doesn't show the gene, but is on the right chromosome
+          bottom_chromosome_readjust = true;
+        }
+      }
+    }
+    if (shown_already == false) {
+      if (top_chromosome_readjust) {
+        select_chrom_for_zoom_top(annotation_for_new_gene.chromosome);
+      } else if (bottom_chromosome_readjust) {
+        select_chrom_for_zoom_bottom(annotation_for_new_gene.chromosome);
+      } else {
+        select_chrom_for_zoom_top(annotation_for_new_gene.chromosome);
+      }
+    }
+
+    update_genes();
+  }
+}
+
+function user_clear_genes() {
+  console.log("user_clear_genes")
+  change_genes_shown([])
+
+  update_genes();
 }
 
 //////////    Populate navbar with visualizer settings    ////////////////
@@ -2021,52 +2178,72 @@ function populate_navbar() {
       .attr("id", "settings_dropdown_menu")
       .attr("role","menu")
 
-  settings.append("li").append("a")
-    .attr("href",void(0))
-    .attr("id","toggle_boxes")
-    .on("click",toggle_boxes)
-    .text("Hide boxes from SplitThreader Evolution")
 
 
-  settings.append("li").append("a")
-    .attr("href",void(0))
-    .attr("id","user_set_min_variant_size")
-    .on("click",user_set_min_variant_size)
-    .text("Minimum variant size = " + config["min_variant_size"])
-
+///////////    Show/Hide features    /////////////
+  
+  settings.append("li").attr("class","dropdown-header")
+    .text("Features")
 
   settings.append("li").append("a")
     .attr("href",void(0))
-    .attr("id","user_set_min_split_reads")
-    .on("click",user_set_min_split_reads)
-    .text("Minimum split reads = " + config["min_split_reads"])
+    .attr("id","toggle_segment_copy_number")
+    .on("click",toggle_segment_copy_number)
+    .text("Show segmented read coverage")
 
+  if (DEBUG_MODE == true) {
+    settings.append("li").append("a")
+      .attr("href",void(0))
+      .attr("id","toggle_evolution_boxes")
+      .on("click",toggle_evolution_boxes)
+      .text("Hide boxes from SplitThreader Evolution")
 
+    settings.append("li").append("a")
+      .attr("href",void(0))
+      .attr("id","toggle_node_boxes")
+      .on("click",toggle_node_boxes)
+      .text("Show boxes on SplitThreader nodes")
+  }
 
+//////////    Variant filters    //////////
 
-// config["min_split_reads"]
+  // settings.append("li").attr("class","dropdown-header")
+  //   .text("Filters")
 
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","user_set_min_variant_size")
+  //   .on("click",user_set_min_variant_size)
+  //   .text("Minimum variant size = " + config["min_variant_size"])
 
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","user_set_min_split_reads")
+  //   .on("click",user_set_min_split_reads)
+  //   .text("Minimum split reads = " + config["min_split_reads"])
 
+///////////    Genes    /////////////
 
+  settings.append("li").attr("class","dropdown-header")
+    .text("Genes")
+
+  settings.append("li").append("a")
+    .attr("href",void(0))
+    .attr("id","user_add_gene")
+    .on("click",user_add_gene)
+    .text("Add gene")
+
+  settings.append("li").append("a")
+    .attr("href",void(0))
+    .attr("id","user_clear_genes")
+    .on("click",user_clear_genes)
+    .text("Clear genes")
 
   // settings.append("li").append("a")
   //   .attr("href",void(0))
   //   .attr("id","toggle_spansplit_lines")
   //   .on("click",toggle_spansplit_lines)
   //   .text("Show span/split count lines")
-
-  // settings.append("li").append("a")
-  //   .attr("href",void(0))
-  //   .attr("id","toggle_segment_copy_number")
-  //   .on("click",toggle_segment_copy_number)
-  //   .text("Show segmented read coverage")
-
-
-  // Add also variant numreads and min_size filters (maybe a dialog box that user can type a number into)
-
-
-
 
 
   // settings.html('<li><a href="javascript:void(0)" onclick="toggle_boxes()" id="toggle_boxes">Hide boxes from SplitThreader Evolution</a></li>

@@ -46,13 +46,20 @@
                                   <div class="frame"> 
                                       <!--    SUBMIT BUTTON with hidden field to transport code to next page   -->
                                       <form name="input_code_form" action="input_validation.php"  method="post">
+                                            <!-- DESCRIPTION -->
                                             <p>
                                               <div class="input-group input-group-lg">
                                                 <span class="input-group-addon">Description</span>
-                                                 <input type="text" name="nickname" class="form-control" value = "description of dataset, cell line, data type, etc. ">
+                                                 <input type="text" name="nickname" class="form-control" placeholder = "description of dataset, cell line, data type, etc.">
                                               </div>
                                             </p>
-
+                                            <!-- EMAIL -->
+                                            <p>
+                                              <div class="input-group input-group-lg">
+                                                <span class="input-group-addon">Email</span>
+                                                <input type="email" name="email" class="form-control" placeholder="email@gmail.com">
+                                              </div>
+                                            </p>
                                             <!-- BUTTON FOR OPTIONAL PARAMETERS -->
                                             <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample">
                                                 <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters
@@ -77,7 +84,7 @@
                                                                       <th colspan="2">Annotation</th></tr>
                                                                   <tr>
                                                                     <td colspan="2">                                                                      
-                                                                          <div class="radio"><label><input type="radio" checked name="annotation" value=""> None </label></div>
+                                                                          <div class="radio"><label><input type="radio" checked name="annotation" value="none"> None </label></div>
                                                                           <?php $filenames = glob("resources/annotation/*.genes.csv"); foreach ($filenames as $value) {$output=str_replace("resources/annotation/","",$value); $output=str_replace(".genes.csv","",$output); echo '<div class="radio"><label><input type="radio" name="annotation" value="' . $value .'"> ' . $output. ' (Gencode) </label></div>';}; ?>
                                                                     </td>
                                                                   </tr>

@@ -30,10 +30,10 @@ function showProgress() {
                 document.getElementById("nickname_header").innerHTML = nickname.replace(/_/g," ");
 
                 output_array = prog.slice(1,prog.length);
-                output_info = ""
+                output_info = "Starting..."
                 for (var i=0;i < output_array.length; i++) {
-                    sub_array = output_array[i].split(",");
-                    output_info += "<p>" + sub_array.slice(2,sub_array.length) + "</p>";
+                    // sub_array = output_array[i].split(",");
+                    output_info += "<p>" + output_array[i] + "</p>";
                 }
 
                 document.getElementById("plot_info").innerHTML = output_info
