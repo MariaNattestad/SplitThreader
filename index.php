@@ -142,8 +142,6 @@
    
 <script type="text/javascript">
 
-console.log("in bottom javascript");
-
 Dropzone.options.CopyNumberDropzone = {
   accept: function(file, done) {
     console.log("uploaded");

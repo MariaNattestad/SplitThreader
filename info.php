@@ -32,7 +32,7 @@
           <p>Science and web application by <a href="http://marianattestad.com" target="_blank">Maria Nattestad</a></p>
           <p>Principal investigator / The Boss: <a href="http://schatzlab.cshl.edu" target="_blank">Mike Schatz</a></p>
           <br>
-          <p>For questions, email: <a href="mailto:mnattest@cshl.edu?Subject=Question%20About%20Assemblytics" target="_top">mnattest@cshl.edu</a></p>
+          <p>For questions, email: <a href="mailto:mnattest@cshl.edu?Subject=Question%20About%20SplitThreader" target="_top">mnattest@cshl.edu</a></p>
     </div>
 </div>
 

@@ -1,4 +1,5 @@
 #!/bin/bash
+
 USAGE="web_pipeline variants copynumber output_prefix annotation email url"
 if [ -z "$1" ]
   then
@@ -42,6 +43,9 @@ LINK=${6?"$USAGE"}
 
 # GENE_FUSION_LIST=${7?"$USAGE"} ####### Add optional file upload for gene fusion list (gene1\tgene2\tnum_IsoSeq_reads_of_support)
 
+source python_env/bin/activate
+
+
 URL_PREFIX="qb.cshl.edu/splitthreader"
 
 
@@ -68,7 +72,7 @@ then
     if [ -e $OUTPUT_PREFIX.copynumber.csv ];
     then
         echo "2. Segmenting copy number" >> $LOG_FILE
-        ./bin/Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
+        Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
         if [ -e $OUTPUT_PREFIX.copynumber.segmented.csv ];
         then
             echo "done" >> $LOG_FILE
