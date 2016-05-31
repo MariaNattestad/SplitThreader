@@ -33,6 +33,7 @@ echo $3
 echo $4
 echo $5
 echo $6
+echo $7
 
 VARIANTS=${1?"$USAGE"}
 COPYNUMBER=${2?"$USAGE"}
@@ -40,6 +41,7 @@ OUTPUT_PREFIX=${3?"$USAGE"}
 ANNOTATION=${4?"$USAGE"}
 EMAIL=${5?"$USAGE"}
 LINK=${6?"$USAGE"}
+# GENE_FUSION_LIST=${7?"USAGE"}
 
 # GENE_FUSION_LIST=${7?"$USAGE"} ####### Add optional file upload for gene fusion list (gene1\tgene2\tnum_IsoSeq_reads_of_support)
 
@@ -75,18 +77,27 @@ then
         Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
         if [ -e $OUTPUT_PREFIX.copynumber.segmented.csv ];
         then
+            # if [ -e $GENE_FUSION_LIST ];
+            # then
+            #     echo "Gene fusion list uploaded: running SplitThreader Fusions";
+            #     SplitThreader.py Fusions --variants $VARIANTS --genome $OUTPUT_PREFIX.genome.csv --annotation $ANNOTATION --list $GENE_FUSION_LIST --out $OUTPUT_PREFIX
+            # fi
+            
+            SplitThreader.py Evolution --variants $VARIANTS --genome $OUTPUT_PREFIX.genome.csv --coverage $OUTPUT_PREFIX.copynumber.csv --out $OUTPUT_PREFIX
+            
             echo "done" >> $LOG_FILE
-            if [ "$EMAIL" = "none" ]; 
-            then 
-                echo "No email"; 
-            else 
-                echo "SENDING EMAIL";
-                mail -s "SplitThreader finished on ${OUTPUT_PREFIX##*/}" $EMAIL <<END_MAIL
-SplitThreader is ready on: ${OUTPUT_PREFIX##*/}
-Results are available at: $URL_PREFIX/$LINK
-END_MAIL
 
-            fi
+#             if [ "$EMAIL" = "none" ];
+#             then 
+#                 echo "No email"; 
+#             else 
+#                 echo "SENDING EMAIL";
+#                 mail -s "SplitThreader finished on ${OUTPUT_PREFIX##*/}" $EMAIL <<END_MAIL
+# SplitThreader is ready on: ${OUTPUT_PREFIX##*/}
+# Results are available at: $URL_PREFIX/$LINK
+# END_MAIL
+
+#             fi
 
         else
             echo "Error: Copy number segmentation failed"

@@ -56,7 +56,9 @@ var panel_width;
 
 var panel_canvas;
 
-var DEBUG_MODE = false;
+var DEBUG_MODE = true;
+
+var gene_fusion_dropdown;
 
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
 
@@ -136,6 +138,8 @@ responsive_sizing();
 
 var chromosomes = []; //["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"];
 var chromosome_colors = ["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"];
+// var chromosome_colors = ['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']
+
 
 // Custom color scale to match karyotype
 var color = d3.scale.ordinal()
@@ -320,7 +324,7 @@ var run = function(){
     read_splitthreader_boxes_file(".SplitThreader.evolution.csv");
   }
   
-  // read_fusion_report_file();
+  read_fusion_report_file();
   // show_oncogene_dropdown();
   message_to_user("Loading data");
   wait_then_run_when_all_data_loaded();
@@ -532,19 +536,21 @@ var read_annotation_file = function() {
 }
 
 
-// var read_fusion_report_file = function() {
-//   d3.csv(directory+"SplitThreader.fusion_report.csv", function(error,fusions_input) {
+var read_fusion_report_file = function() {
+  d3.csv(directory + nickname +".fusion_report.csv", function(error,fusions_input) {
 
-//     if (error) throw error;
+    if (error) throw error;
 
-//     for (var i=0;i<fusions_input.length;i++) {
-//       fusions_input[i].variant_count = +fusions_input[i].variant_count
-//      ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
-//     }
-//     gene_fusion_data = fusions_input;
-//     show_gene_fusion_dropdown();
-//   });
-// }
+    for (var i=0;i<fusions_input.length;i++) {
+      fusions_input[i].variant_count = +fusions_input[i].variant_count
+      ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
+    }
+    gene_fusion_data = fusions_input;
+    console.log("gene_fusion_data:");
+    console.log(gene_fusion_data);
+    show_gene_fusion_dropdown();
+  });
+}
 
 
 //////////////  Handle dragging chromosomes from circos onto zoom plots to select chromosomes to show /////////////////
@@ -1551,7 +1557,6 @@ var draw_connections = function() {
 
 
     } // end if plot spansplit counts
-    
 }
 
 
@@ -1620,15 +1625,15 @@ var arrow_path_generator = function(d, top_or_bottom) {
     var arrow_head = d.start;
     var arrow_butt = d.end;
     if (d.strand == "+") {
-      console.log(d.gene)
-      console.log("forward")
+      // console.log(d.gene)
+      // console.log("forward")
       arrow_head = d.end
       arrow_butt = d.start
       arrowhead_size = -1 * arrowhead_size;
     } else if (d.strand == "-"){
 
-      console.log(d.gene)
-      console.log("reverse")
+      // console.log(d.gene)
+      // console.log("reverse")
     }
 
 
@@ -1771,20 +1776,18 @@ var change_genes_shown = function(gene_list) {
       relevant_annotation.push(d)
     }     
   });
-
 }
 
 var show_gene_fusion_dropdown = function() {
-    var gene_fusion_dropdown = d3.select("#gene_fusion_dropdown_menu").html("");
 
-    gene_fusion_dropdown
-      .selectAll("li")
-      .data(gene_fusion_data)
-      .enter()
-      .append("li")
-      .append("a")
-        .text(function(d){return (d.gene1 + " - " + d.gene2)})
-        .on("click",highlight_gene_fusion)
+  gene_fusion_dropdown
+    .selectAll("li")
+    .data(gene_fusion_data)
+    .enter()
+    .append("li")
+    .append("a")
+      .text(function(d){return (d.gene1 + "(" + d.strand1 + ") - " + d.gene2 + "(" + d.strand2 + ")" + " [" + d.variant_count + "-hop, "  + d.RNA_split_read_count + " RNA reads] ")})
+      .on("click",highlight_gene_fusion)
 
 }
 
@@ -2160,6 +2163,27 @@ function user_clear_genes() {
 function populate_navbar() {
 
   // Separating bar
+  d3.select("#navbar").append("li").attr("class","dropdown").append("a")
+        .html("|")
+        // .attr("class","dropdown-toggle")
+        // .attr("data-toggle","dropdown")
+        // .attr("href","")
+
+
+  gene_fusion_dropdown = d3.select("#navbar").append("li").attr("class","dropdown");
+
+  gene_fusion_dropdown
+      .append("a")
+        .html("Fusions <span class='caret'></span>")
+        .attr("class","dropdown-toggle")
+        .attr("data-toggle","dropdown")
+        .attr("href","")
+
+  gene_fusion_dropdown = gene_fusion_dropdown.append("ul")
+      .attr("class","dropdown-menu")
+      .attr("id", "settings_dropdown_menu")
+      .attr("role","menu")
+
   
   // Settings
   settings_link = d3.select("#navbar")
@@ -2249,8 +2273,6 @@ function populate_navbar() {
   // settings.html('<li><a href="javascript:void(0)" onclick="toggle_boxes()" id="toggle_boxes">Hide boxes from SplitThreader Evolution</a></li>
   //             <li><a href="javascript:void(0)" onclick="toggle_spansplit_lines()" id="toggle_spansplit_lines">Show span/split count lines</a></li>
   //             <li><a href="javascript:void(0)" onclick="toggle_segment_copy_number()" id="toggle_segment_copy_number">Show segmented read coverage</a></li></ul>')
-
-
 
 }
 

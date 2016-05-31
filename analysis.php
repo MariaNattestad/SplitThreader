@@ -8,7 +8,7 @@
 
     <link href="css/custom_styles.css" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="http://cdnjs.cloudflare.com/ajax/libs/fancybox/1.3.4/jquery.fancybox-1.3.4.css" />
+    <!-- <link rel="stylesheet" type="text/css" media="screen" href="http://cdnjs.cloudflare.com/ajax/libs/fancybox/1.3.4/jquery.fancybox-1.3.4.css" /> -->
 
 
 
@@ -82,11 +82,11 @@
 <script src="js/bootstrap.min.js"></script>
 
 
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<!-- <script type="text/javascript" src="https://www.google.com/jsapi"></script> -->
 <script type='text/javascript' src="js/analysis_page_script.js?rndstr="<?php rand(100000,999999) ?> ></script>
 
-<script type="text/javascript" src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/fancybox/1.3.4/jquery.fancybox-1.3.4.pack.min.js"></script>
+<!-- <script type="text/javascript" src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script> -->
+<!-- <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/fancybox/1.3.4/jquery.fancybox-1.3.4.pack.min.js"></script> -->
 
 </body>
 </html>

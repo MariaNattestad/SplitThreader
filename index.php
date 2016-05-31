@@ -54,12 +54,12 @@
                                               </div>
                                             </p>
                                             <!-- EMAIL -->
-                                            <p>
+                                            <!-- <p>
                                               <div class="input-group input-group-lg">
                                                 <span class="input-group-addon">Email</span>
                                                 <input type="email" name="email" class="form-control" placeholder="email@gmail.com">
                                               </div>
-                                            </p>
+                                            </p> -->
                                             <!-- BUTTON FOR OPTIONAL PARAMETERS -->
                                             <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample">
                                                 <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters
@@ -108,8 +108,8 @@
                       <div class="panel-body">
                         <p>Upload variant calls and a copy number profile</p>
                         <ol>
-                          <li>Run Sniffles (for PacBio data) or Lumpy (for Illumina data, select output as bedpe format) and upload the .bedpe file</li>
-                          <li>Run this script [to be created] on your bam file to convert to binned copy numbers, and upload the resulting .csv file</li>
+                          <li>Run <a href="https://github.com/fritzsedlazeck/Sniffles">Sniffles</a> (for PacBio data) or <a href="https://github.com/arq5x/lumpy-sv">Lumpy</a> (for Illumina data, select output as bedpe format) and upload the .bedpe file</li>
+                          <li>Run <a href="https://github.com/marianattestad/copycat">Copycat</a> on your bam file to convert to binned copy numbers, and upload the resulting .csv file</li>
                         </ol>
                       </div>
                   </div>
