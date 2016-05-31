@@ -3,6 +3,6 @@ user_uploads/*
 !user_data/.htaccess
 !user_uploads/.htaccess
 
-!user_data/example*
+
 resources/annotation/*.gtf
 
