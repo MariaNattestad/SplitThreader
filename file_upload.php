@@ -1,7 +1,7 @@
 <?php
     
     
-    $code = escapeshellarg($_POST["code_hidden"]);
+    $code = escapeshellcmd($_POST["code_hidden"]);
     $file_type = $_POST["file_type"];
     $name = "./user_uploads/" . $code . "." . $file_type;
     

@@ -60,9 +60,9 @@ var DEBUG_MODE = true;
 
 var gene_fusion_dropdown;
 
+
+
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
-
-
 
 function responsive_sizing() {
 
