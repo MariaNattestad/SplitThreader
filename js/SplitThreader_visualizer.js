@@ -56,7 +56,7 @@ var panel_width;
 
 var panel_canvas;
 
-var DEBUG_MODE = true;
+var DEBUG_MODE = false;
 
 var gene_fusion_dropdown;
 
@@ -317,17 +317,16 @@ var run = function(){
   read_genome_file();
 
   // read_coverage_file();
-  
 
   read_spansplit_file();
   if (DEBUG_MODE == true) {
     read_splitthreader_boxes_file(".SplitThreader.evolution.csv");
   }
   
-  read_fusion_report_file();
+  // read_fusion_report_file(); //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
   // show_oncogene_dropdown();
   message_to_user("Loading data");
-  wait_then_run_when_all_data_loaded();
+  wait_then_run_when_all_data_loaded(); 
 }
 
 var draw_everything = function() {
@@ -343,7 +342,8 @@ function wait_then_run_when_all_data_loaded() {
   console.log("checking")
   if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
     console.log("ready")
-    draw_everything();
+    draw_everything(); //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
+    build_SplitThreader_graph(connection_data,genome_data);
     message_to_user("Loading data is complete")
   } else {
     console.log("not yet")
@@ -501,7 +501,7 @@ var read_spansplit_file = function() {
       spansplit_input[i].stop2 = +spansplit_input[i].stop2
       spansplit_input[i].pos1 = (spansplit_input[i].start1+spansplit_input[i].stop1)/2
       spansplit_input[i].pos2 = (spansplit_input[i].start2+spansplit_input[i].stop2)/2
-      spansplit_input[i].split = +spansplit_input[i].split;
+      spansplit_input[i].split = +spansplit_input[i].split
       // spansplit_input[i].span1 = +spansplit_input[i].span1
       // spansplit_input[i].span2 = +spansplit_input[i].span2
     }
@@ -2165,24 +2165,24 @@ function populate_navbar() {
   // Separating bar
   d3.select("#navbar").append("li").attr("class","dropdown").append("a")
         .html("|")
-        // .attr("class","dropdown-toggle")
-        // .attr("data-toggle","dropdown")
-        // .attr("href","")
+                          // .attr("class","dropdown-toggle")
+                          // .attr("data-toggle","dropdown")
+                          // .attr("href","")
 
 
-  gene_fusion_dropdown = d3.select("#navbar").append("li").attr("class","dropdown");
+  // gene_fusion_dropdown = d3.select("#navbar").append("li").attr("class","dropdown");
 
-  gene_fusion_dropdown
-      .append("a")
-        .html("Fusions <span class='caret'></span>")
-        .attr("class","dropdown-toggle")
-        .attr("data-toggle","dropdown")
-        .attr("href","")
+  // gene_fusion_dropdown
+  //     .append("a")
+  //       .html("Fusions <span class='caret'></span>")
+  //       .attr("class","dropdown-toggle")
+  //       .attr("data-toggle","dropdown")
+  //       .attr("href","")
 
-  gene_fusion_dropdown = gene_fusion_dropdown.append("ul")
-      .attr("class","dropdown-menu")
-      .attr("id", "settings_dropdown_menu")
-      .attr("role","menu")
+  // gene_fusion_dropdown = gene_fusion_dropdown.append("ul")
+  //     .attr("class","dropdown-menu")
+  //     .attr("id", "settings_dropdown_menu")
+  //     .attr("role","menu")
 
   
   // Settings

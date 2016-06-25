@@ -23,9 +23,6 @@
 
     
     <div id="results">
-            
-
-            
             <div class=" thumbnail plot_frame frame">
 
                 <!--  SHOW VISUALIZER BUTTON  -->
