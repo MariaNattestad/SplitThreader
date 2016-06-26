@@ -13,6 +13,7 @@
 <script src="js/d3.tip.v0.6.3.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
+<script src="js/seqgraph.js"></script>
 <script src="js/SplitThreader.js"></script>
 <script src="js/SplitThreader_visualizer.js"></script>
 

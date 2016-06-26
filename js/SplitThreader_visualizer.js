@@ -342,8 +342,12 @@ function wait_then_run_when_all_data_loaded() {
   console.log("checking")
   if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
     console.log("ready")
-    draw_everything(); //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
-    build_SplitThreader_graph(connection_data,genome_data);
+    draw_everything(); 
+    //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
+    var g = new Graph();
+    g.from_genomic_variants(connection_data,genome_data);
+    //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
+
     message_to_user("Loading data is complete")
   } else {
     console.log("not yet")

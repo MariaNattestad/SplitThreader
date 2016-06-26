@@ -63,7 +63,6 @@ QUnit.test ( "glide test", function( assert ) {
 	}
 });
 
-
 QUnit.test ( "travel test", function( assert ) {
 	
 	var g = new Graph();
@@ -74,7 +73,6 @@ QUnit.test ( "travel test", function( assert ) {
 	assert.ok(g.nodes["A"].end == g.nodes["A"].end.edges[0].port.edges[0].port || g.nodes["A"].end == g.nodes["A"].end.edges[0].port.edges[1].port);
 
 });
-
 
 QUnit.test ( "simple bfs test", function (assert) {
 	var g = new Graph();
@@ -90,8 +88,6 @@ QUnit.test ( "simple bfs test", function (assert) {
 	assert.equal(g.distance_between_2_points(a,b),g.distance_between_2_points(b,a), "reversible");
 
 });
-
-
 
 QUnit.test ( "basic traversal test", function (assert) {
 	var linear = new Graph();
@@ -120,30 +116,26 @@ QUnit.test ( "count connected components test", function (assert) {
 
 });
 
+/////////////////////////    Testing graph creation from genomic coordinates    //////////////////////////////
 
-// QUnit.test ( "tandem repeat detection test", function (assert) {
-// 	var linear = new Graph();
-// 	linear.from_edge_list(fast_graph(test_linear));
-// 	assert.equal(linear.count_tandem_repeats(),0);
+// 2 chromosomes linked by a single variant
+var test_variants_1 = [{"chrom1":"1", "pos1":30000, "strand1":"+", "chrom2":"2", "pos2":8000, "strand2": "-"}]
+var test_genome_1 = [{"chromosome":"1", "size":50000}, {"chromosome":"2","size":10000}];
 
-// 	var tandem_1 = new Graph();
-// 	tandem_1.from_edge_list(fast_graph(test_tr_1));
-// 	assert.equal(tandem_1.count_tandem_repeats(),1);
+QUnit.test ( "graph creation from genomic variants test", function( assert ) {
+	var g = new Graph();
+	g.from_genomic_variants(test_variants_1,test_genome_1);
 
-// 	var tandem_2 = new Graph();
-// 	tandem_2.from_edge_list(fast_graph(test_tr_2));
-// 	assert.equal(tandem_2.count_tandem_repeats(),1);
+	assert.equal(dict_length(g.nodes),4);
+	assert.equal(dict_length(g.edges),3);
 
-// 	var tandem_3 = new Graph();
-// 	tandem_3.from_edge_list(fast_graph(test_tr_3));
-// 	assert.equal(tandem_3.count_tandem_repeats(),2);
-
-// 	var tandem_4 = new Graph();
-// 	tandem_4.from_edge_list(fast_graph(test_tr_4));
-// 	assert.equal(tandem_3.count_tandem_repeats(),2);
-
-
-// });
+	var a = new Point(g.nodes["1|0"],10000);
+	var b = new Point(g.nodes["2|1"],2000);
+	var c = new Point(g.nodes["2|0"],3000);
+	assert.equal(g.distance_between_2_points(a,b),22000, "matches expected value");
+	assert.equal(g.distance_between_2_points(b,c),7000, "matches expected value");
+	assert.equal(g.distance_between_2_points(a,c),-1, "matches no path found");
+});
 
 
 
