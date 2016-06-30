@@ -60,7 +60,7 @@ var DEBUG_MODE = false;
 
 var gene_fusion_dropdown;
 
-
+var SplitThreader_graph = new Graph();
 
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
 
@@ -344,8 +344,7 @@ function wait_then_run_when_all_data_loaded() {
     console.log("ready")
     draw_everything(); 
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
-    var g = new Graph();
-    g.from_genomic_variants(connection_data,genome_data);
+    SplitThreader_graph.from_genomic_variants(connection_data,genome_data);
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
 
     message_to_user("Loading data is complete")
@@ -472,25 +471,6 @@ var load_coverage = function(chromosome,top_or_bottom) {
       }
   });
 }
-
-
-// var read_coverage_file = function() {
-//     d3.csv(directory + nickname + ".copynumber.segmented.csv?id=" + Math.random(), function(error,coverage_input) {
-//       if (error) throw error;
-//       for (var i=0;i<coverage_input.length;i++) {
-//         // Make columns numerical:
-//         coverage_input[i].start = +coverage_input[i].start
-//         coverage_input[i].end = +coverage_input[i].end
-//         // coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage // fix until we have both unsegmented and segmented coverage again
-//         coverage_input[i].unsegmented_coverage = +coverage_input[i].coverage
-//         coverage_input[i].coverage = +coverage_input[i].segmented_coverage
-//       }
-//       coverage = coverage_input; // set global variable for accessing this elsewhere
-//       top_zoom_chromosome = coverage[0].chromosome; // top_zoom_chromosome = "17";//
-//       bottom_zoom_chromosome =coverage[0].chromosome; // bottom_zoom_chromosome = "8"; //
-//       coverage_done = true;
-//     });
-// }
 
 
 var read_spansplit_file = function() {
@@ -659,9 +639,6 @@ var draw_circos = function() {
 ///////////    Add connections to the circos plot   /////////////////////
 function draw_circos_connections() {
   var connection_point_radius = radius - chrom_label_size;
-
-
-
 
   var circos_connection_path_generator = function(d) {
 

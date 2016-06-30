@@ -3,6 +3,7 @@ class Graph {
 		this.nodes = {}; // key: node_name, value: Node
 		this.edges = {}; // key: edge_name, value: Edge
 		this.genomic_node_lookup = {}; // key: (chrom,pos,s/e) value: node_name
+		this.genomic_sorted_positions = {}; // key: chrom, value: [list of positions]
 	}
 }
 
@@ -61,6 +62,8 @@ class Point {
 	}
 }
 
+
+
 ////////////    Creating the graph    ////////////////////////
 
 Graph.prototype.from_edge_list = function(input) {
@@ -80,8 +83,8 @@ Graph.prototype.from_edge_list = function(input) {
 
 
 Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
-	this.nodes = {}; // empty for cleanup in case of reloading file in future code
-	this.edges = {}; // empty for cleanup in case of reloading file in future code
+	this.nodes = {}; // empty for cleanup in case of reloading file
+	this.edges = {}; // empty for cleanup in case of reloading file
 	
 	var positions_by_chrom = {};
 
@@ -107,6 +110,7 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 	for (var chrom in positions_by_chrom) {
 		var positions = positions_by_chrom[chrom];
 		positions.sort(function(a, b){return a-b});
+		this.genomic_sorted_positions[chrom] = positions;
 
 		var previous_position = 0;
 		for (var i = 0; i < positions.length; i++) {
@@ -261,6 +265,86 @@ Graph.prototype.count_connected_components = function() {
 	}
 	return num_connected_components;
 };
+
+Graph.prototype.binary_search = function(chrom,pos,i,j) {
+	var mid = Math.round((i+j)/2);
+	// console.log("pos=",pos,", i=", i, " j=",j,"mid=", mid);
+	if (i == j) {
+		return i;
+	}
+	if (Math.abs(j-i) == 1) {
+		if (Math.abs(this.genomic_sorted_positions[chrom][i]-pos) < Math.abs(this.genomic_sorted_positions[chrom][j]-pos)) {
+			return i; // pos is closer to element at index i
+		} else {
+			return j; // pos is closer to element at index j
+		}
+	}
+	if (pos == this.genomic_sorted_positions[chrom][mid]) {
+		return mid;
+	}
+	else if (pos > this.genomic_sorted_positions[chrom][mid]) {
+		return this.binary_search(chrom,pos,mid,j);
+	} else if (pos < this.genomic_sorted_positions[chrom][mid]) {
+		return this.binary_search(chrom,pos,i,mid);
+	}
+}
+
+Graph.prototype.point_by_genomic_location = function(chrom,pos) {
+	
+	// using a dictionary by chromosome containing sorted lists of the breakpoint locations for binary searching
+	if (this.genomic_sorted_positions.hasOwnProperty(chrom)) {
+		var index = this.binary_search(chrom, pos, 0, this.genomic_sorted_positions[chrom].length)
+		var nearest_breakpoint = this.genomic_sorted_positions[chrom][index];
+		var port = "s";
+		var relative_position = -1;
+		
+		if (pos == nearest_breakpoint) {
+			if (this.genomic_node_lookup[[chrom,nearest_breakpoint,"s"]] == undefined) {
+				port = "e";
+			} else {
+				port = "s";
+			}
+		}
+		else if (pos > nearest_breakpoint) {
+			port = "s";
+		} else {
+			port = "e";
+		}
+
+		var node_name = this.genomic_node_lookup[[chrom,nearest_breakpoint,port]];
+		if (node_name == undefined) {
+			console.log( "ERROR: genomic_node_lookup does not contain this combination of chrom,pos,strand)");
+			return null;
+		}
+
+		if (port == "s") {
+			relative_position = pos - nearest_breakpoint;
+		} else {
+			relative_position = this.nodes[node_name].length - (nearest_breakpoint-pos)
+		}
+		var point = new Point(node_name, relative_position);
+		return point;
+	
+	} else {
+		return null;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
