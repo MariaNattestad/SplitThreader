@@ -26,11 +26,6 @@ var svg_height;
 
 
 var padding = {};
-// var padding.top;
-// var padding.bottom;
-// var padding.left;
-// var padding.right;
-// var padding.between_circos_and_zoom_plots;
 
 var circos_size;
 
@@ -77,8 +72,9 @@ function responsive_sizing() {
   svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96 - top_banner_size;
 
   d3.select("#right_panel")
-    .style("width",window_width*panel_width_fraction)
-    .style("height",svg_height)
+    .style("display","block")
+    .style("width",window_width*panel_width_fraction*0.90 + "px")
+    .style("height",svg_height + "px")
     .style("float","left");
 
 
@@ -185,11 +181,12 @@ var boxes_data = [];
 var annotation_data = null;
 var gene_fusion_data = null;
 
-var annotation_genes_available = null;
+// var annotation_genes_available = null;
 
 
 var genes_to_show = [];
-var relevant_annotation = [];
+var relevant_annotation = []; // has to be a list for d3 display
+var annotation_by_gene = {}; // only contains genes we have searched for
 
 
 var top_zoom_chromosome = null;
@@ -518,13 +515,14 @@ var read_annotation_file = function() {
 
       if (error) throw error;
 
-      annotation_genes_available = []
+      // annotation_genes_available = []
       for (var i=0;i<annotation_input.length;i++) {
         annotation_input[i].start = +annotation_input[i].start
         annotation_input[i].end = +annotation_input[i].end
-        annotation_genes_available.push(annotation_input[i].gene)
+        // annotation_genes_available.push(annotation_input[i].gene)
       }
       annotation_data = annotation_input;
+
       annotation_done = true;
       // console.log("Finished reading annotation")
       // console.log(annotation_data[0])
@@ -535,21 +533,21 @@ var read_annotation_file = function() {
 }
 
 
-var read_fusion_report_file = function() {
-  d3.csv(directory + nickname +".fusion_report.csv", function(error,fusions_input) {
+// var read_fusion_report_file = function() {
+//   d3.csv(directory + nickname +".fusion_report.csv", function(error,fusions_input) {
 
-    if (error) throw error;
+//     if (error) throw error;
 
-    for (var i=0;i<fusions_input.length;i++) {
-      fusions_input[i].variant_count = +fusions_input[i].variant_count
-      ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
-    }
-    gene_fusion_data = fusions_input;
-    console.log("gene_fusion_data:");
-    console.log(gene_fusion_data);
-    show_gene_fusion_dropdown();
-  });
-}
+//     for (var i=0;i<fusions_input.length;i++) {
+//       fusions_input[i].variant_count = +fusions_input[i].variant_count
+//       ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
+//     }
+//     gene_fusion_data = fusions_input;
+//     console.log("gene_fusion_data:");
+//     console.log(gene_fusion_data);
+//     show_gene_fusion_dropdown();
+//   });
+// }
 
 
 //////////////  Handle dragging chromosomes from circos onto zoom plots to select chromosomes to show /////////////////
@@ -1764,28 +1762,14 @@ var update_genes = function() {
 
 }
 
-var change_genes_shown = function(gene_list) {
-  genes_to_show = gene_list
-  relevant_annotation = []
-  annotation_data.forEach(function (d,i) {
-    if (genes_to_show.indexOf(d.gene) != -1) {
-      relevant_annotation.push(d)
-    }     
-  });
-}
+// var change_genes_shown = function(gene_list) {
+//   genes_to_show = gene_list
+//   relevant_annotation = []
 
-var show_gene_fusion_dropdown = function() {
-
-  gene_fusion_dropdown
-    .selectAll("li")
-    .data(gene_fusion_data)
-    .enter()
-    .append("li")
-    .append("a")
-      .text(function(d){return (d.gene1 + "(" + d.strand1 + ") - " + d.gene2 + "(" + d.strand2 + ")" + " [" + d.variant_count + "-hop, "  + d.RNA_split_read_count + " RNA reads] ")})
-      .on("click",highlight_gene_fusion)
-
-}
+//   for (var gene in genes_to_show) {
+//     relevant_annotation.push(annotation_by_gene[gene]);
+//   }
+// }
 
 function arraysEqual(arr1, arr2) {
     if(arr1.length !== arr2.length)
@@ -1816,9 +1800,9 @@ var highlight_gene_fusion = function(d) {
   if (top_zoom_chromosome != d.chrom1) {
     select_chrom_for_zoom_top(d.chrom1);
   } else {
-    console.log(get_annotation_by_gene_name(d.gene1).start)
-    console.log(top_zoom_x_scale(get_annotation_by_gene_name(d.gene1).start))
-    var coordinate = top_zoom_x_scale(get_annotation_by_gene_name(d.gene1).start);
+    console.log(annotation_by_gene[d.gene1].start)
+    console.log(top_zoom_x_scale(annotation_by_gene[d.gene1].start))
+    var coordinate = top_zoom_x_scale(annotation_by_gene[d.gene1].start);
     if (coordinate < 0 || coordinate > both_zoom_canvas_width) {
       select_chrom_for_zoom_top(d.chrom1);
     }
@@ -1827,7 +1811,7 @@ var highlight_gene_fusion = function(d) {
   if (bottom_zoom_chromosome != d.chrom2) {
     select_chrom_for_zoom_bottom(d.chrom2);  
   } else {
-    var coordinate = bottom_zoom_x_scale(get_annotation_by_gene_name(d.gene2).start);
+    var coordinate = bottom_zoom_x_scale(annotation_by_gene[d.gene2].start);
     if (coordinate < 0 || coordinate > both_zoom_canvas_width) {
       select_chrom_for_zoom_bottom(d.chrom2);
     }
@@ -1835,7 +1819,7 @@ var highlight_gene_fusion = function(d) {
 
   message_to_user("Highlighting gene fusion: " + d.gene1 + " - " + d.gene2)
   
-  change_genes_shown([d.gene1,d.gene2]);
+  // change_genes_shown([d.gene1,d.gene2]);
 
   update_genes();
 
@@ -1845,16 +1829,17 @@ var highlight_gene_fusion = function(d) {
   // gene_fusion_to_highlight = d;
 }
 
-var get_annotation_by_gene_name = function(gene) {
-  var annotation_index = annotation_genes_available.indexOf(gene);
-  if (annotation_index != -1){
-    return annotation_data[annotation_index]
-  } else {
-    // message_to_user("Gene is not in annotation");
-    alert("Gene is not in annotation");
-    return null;
-  }
-}
+
+// var get_annotation_by_gene_name = function(gene) {
+//   var annotation_index = annotation_genes_available.indexOf(gene);
+//   if (annotation_index != -1){
+//     return annotation_data[annotation_index]
+//   } else {
+//     // message_to_user("Gene is not in annotation");
+//     alert("Gene is not in annotation");
+//     return null;
+//   }
+// }
 
 var color_connections = function(d) {
 
@@ -2091,24 +2076,13 @@ function user_set_min_split_reads() {
   draw_circos_connections();
 }
 
-function user_add_gene(annotation_for_new_gene) {
-  // console.log("user_add_gene")
-  // var new_gene = prompt("Label gene: ","ERBB2")
+function jump_to_gene(gene) {
 
-  // annotation_for_new_gene = get_annotation_by_gene_name(new_gene)
+    var annotation_for_new_gene = annotation_by_gene[gene];
 
-  console.log("annotation_for_new_gene")
-  console.log(annotation_for_new_gene)
-
-  if (annotation_for_new_gene != null) {
-    genes_to_show = genes_to_show + new_gene;
-      
-    relevant_annotation.push(annotation_for_new_gene)
-    console.log(annotation_for_new_gene.chromosome)
-
-    shown_already = false
-    top_chromosome_readjust = false
-    bottom_chromosome_readjust = false
+    var shown_already = false
+    var top_chromosome_readjust = false
+    var bottom_chromosome_readjust = false
 
     // Is the gene already in view at the top?
     if (top_zoom_chromosome == annotation_for_new_gene.chromosome) {
@@ -2141,23 +2115,34 @@ function user_add_gene(annotation_for_new_gene) {
         select_chrom_for_zoom_top(annotation_for_new_gene.chromosome);
       }
     }
+}
+
+function user_add_gene(annotation_for_new_gene) {
+
+  if (annotation_for_new_gene != null) {
+    annotation_by_gene[annotation_for_new_gene.gene] = annotation_for_new_gene;
+
+    genes_to_show = genes_to_show + annotation_for_new_gene.gene;
+      
+    relevant_annotation.push(annotation_for_new_gene)
+    console.log(annotation_for_new_gene.chromosome)
+
+    jump_to_gene(annotation_for_new_gene.gene);
 
     update_genes();
   }
 }
 
-function user_clear_genes() {
-  console.log("user_clear_genes")
-  change_genes_shown([])
+// function user_clear_genes() {
+//   console.log("user_clear_genes")
+//   change_genes_shown([])
 
-  update_genes();
-}
-
+//   update_genes();
+// }
 
 
 
 function search_gene(str) {
-  console.log("search_gene");
 
   if (str.length==0) { 
     d3.select("#livesearch").html("");
@@ -2168,9 +2153,9 @@ function search_gene(str) {
   var search_value = str.toUpperCase();
 
   var suggestions = "";
-  for (var i in annotation) {
-    if (annotation[i].gene.indexOf(search_value) != -1) {
-      suggestions += '<p onclick="selectGene(' + i + ')">' + annotation[i].gene + "  [chromosome = " + annotation[i].chromosome + "]" + '</p>';
+  for (var i in annotation_data) {
+    if (annotation_data[i].gene.indexOf(search_value) != -1) {
+      suggestions += '<p onclick="selectGene(' + i + ')">' + annotation_data[i].gene + "  [chr: " + annotation_data[i].chromosome + "]" + '</p>';
     }
   }
   if (suggestions == "") {
@@ -2178,26 +2163,28 @@ function search_gene(str) {
   }
   d3.select("#livesearch").html(suggestions);
   d3.select("#livesearch").style("border","1px solid #A5ACB2");
+
 }
 
-function selectGene(index) {
-  annotation_for_new_gene(annotation[index]);
 
+
+function selectGene(index) {
   d3.select("#livesearch").html("");
   d3.select("#livesearch").style("border","0px");
 
   d3.select("#search_input").property("value","");
-  var formatted_result = "<strong>" + annotation[index]["gene"] + "</strong>";
-  for (var key in annotation[index]) {
-    if (key != "gene") {
-      formatted_result += ", " + key + ": " + annotation[index][key]; 
-    }
+ 
+  if (genes_to_show.indexOf(annotation_data[index].gene) == -1) {
+    d3.select("#genes_labeled").append("li").html(annotation_data[index].gene);  
+    user_add_gene(annotation_data[index]);
+  } else {
+    jump_to_gene(annotation_data[index].gene);
   }
-  d3.select("#show_result").append("li").html(formatted_result);
 }
 
 
-d3.select("#search_input").on("keyup",function() {console.log("onkeyup");showResult(this.value)});
+d3.select("#search_input").on("keyup",function() { search_gene(this.value) });
+
 
 
 //////////    Populate navbar with visualizer settings    ////////////////
@@ -2308,20 +2295,20 @@ function populate_navbar() {
 
 ///////////    Genes    /////////////
 
-  settings.append("li").attr("class","dropdown-header")
-    .text("Genes")
+  // settings.append("li").attr("class","dropdown-header")
+  //   .text("Genes")
 
-  settings.append("li").append("a")
-    .attr("href",void(0))
-    .attr("id","user_add_gene")
-    .on("click",user_add_gene)
-    .text("Add gene")
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","user_add_gene")
+  //   .on("click",user_add_gene)
+  //   .text("Add gene")
 
-  settings.append("li").append("a")
-    .attr("href",void(0))
-    .attr("id","user_clear_genes")
-    .on("click",user_clear_genes)
-    .text("Clear genes")
+  // settings.append("li").append("a")
+  //   .attr("href",void(0))
+  //   .attr("id","user_clear_genes")
+  //   .on("click",user_clear_genes)
+  //   .text("Clear genes")
 
   // settings.append("li").append("a")
   //   .attr("href",void(0))

@@ -11,11 +11,12 @@
 <div id="svg_landing"></div>
 
 <div id="right_panel">
-	<input id="search_input" type="text" size="30">
+	<input id="search_input" type="text" size="30" placeholder="Find gene">
 	<div id="livesearch"></div>
 
-	<ul id="show_result"></ul>
-
+    <div>
+	   <ul id="genes_labeled"></ul>
+    </div>
 </div>
 
 

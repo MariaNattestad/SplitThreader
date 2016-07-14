@@ -6,6 +6,28 @@
 #right_panel {
   float:left;
   display:inline-block;
+  overflow: hidden;
+}
+#right_panel #search_input {
+  margin-left: 2vmax;
+  margin-top: 2vmax;
+  width: 80%;
+}
+
+#genes_labeled {
+  width: 100%;
+  list-style-type:none;
+  margin-top:10px;
+  float: left;
+}
+
+ul#genes_labeled li {
+    display:inline-block;
+    float: left;
+    background-color: #cccccc;
+    padding: 0.5vmax;
+    margin-right: 1vmax;
+    margin-bottom: 1vmax;
 }
 
 svg {
@@ -67,7 +89,7 @@ body {
 }
 
 text {
-  font: 1.5vmin sans-serif;
+  font: 1vmax sans-serif;
 }
 .axis {
    shape-rendering: crispEdges;

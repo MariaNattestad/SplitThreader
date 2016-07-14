@@ -47,7 +47,7 @@ LINK=${6?"$USAGE"}
 
 source python_env/bin/activate
 
-
+PATH=$PATH:/usr/local/bin/
 URL_PREFIX="qb.cshl.edu/splitthreader"
 
 
