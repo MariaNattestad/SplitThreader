@@ -98,17 +98,24 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 
 	// Add breakpoints
 	for (var i = 0; i < variants.length; i++) {
-		if (!positions_by_chrom.hasOwnProperty(variants[i].chrom1)) {
-			positions_by_chrom[variants[i].chrom1] = [];
+		variants[i].good = false;
+		if (positions_by_chrom[variants[i].chrom1] != undefined && positions_by_chrom[variants[i].chrom2] != undefined) {
+			if (variants[i].pos1 > positions_by_chrom[variants[i].chrom1]) {
+				console.log("Variant outside chromosome size range");
+				console.log(variants[i]);
+			} else if (variants[i].pos2 > positions_by_chrom[variants[i].chrom2]) {
+				console.log("Variant outside chromosome size range");
+				console.log(variants[i]);
+			} else {
+				positions_by_chrom[variants[i].chrom1].push(variants[i].pos1);
+				positions_by_chrom[variants[i].chrom2].push(variants[i].pos2);
+				variants[i].good = true;
+			}
+		} else {
+			console.log("Ignoring " + variants[i].variant_name + " because chromosome not in genome set");
 		}
-		positions_by_chrom[variants[i].chrom1].push(variants[i].pos1);
-
-		if (!positions_by_chrom.hasOwnProperty(variants[i].chrom2)) {
-			positions_by_chrom[variants[i].chrom2] = [];
-		}
-		positions_by_chrom[variants[i].chrom2].push(variants[i].pos2);
-
 	}
+
 	// Create nodes between the breakpoints and link them with edges
 	for (var chrom in positions_by_chrom) {
 		var positions = positions_by_chrom[chrom];
@@ -130,21 +137,28 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 	//  Create edges
 	var edge_name_counter = 0;
 	for (var i = 0; i < variants.length; i++) {
-		var v = variants[i];
+		if (variants[i].good == true) {
+			var v = variants[i];
 
-		var port1 = strand_to_port(v.strand1);
-		var node1 = this.genomic_node_lookup[[v.chrom1,v.pos1,port1]];
+			var port1 = strand_to_port(v.strand1);
+			var node1 = this.genomic_node_lookup[[v.chrom1,v.pos1,port1]];
 
-		var port2 = strand_to_port(v.strand2);
-		var node2 = this.genomic_node_lookup[[v.chrom2,v.pos2,port2]];
+			var port2 = strand_to_port(v.strand2);
+			var node2 = this.genomic_node_lookup[[v.chrom2,v.pos2,port2]];
 
-		// Split and 2 spanning edges
-		this.create_edge(edge_name_counter,     node1, port1, node2, port2); // split edge
-		this.edges[edge_name_counter].variant_name = variants[i].variant_name; // split edge gets variant name
-		this.create_edge(edge_name_counter + 1, node1, port1, this.genomic_node_lookup[[v.chrom1,v.pos1,opposite_port(port1)]], opposite_port(port1)); // spanning edge for node 1
-		this.create_edge(edge_name_counter + 2, this.genomic_node_lookup[[v.chrom2,v.pos2,opposite_port(port2)]], opposite_port(port2), node2, port2); // spanning edge for node 2 
-		edge_name_counter += 3; 
+			// Split and 2 spanning edges
+			this.create_edge(edge_name_counter,     node1, port1, node2, port2); // split edge
+			this.edges[edge_name_counter].variant_name = variants[i].variant_name; // split edge gets variant name
+			this.create_edge(edge_name_counter + 1, node1, port1, this.genomic_node_lookup[[v.chrom1,v.pos1,opposite_port(port1)]], opposite_port(port1)); // spanning edge for node 1
+			this.create_edge(edge_name_counter + 2, this.genomic_node_lookup[[v.chrom2,v.pos2,opposite_port(port2)]], opposite_port(port2), node2, port2); // spanning edge for node 2 
+			edge_name_counter += 3; 
+
+		}
 	}
+
+	// console.log("this.edges:");
+	// console.log(this.edges);
+
 }
 
 Graph.prototype.create_edge = function(edge_name,node1,port1,node2,port2) {
@@ -450,7 +464,16 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	var results = this.bfs(list1,list2);
 	
 	var details = this.details_from_path(results);
+
+	details.gene1 = gene1.name;
+	details.gene2 = gene2.name;
+
+	details.chrom1 = gene1.chromosome;
+	details.chrom2 = gene2.chromosome;
 	
 	return details;
 }
+
+
+
 

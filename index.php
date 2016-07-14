@@ -134,11 +134,11 @@
 <!--scripts at the end of the file so they don't slow down the html loading-->
 
 <!--   jquery must be first because bootstrap depends on it   -->
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/bootstrap.min.js"></script>
 
 <script src="js/front_page_script.js"></script>
-<script src="js/dropzone.js"></script>
+<script src="js/lib/dropzone.js"></script>
    
 <script type="text/javascript">
 

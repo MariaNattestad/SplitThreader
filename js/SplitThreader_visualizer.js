@@ -55,7 +55,9 @@ var panel_canvas;
 
 var DEBUG_MODE = false;
 
-var gene_fusion_dropdown;
+// var gene_fusion_dropdown;
+
+var fusion_genes = {};
 
 var SplitThreader_graph = new Graph();
 
@@ -335,7 +337,7 @@ var run = function(){
   
   // read_fusion_report_file(); //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
   // show_oncogene_dropdown();
-  message_to_user("Loading data");
+  user_message("Info","Loading data");
   wait_then_run_when_all_data_loaded(); 
 }
 
@@ -354,12 +356,14 @@ function wait_then_run_when_all_data_loaded() {
     // console.log("ready")
     draw_everything(); 
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
-    console.log(connection_data);
+    console.log("connection_data:");
+    console.log(connection_data[0]);
+    // for SplitThreader.js graph the variants should be: {"variant_name":"variant1","chrom1":"1","pos1":50100,"strand1":"-","chrom2":"2","pos2":1000,"strand2":"-"},
     console.log(genome_data);
     SplitThreader_graph.from_genomic_variants(connection_data,genome_data);
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
 
-    message_to_user("Loading data is complete")
+    user_message("Info","Loading data is complete")
   } else {
     console.log("waiting for data to load")
     window.setTimeout(wait_then_run_when_all_data_loaded,300)  
@@ -418,7 +422,7 @@ var read_genome_file = function() {
     draw_circos();
 
     if (genome_data.length == 0) {
-      message_to_user("No genome file");
+      user_message("Error","No genome file");
     }
     else {
       top_zoom_chromosome = genome_data[0].chromosome;
@@ -605,11 +609,11 @@ var draw_circos = function() {
         // Put the chromosome onto the plot it was dropped on (top or bottom)
         if (hover_plot == "top") {
           select_chrom_for_zoom_top(dragging_chromosome)
-          console.log("Switch top to " + dragging_chromosome)
+          // console.log("Switch top to " + dragging_chromosome)
         }
         else if (hover_plot == "bottom") {
           select_chrom_for_zoom_bottom(dragging_chromosome);
-          console.log("Switch bottom to " + dragging_chromosome)
+          // console.log("Switch bottom to " + dragging_chromosome)
         }
         dragging_chromosome = null;
       })
@@ -883,7 +887,7 @@ var draw_bottom_zoom = function() {
         .scaleExtent([1,genomic_bins_per_pixel*max_zoom])
         .on("zoom",
             function() {
-                console.log("zoom")
+                // console.log("zoom")
                 bottom_zoom_x_axis_label.call(bottom_zoom_x_axis)
                 zoom_scale_factor = d3.event.scale;
                 // When replotting it uses the scales, which have just been automatically updated already, so there is no need to translate/scale the plot too
@@ -1716,12 +1720,12 @@ var draw_genes_bottom = function() {
 var select_chrom_for_zoom_top = function(d) {
   top_zoom_chromosome = d;
   if (coverage_by_chromosome[d] == undefined) {
-    console.log("Loading " + d + " from file");
+    // console.log("Loading " + d + " from file");
     top_coverage_loaded = false;
     load_coverage(d,"top");
     wait_then_draw_top();
   } else {
-    console.log(d+" already loaded");
+    // console.log(d+" already loaded");
     draw_top_zoom();
   }
 }
@@ -1737,12 +1741,12 @@ function wait_then_draw_top() {
 var select_chrom_for_zoom_bottom = function(d) {
   bottom_zoom_chromosome = d;
   if (coverage_by_chromosome[d] == undefined) {
-    console.log("Loading " + d + " from file");
+    // console.log("Loading " + d + " from file");
     bottom_coverage_loaded = false;
     load_coverage(d,"bottom");
     wait_then_draw_bottom();
   } else {
-    console.log(d+" already loaded");
+    // console.log(d+" already loaded");
     draw_bottom_zoom();
   }
 }
@@ -1800,8 +1804,6 @@ var highlight_gene_fusion = function(d) {
   if (top_zoom_chromosome != d.chrom1) {
     select_chrom_for_zoom_top(d.chrom1);
   } else {
-    console.log(annotation_by_gene[d.gene1].start)
-    console.log(top_zoom_x_scale(annotation_by_gene[d.gene1].start))
     var coordinate = top_zoom_x_scale(annotation_by_gene[d.gene1].start);
     if (coordinate < 0 || coordinate > both_zoom_canvas_width) {
       select_chrom_for_zoom_top(d.chrom1);
@@ -1817,16 +1819,40 @@ var highlight_gene_fusion = function(d) {
     }
   }
 
-  message_to_user("Highlighting gene fusion: " + d.gene1 + " - " + d.gene2)
-  
+  user_message("Info", "Highlighting gene fusion: " + d.gene1 + " - " + d.gene2)
+
   // change_genes_shown([d.gene1,d.gene2]);
 
   update_genes();
 
-  variants_to_highlight = d.variant_names.split("|");
+  variants_to_highlight = d.variant_names;
   draw_connections();
 
   // gene_fusion_to_highlight = d;
+}
+
+
+function user_message(message_type,message) {
+  if (message_type == "") {
+    d3.select("#user_message").html("").style("visibility","hidden");
+  } else {
+    d3.select("#user_message").style("visibility","visible");
+    var message_style = "default";
+    switch (message_type) {
+      case "error":
+        message_style="danger";
+        break;
+      case "Error":
+        message_style="danger";
+        break;
+      case "warning","Warning":
+        message_style="warning";
+        break;
+      default:
+        message_style="default";
+    }
+    d3.select("#user_message").html("<strong>"+ message_type + ": </strong>" + message).attr("class","alert alert-" + message_style);
+  }
 }
 
 
@@ -1835,7 +1861,7 @@ var highlight_gene_fusion = function(d) {
 //   if (annotation_index != -1){
 //     return annotation_data[annotation_index]
 //   } else {
-//     // message_to_user("Gene is not in annotation");
+//     // user_message("Warning","Gene is not in annotation");
 //     alert("Gene is not in annotation");
 //     return null;
 //   }
@@ -1987,41 +2013,41 @@ function toggle_segment_copy_number() {
 
 //////////    Printing messages to user in bottom left corner    ////////////////
 
-function message_to_user(message) {
-  // console.log(message)
-  panel_canvas.selectAll("text").remove()
+// function message_to_user(message) {
+//   // console.log(message)
+//   panel_canvas.selectAll("text").remove()
 
-  var formatted_nickname = nickname.replace(/_/g ," "); // replace underscores with spaces in nickname
+//   var formatted_nickname = nickname.replace(/_/g ," "); // replace underscores with spaces in nickname
 
-  // var parameters_to_print = "";
-  // Object.keys(config).forEach(function(key,index) {
-  //   parameters_to_print += key + ": " + config[key] + ', ';
-  // })
+//   // var parameters_to_print = "";
+//   // Object.keys(config).forEach(function(key,index) {
+//   //   parameters_to_print += key + ": " + config[key] + ', ';
+//   // })
   
-  var whole_message = message; //+ "\n" + parameters_to_print;
+//   var whole_message = message; //+ "\n" + parameters_to_print;
 
   
-  panel_canvas.append("text")
-    .attr("class","sample_title")
-    .text(formatted_nickname)
-    .attr('y',0)
-    .attr('dy',1)
-    // .call(wrap,panel_width)
+//   panel_canvas.append("text")
+//     .attr("class","sample_title")
+//     .text(formatted_nickname)
+//     .attr('y',0)
+//     .attr('dy',1)
+//     // .call(wrap,panel_width)
 
-  panel_canvas.append("text")
-    .attr("class","user_message")
-    .text(whole_message)
-    .attr('y',90)
-    .attr("dy",1);
+//   panel_canvas.append("text")
+//     .attr("class","user_message")
+//     .text(whole_message)
+//     .attr('y',90)
+//     .attr("dy",1);
 
-  panel_canvas.selectAll("text")
-    .call(wrap,panel_width);
+//   panel_canvas.selectAll("text")
+//     .call(wrap,panel_width);
 
-    // panel_canvas.append("text")
-    // .attr("class","user_message")
-    // .attr("y",50)
-    // .text(parameters_to_print);
-}
+//     // panel_canvas.append("text")
+//     // .attr("class","user_message")
+//     // .attr("y",50)
+//     // .text(parameters_to_print);
+// }
 
 
 
@@ -2125,8 +2151,6 @@ function user_add_gene(annotation_for_new_gene) {
     genes_to_show = genes_to_show + annotation_for_new_gene.gene;
       
     relevant_annotation.push(annotation_for_new_gene)
-    console.log(annotation_for_new_gene.chromosome)
-
     jump_to_gene(annotation_for_new_gene.gene);
 
     update_genes();
@@ -2142,11 +2166,14 @@ function user_add_gene(annotation_for_new_gene) {
 
 
 
-function search_gene(str) {
+function search_gene(input_field_element, select_function_name) {
+
+  var str = input_field_element.value;
+  var parent = d3.select(input_field_element.parentNode);
+
 
   if (str.length==0) { 
-    d3.select("#livesearch").html("");
-    d3.select("#livesearch").style("border","0px");
+    parent.select(".livesearch").html("").style("border","0px");
     return;
   }
 
@@ -2155,22 +2182,49 @@ function search_gene(str) {
   var suggestions = "";
   for (var i in annotation_data) {
     if (annotation_data[i].gene.indexOf(search_value) != -1) {
-      suggestions += '<p onclick="selectGene(' + i + ')">' + annotation_data[i].gene + "  [chr: " + annotation_data[i].chromosome + "]" + '</p>';
+      suggestions += '<p onclick="' + select_function_name + i + ')">' + annotation_data[i].gene + "  [chr: " + annotation_data[i].chromosome + "]" + '</p>';
     }
   }
   if (suggestions == "") {
     suggestions = "no match";
   }
-  d3.select("#livesearch").html(suggestions);
-  d3.select("#livesearch").style("border","1px solid #A5ACB2");
+  parent.select(".livesearch").html(suggestions).style("border","1px solid #A5ACB2");
 
 }
 
+function select_fusion_gene(num,index) {
+  d3.select("#gene_fusion_box").selectAll(".livesearch").html("").style("border","0px");
 
+  d3.selectAll(".search_field").property("value","");
+  d3.select("#gene_fusion_table").select("#gene" + num).html(annotation_data[index].gene);
 
-function selectGene(index) {
-  d3.select("#livesearch").html("");
-  d3.select("#livesearch").style("border","0px");
+  fusion_genes[num] = annotation_data[index];
+  user_add_gene(annotation_data[index]);
+  
+}
+
+function submit_fusion() {
+  if (fusion_genes[1] != undefined && fusion_genes[2] != undefined) {
+    // console.log("Ask SplitThreader graph whether this is a fusion");
+    
+    fusion_genes[1].name = fusion_genes[1].gene;
+    fusion_genes[2].name = fusion_genes[2].gene;
+
+    var results = SplitThreader_graph.gene_fusion(fusion_genes[1],fusion_genes[2]);
+    var new_row = d3.select("#gene_fusion_table_results").insert("tr",":first-child").attr("class","record");
+      new_row.append("td").html(fusion_genes[1].name).property("width","20%");
+      new_row.append("td").html(fusion_genes[2].name).property("width","20%");
+      new_row.append("td").html(results.variant_names).property("width","60%");
+    highlight_gene_fusion(results);
+  } else {
+    user_message("Instructions","Select genes first using the Gene 1 and Gene 2 input fields");
+  }
+}
+
+d3.select("#submit_fusion").on("click",submit_fusion);
+
+function select_gene(index) {
+  d3.select(".livesearch").html("").style("border","0px");
 
   d3.select("#search_input").property("value","");
  
@@ -2183,9 +2237,24 @@ function selectGene(index) {
 }
 
 
-d3.select("#search_input").on("keyup",function() { search_gene(this.value) });
+
+d3.select("#search_input").on("keyup",function() { search_gene(this,"select_gene(") });
+
+d3.select("#fusion_gene1_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(1,") });
+d3.select("#fusion_gene2_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(2,") });
 
 
+
+// <div id="fusion_gene1_box" class="gene_search_box">
+//         <input class="search_field" type="text" placeholder="Gene 1">
+//         <div class="livesearch"></div>
+//       </div>
+//       <div id="fusion_gene2_box" class="gene_search_box">
+//         <input class="search_field" type="text" placeholder="Gene 2">
+//         <div class="livesearch"></div>
+//       </div>
+//       <table id="gene_fusion_results">
+//       </table>
 
 //////////    Populate navbar with visualizer settings    ////////////////
 
@@ -2336,7 +2405,7 @@ function resizeWindow()
 {
   responsive_sizing();
   draw_everything();
-  message_to_user("");
+  // message_to_user("");
 }
 
 

@@ -3,15 +3,44 @@
   display:inline-block;
 }
 
+.panel_box {
+  margin-left: 2vmax;
+  margin-top: 2vmax;
+  width: 90%;
+  display: block;
+}
+.search_field {
+  width: 100%;
+}
+
+#gene_fusion_table, #gene_fusion_table_results {
+  width: 100%;
+}
+
+#gene_fusion_table_results table, #gene_fusion_table_results th, #gene_fusion_table_results td {
+  text-align: center;
+  padding: 0.3vmin 0.3vmin 0.3vmin 0.3vmin;
+  border: 0.1px solid gray;
+  font-size: 1.4vmin;
+}
+#gene_fusion_table table, #gene_fusion_table th, #gene_fusion_table td {
+  text-align: center;
+  padding: 0.3vmin 0.3vmin 0.3vmin 0.3vmin;
+  border: 0.1px solid gray;
+  font-size: 1.4vmin;
+}
+
+.gene_search_box {
+  width: 45%;
+  margin: 2%;
+  display: inline-block;
+  vertical-align:top;
+}
+
 #right_panel {
   float:left;
   display:inline-block;
-  overflow: hidden;
-}
-#right_panel #search_input {
-  margin-left: 2vmax;
-  margin-top: 2vmax;
-  width: 80%;
+  overflow: scroll;
 }
 
 #genes_labeled {
