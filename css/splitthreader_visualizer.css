@@ -1,4 +1,20 @@
+#svg_landing {
+  float:left;
+  display:inline-block;
+}
 
+#right_panel {
+  float:left;
+  display:inline-block;
+}
+
+svg {
+  background-color: #ffffff;
+}
+body {
+  background-color: #eeeeee;
+  padding-top: 60px; 
+}
 .frame {
   fill: none;
   stroke: #000;
@@ -51,7 +67,7 @@
 }
 
 text {
-  font: 2vmin sans-serif;
+  font: 1.5vmin sans-serif;
 }
 .axis {
    shape-rendering: crispEdges;

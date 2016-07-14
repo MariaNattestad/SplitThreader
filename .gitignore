@@ -1,5 +1,9 @@
 user_data/*
 user_uploads/*
+
+!user_data/example*
+!user_uploads/example*
+
 !user_data/.htaccess
 !user_uploads/.htaccess
 

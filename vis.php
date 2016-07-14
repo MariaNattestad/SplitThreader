@@ -8,13 +8,27 @@
 
 <link href="css/splitthreader_visualizer.css" rel="stylesheet">
 
+<div id="svg_landing"></div>
+
+<div id="right_panel">
+	<input id="search_input" type="text" size="30">
+	<div id="livesearch"></div>
+
+	<ul id="show_result"></ul>
+
+</div>
+
+
+
 
 <script src="js/d3.v3.min.js"></script>
 <script src="js/d3.tip.v0.6.3.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/bootstrap.min.js"></script>
-<script src="js/seqgraph.js"></script>
 <script src="js/SplitThreader.js"></script>
 <script src="js/SplitThreader_visualizer.js"></script>
+
+
+
 
 

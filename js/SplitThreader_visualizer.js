@@ -13,8 +13,8 @@ var directory="user_data/" + run_id_code + "/";
 var config_path="user_uploads/" + run_id_code + ".config";
 var nickname=getUrlVars()["nickname"];
 
-console.log("directory:" + directory);
-console.log("nickname:" + nickname);
+// console.log("directory:" + directory);
+// console.log("nickname:" + nickname);
 
 var w = window,
     d = document,
@@ -24,11 +24,13 @@ var w = window,
 var svg_width;
 var svg_height;
 
-var top_edge_padding;
-var bottom_edge_padding;
-var left_edge_padding;
-var right_edge_padding;
-var between_circos_and_zoom_plots_padding;
+
+var padding = {};
+// var padding.top;
+// var padding.bottom;
+// var padding.left;
+// var padding.right;
+// var padding.between_circos_and_zoom_plots;
 
 var circos_size;
 
@@ -66,33 +68,44 @@ var SplitThreader_graph = new Graph();
 
 function responsive_sizing() {
 
-  svg_width = (w.innerWidth || e.clientWidth || g.clientWidth)*0.98;
-  svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96;
+  var panel_width_fraction = 0.25;
+  var top_banner_size = 65;
 
-  top_edge_padding = svg_width*0.08; 
-  bottom_edge_padding = svg_width*0.04; 
-  left_edge_padding = svg_width*0.02; 
-  right_edge_padding = svg_width*0.02; 
-  between_circos_and_zoom_plots_padding = svg_width*0.02; 
 
-  circos_size = Math.min(svg_width,svg_height)*0.65;
+  var window_width = (w.innerWidth || e.clientWidth || g.clientWidth);
+  svg_width = window_width*(1-panel_width_fraction);
+  svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96 - top_banner_size;
 
-  radius = circos_size / 2 - left_edge_padding;
+  d3.select("#right_panel")
+    .style("width",window_width*panel_width_fraction)
+    .style("height",svg_height)
+    .style("float","left");
+
+
+
+  padding.top = svg_height*0.10;
+  padding.bottom = svg_height*0.10; 
+  padding.left = svg_width*0.02; 
+  padding.right = svg_width*0.02; 
+  padding.between_circos_and_zoom_plots = svg_width*0.02; 
+
+  circos_size = svg_width*0.35; //Math.min(svg_width,svg_height)*0.50;
+
+  radius = circos_size / 2 - padding.left;
 
   ////////  Clear the svg to start drawing from scratch  ////////
   
   d3.selectAll("svg").remove()
 
   ////////  Create the SVG  ////////
-  svg = d3.select("body")
+  svg = d3.select("#svg_landing")
     .append("svg:svg")
     .attr("width", svg_width)
     .attr("height", svg_height)
 
-
-  both_zoom_canvas_height = (svg_height-top_edge_padding-bottom_edge_padding)/3;
-  both_zoom_left_x_coordinate = circos_size + between_circos_and_zoom_plots_padding;
-  both_zoom_canvas_width = svg_width-both_zoom_left_x_coordinate-right_edge_padding;
+  both_zoom_canvas_height = (svg_height-padding.top-padding.bottom)/3;
+  both_zoom_left_x_coordinate = circos_size + padding.between_circos_and_zoom_plots;
+  both_zoom_canvas_width = svg_width-both_zoom_left_x_coordinate-padding.right;
 
 
 
@@ -100,11 +113,11 @@ function responsive_sizing() {
 
   top_zoom_container = svg.append("g")
     // .attr("class","top_zoom_container")
-    .attr("transform","translate(" + both_zoom_left_x_coordinate + "," + top_edge_padding + ")")
+    .attr("transform","translate(" + both_zoom_left_x_coordinate + "," + padding.top + ")")
 
   ////////  Bottom zoom plot  ////////
 
-  bottom_zoom_canvas_top_y_coordinate = svg_height-bottom_edge_padding-both_zoom_canvas_height;
+  bottom_zoom_canvas_top_y_coordinate = svg_height-padding.bottom-both_zoom_canvas_height;
 
   bottom_zoom_container = svg.append("g")
     // .attr("class","bottom_zoom_container")
@@ -114,19 +127,19 @@ function responsive_sizing() {
   ////////  Set up circos canvas  ////////
   circos_canvas = svg.append("svg:g")
     // .attr("class","circos_canvas")
-    .attr("transform", "translate(" + (radius+left_edge_padding) + "," + (radius+top_edge_padding) + ")")
+    .attr("transform", "translate(" + (radius+padding.left) + "," + (radius+padding.top) + ")")
 
   chrom_label_size = radius/5;
 
 
   ////////  Set up panel canvas  ////////
 
-  panel_top_position = radius*2+top_edge_padding+between_circos_and_zoom_plots_padding;
-  panel_height = svg_height - panel_top_position - bottom_edge_padding;
-  panel_width = radius*2 - between_circos_and_zoom_plots_padding;
+  panel_top_position = radius*2+padding.top+padding.between_circos_and_zoom_plots;
+  panel_height = svg_height - panel_top_position - padding.bottom;
+  panel_width = radius*2 - padding.between_circos_and_zoom_plots;
 
   panel_canvas = svg.append("g")
-    .attr("transform", "translate(" + left_edge_padding + "," + panel_top_position + ")")
+    .attr("transform", "translate(" + padding.left + "," + panel_top_position + ")")
 }
 
 responsive_sizing();
@@ -274,12 +287,12 @@ var loop_height = 25;
 
 var top_loop_scale = d3.scale.linear()
   .domain([1000000,100000000])
-  .range([loop_height,bottom_zoom_canvas_top_y_coordinate-both_zoom_canvas_height-top_edge_padding])
+  .range([loop_height,bottom_zoom_canvas_top_y_coordinate-both_zoom_canvas_height-padding.top])
   .clamp(true)
 
 var bottom_loop_scale = d3.scale.linear()
   .domain([1000000,100000000])
-  .range([loop_height,bottom_zoom_canvas_top_y_coordinate-both_zoom_canvas_height-top_edge_padding])
+  .range([loop_height,bottom_zoom_canvas_top_y_coordinate-both_zoom_canvas_height-padding.top])
   .clamp(true)
 
 ///////////   Add tooltips   /////////////////
@@ -339,17 +352,19 @@ var draw_everything = function() {
 
 
 function wait_then_run_when_all_data_loaded() {
-  console.log("checking")
+  // console.log("checking")
   if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
-    console.log("ready")
+    // console.log("ready")
     draw_everything(); 
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
+    console.log(connection_data);
+    console.log(genome_data);
     SplitThreader_graph.from_genomic_variants(connection_data,genome_data);
     //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
 
     message_to_user("Loading data is complete")
   } else {
-    console.log("not yet")
+    console.log("waiting for data to load")
     window.setTimeout(wait_then_run_when_all_data_loaded,300)  
   }
 }
@@ -369,16 +384,16 @@ config["annotation"] = "none";
 var read_config_file = function() {
   d3.csv(config_path, function(error,config_input) {
     if (error) throw error;
-    console.log("CONFIG FILE:");
+    // console.log("CONFIG FILE:");
     for (var i=0;i<config_input.length;i++){
-      console.log(config_input[i]);
+      // console.log(config_input[i]);
       if (isNaN(config_input[i].val)) {
         config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
       } else {
         config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
       }
     }
-    console.log(config);
+    // console.log(config);
     read_annotation_file();
   });
 }
@@ -448,7 +463,7 @@ var read_splitthreader_boxes_file = function(file_to_use) {
 
 var load_coverage = function(chromosome,top_or_bottom) {
 
-  console.log("loading chromosome coverage from file");
+  // console.log("loading chromosome coverage from file");
   d3.csv(directory + nickname + ".copynumber.segmented." + chromosome + ".csv?id=" + Math.random(), function(error,coverage_input) {
       if (error) throw error;
 
@@ -462,11 +477,11 @@ var load_coverage = function(chromosome,top_or_bottom) {
         coverage_by_chromosome[chromosome][i].coverage = +coverage_input[i].segmented_coverage
       }
       if (top_or_bottom == "top") {
-        console.log("Coverage for TOP finished loading");
+        // console.log("Coverage for TOP finished loading");
         top_coverage_loaded = true;
 
       } else {
-        console.log("Coverage for BOTTOM finished loading")
+        // console.log("Coverage for BOTTOM finished loading")
         bottom_coverage_loaded = true;
       }
   });
@@ -497,7 +512,7 @@ var read_spansplit_file = function() {
 
 var read_annotation_file = function() {
   if (config["annotation"] != "none") {
-    console.log("Reading annotation");
+    // console.log("Reading annotation");
 
     d3.csv(config["annotation"], function(error,annotation_input) {
 
@@ -511,8 +526,8 @@ var read_annotation_file = function() {
       }
       annotation_data = annotation_input;
       annotation_done = true;
-      console.log("Finished reading annotation")
-      console.log(annotation_data[0])
+      // console.log("Finished reading annotation")
+      // console.log(annotation_data[0])
     });
   } else {
     console.log("No annotation chosen");
@@ -692,8 +707,8 @@ var draw_top_zoom = function() {
       var x_bin_size_domain = coverage_by_chromosome[top_zoom_chromosome][0].end-coverage_by_chromosome[top_zoom_chromosome][0].start;
 
       var genomic_bins_per_pixel = Math.ceil((zoom_top_position_end-zoom_top_position_start)/x_bin_size_domain/both_zoom_canvas_width);
-      console.log("genomic_bins_per_pixel:")
-      console.log(genomic_bins_per_pixel)
+      // console.log("genomic_bins_per_pixel:")
+      // console.log(genomic_bins_per_pixel)
 
       // file_bins/display_bins = (file_bins/pixels)*(pixels/display_bins)
       genomic_bins_per_zoom_top_bin = genomic_bins_per_pixel*pixels_per_bin;
@@ -1034,11 +1049,11 @@ var draw_connections = function() {
 
     var y_coordinate_for_connection = d3.scale.ordinal()
       .domain(["top","bottom"])
-      .range([both_zoom_canvas_height+top_edge_padding+foot_spacing_from_axis,bottom_zoom_canvas_top_y_coordinate-foot_spacing_from_axis])
+      .range([both_zoom_canvas_height+padding.top+foot_spacing_from_axis,bottom_zoom_canvas_top_y_coordinate-foot_spacing_from_axis])
 
     var y_coordinate_for_zoom_plot_base = d3.scale.ordinal()
       .domain(["top","bottom"])
-      .range([both_zoom_canvas_height+top_edge_padding,bottom_zoom_canvas_top_y_coordinate])
+      .range([both_zoom_canvas_height+padding.top,bottom_zoom_canvas_top_y_coordinate])
 
 
     //////////   Classify connections so we can plot them differently   ///////////
@@ -1988,7 +2003,7 @@ function toggle_segment_copy_number() {
 //////////    Printing messages to user in bottom left corner    ////////////////
 
 function message_to_user(message) {
-  console.log(message)
+  // console.log(message)
   panel_canvas.selectAll("text").remove()
 
   var formatted_nickname = nickname.replace(/_/g ," "); // replace underscores with spaces in nickname
@@ -2076,13 +2091,12 @@ function user_set_min_split_reads() {
   draw_circos_connections();
 }
 
-function user_add_gene() {
-  console.log("user_add_gene")
-  var new_gene = prompt("Label gene: ","ERBB2")
-  
-  
+function user_add_gene(annotation_for_new_gene) {
+  // console.log("user_add_gene")
+  // var new_gene = prompt("Label gene: ","ERBB2")
 
-  annotation_for_new_gene = get_annotation_by_gene_name(new_gene)
+  // annotation_for_new_gene = get_annotation_by_gene_name(new_gene)
+
   console.log("annotation_for_new_gene")
   console.log(annotation_for_new_gene)
 
@@ -2098,7 +2112,7 @@ function user_add_gene() {
 
     // Is the gene already in view at the top?
     if (top_zoom_chromosome == annotation_for_new_gene.chromosome) {
-      var coordinate = top_zoom_x_scale(get_annotation_by_gene_name(new_gene).start);
+      var coordinate = top_zoom_x_scale(annotation_for_new_gene.start);
       if (coordinate > 0 && coordinate < both_zoom_canvas_width) {
         shown_already = true;
       } else {
@@ -2109,7 +2123,7 @@ function user_add_gene() {
     // Is the gene already in view at the bottom?
     if (shown_already == false) {
       if (bottom_zoom_chromosome == annotation_for_new_gene.chromosome) {
-        var coordinate = bottom_zoom_x_scale(get_annotation_by_gene_name(new_gene).start);
+        var coordinate = bottom_zoom_x_scale(annotation_for_new_gene.start);
         if (coordinate > 0 && coordinate < both_zoom_canvas_width) {
           shown_already = true;
         } else {
@@ -2138,6 +2152,53 @@ function user_clear_genes() {
 
   update_genes();
 }
+
+
+
+
+function search_gene(str) {
+  console.log("search_gene");
+
+  if (str.length==0) { 
+    d3.select("#livesearch").html("");
+    d3.select("#livesearch").style("border","0px");
+    return;
+  }
+
+  var search_value = str.toUpperCase();
+
+  var suggestions = "";
+  for (var i in annotation) {
+    if (annotation[i].gene.indexOf(search_value) != -1) {
+      suggestions += '<p onclick="selectGene(' + i + ')">' + annotation[i].gene + "  [chromosome = " + annotation[i].chromosome + "]" + '</p>';
+    }
+  }
+  if (suggestions == "") {
+    suggestions = "no match";
+  }
+  d3.select("#livesearch").html(suggestions);
+  d3.select("#livesearch").style("border","1px solid #A5ACB2");
+}
+
+function selectGene(index) {
+  annotation_for_new_gene(annotation[index]);
+
+  d3.select("#livesearch").html("");
+  d3.select("#livesearch").style("border","0px");
+
+  d3.select("#search_input").property("value","");
+  var formatted_result = "<strong>" + annotation[index]["gene"] + "</strong>";
+  for (var key in annotation[index]) {
+    if (key != "gene") {
+      formatted_result += ", " + key + ": " + annotation[index][key]; 
+    }
+  }
+  d3.select("#show_result").append("li").html(formatted_result);
+}
+
+
+d3.select("#search_input").on("keyup",function() {console.log("onkeyup");showResult(this.value)});
+
 
 //////////    Populate navbar with visualizer settings    ////////////////
 
@@ -2183,6 +2244,24 @@ function populate_navbar() {
       .attr("id", "settings_dropdown_menu")
       .attr("role","menu")
 
+
+  // d3.select("#navbar")
+  //   .append("form")
+  //     .attr("class","navbar-form navbar-left")
+  //     .property("role","search")
+  //       .append("div").attr("class","form-group")
+  //         .append("input")
+  //           .property("type","text")
+  //           .attr("class","form-control")
+  //           .attr("id","gene_search_input")
+  //           .property("placeholder","Gene")
+
+//   <form class="navbar-form navbar-left" role="search">
+//   <div class="form-group">
+//     <input type="text" class="form-control" placeholder="Search">
+//   </div>
+//   <button type="submit" class="btn btn-default">Submit</button>
+// </form>
 
 
 ///////////    Show/Hide features    /////////////
