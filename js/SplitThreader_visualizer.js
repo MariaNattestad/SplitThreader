@@ -325,7 +325,8 @@ svg.call(variant_tip);
 var run = function(){
   populate_navbar();
 
-  read_config_file();
+  // read_config_file();
+  read_annotation_file(); // when not using config
   read_genome_file();
 
   // read_coverage_file();
@@ -379,25 +380,25 @@ var max_zoom = 50; //Max number of pixels a genomic bin can be zoomed to (used t
 var config = {};
 config["min_variant_size"] = 0;
 config["min_split_reads"] = 0;
-config["annotation"] = "none";
+config["annotation"] = "resources/annotation/Human_hg19.genes.csv";
 
 
-var read_config_file = function() {
-  d3.csv(config_path, function(error,config_input) {
-    if (error) throw error;
-    // console.log("CONFIG FILE:");
-    for (var i=0;i<config_input.length;i++){
-      // console.log(config_input[i]);
-      if (isNaN(config_input[i].val)) {
-        config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
-      } else {
-        config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
-      }
-    }
-    // console.log(config);
-    read_annotation_file();
-  });
-}
+// var read_config_file = function() {
+//   d3.csv(config_path, function(error,config_input) {
+//     if (error) throw error;
+//     // console.log("CONFIG FILE:");
+//     for (var i=0;i<config_input.length;i++){
+//       // console.log(config_input[i]);
+//       if (isNaN(config_input[i].val)) {
+//         config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
+//       } else {
+//         config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
+//       }
+//     }
+//     // console.log(config);
+//     read_annotation_file();
+//   });
+// }
 
 
 
