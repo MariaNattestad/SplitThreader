@@ -182,6 +182,7 @@ var connection_data = null;
 var boxes_data = [];
 var annotation_data = null;
 var gene_fusion_data = null;
+var annotation_by_chrom = {};
 
 // var annotation_genes_available = null;
 
@@ -521,9 +522,14 @@ var read_annotation_file = function() {
       if (error) throw error;
 
       // annotation_genes_available = []
+      annotation_by_chrom = {};
       for (var i=0;i<annotation_input.length;i++) {
-        annotation_input[i].start = +annotation_input[i].start
-        annotation_input[i].end = +annotation_input[i].end
+        annotation_input[i].start = +annotation_input[i].start;
+        annotation_input[i].end = +annotation_input[i].end;
+        if (annotation_by_chrom[annotation_input[i].chromosome] == undefined) {
+          annotation_by_chrom[annotation_input[i].chromosome] = [];
+        }
+        annotation_by_chrom[annotation_input[i].chromosome].push(annotation_input[i]);
         // annotation_genes_available.push(annotation_input[i].gene)
       }
       annotation_data = annotation_input;
@@ -1659,11 +1665,41 @@ var arrow_path_generator = function(d, top_or_bottom) {
 
 
 var draw_genes_top = function() {
-  top_zoom_canvas.selectAll("text.top_gene_label").remove()
-  top_zoom_canvas.selectAll("path.top_gene_arrow").remove()
+  top_zoom_canvas.selectAll("text.top_gene_label").remove();
+  top_zoom_canvas.selectAll("path.top_gene_arrow").remove();
+
+
+  var local_annotation = [];
+  for (var i in annotation_by_chrom[top_zoom_chromosome]) {
+    var d = annotation_by_chrom[top_zoom_chromosome][i];
+    if (top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width) {
+      local_annotation.push(d);
+    }
+  }
+
+  if (local_annotation.length > 30) {
+    d3.select("#top_local_genes").html(local_annotation.length + " genes. Double-click on plot to zoom and view details.");  
+  } else {
+    d3.select("#top_local_genes").html("");
+    d3.select("#top_local_genes").selectAll("li").data(local_annotation).enter()
+      .append("li")
+        .html(function(d) {return d.gene + ", " })
+        .on("click", user_add_gene);
+  }
+  
+
+  var genes_to_draw = [];
+  for (var i in relevant_annotation) {
+    genes_to_draw.push(relevant_annotation[i]);
+  }
+  if (local_annotation.length < 10) {
+    for (var i in local_annotation) {
+      genes_to_draw.push(local_annotation[i]);
+    }
+  }
 
   var genes_top = top_zoom_canvas.selectAll("text.top_gene_label")
-    .data(relevant_annotation).enter()
+    .data(genes_to_draw).enter()
     .append("text")
       .filter(function(d){return d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
@@ -1677,7 +1713,7 @@ var draw_genes_top = function() {
 
 
     var gene_arrows_top = top_zoom_canvas.selectAll("path.top_gene_arrow")
-    .data(relevant_annotation).enter()
+    .data(genes_to_draw).enter()
     .append("path")
       .filter(function(d){return d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
@@ -1689,11 +1725,43 @@ var draw_genes_top = function() {
 }
 
 var draw_genes_bottom = function() {
-  bottom_zoom_canvas.selectAll("text.bottom_gene_label").remove()
-  bottom_zoom_canvas.selectAll("path.bottom_gene_arrow").remove()
+  bottom_zoom_canvas.selectAll("text.bottom_gene_label").remove();
+  bottom_zoom_canvas.selectAll("path.bottom_gene_arrow").remove();
+
+
+  var local_annotation = [];
+  for (var i in annotation_by_chrom[bottom_zoom_chromosome]) {
+    var d = annotation_by_chrom[bottom_zoom_chromosome][i];
+    if (bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width) {
+      local_annotation.push(d);
+    }
+  }
+
+
+  if (local_annotation.length > 30) {
+    d3.select("#bottom_local_genes").html(local_annotation.length + " genes. Double-click on plot to zoom and view details.");  
+  } else {
+    d3.select("#bottom_local_genes").html("");
+    d3.select("#bottom_local_genes").selectAll("li").data(local_annotation).enter()
+      .append("li")
+        .html(function(d) {return d.gene + ", "})
+        .on("click",user_add_gene);
+  }
+  
+
+
+  var genes_to_draw = [];
+  for (var i in relevant_annotation) {
+    genes_to_draw.push(relevant_annotation[i]);
+  }
+  if (local_annotation.length < 10) {
+    for (var i in local_annotation) {
+      genes_to_draw.push(local_annotation[i]);
+    }
+  }
 
   var genes_bottom = bottom_zoom_canvas.selectAll("text.bottom_gene_label")
-    .data(relevant_annotation).enter()
+    .data(genes_to_draw).enter()
     .append("text")
       .filter(function(d){return d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
@@ -1706,7 +1774,7 @@ var draw_genes_bottom = function() {
       // .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
 
   var gene_arrows_bottom = bottom_zoom_canvas.selectAll("path.bottom_gene_arrow")
-    .data(relevant_annotation).enter()
+    .data(genes_to_draw).enter()
     .append("path")
       .filter(function(d){return d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
@@ -2145,6 +2213,7 @@ function jump_to_gene(gene) {
 }
 
 function user_add_gene(annotation_for_new_gene) {
+  console.log(annotation_for_new_gene);
 
   if (annotation_for_new_gene != null) {
     annotation_by_gene[annotation_for_new_gene.gene] = annotation_for_new_gene;
@@ -2155,6 +2224,7 @@ function user_add_gene(annotation_for_new_gene) {
     jump_to_gene(annotation_for_new_gene.gene);
 
     update_genes();
+    console.log("updated_genes");
   }
 }
 

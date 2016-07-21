@@ -16,7 +16,7 @@
 		<input id="search_input" class="search_field" type="text" placeholder="Find gene">
 		<div class="livesearch"></div>
 		<div>
-		   <ul id="genes_labeled"></ul>
+		   <ul id="genes_labeled" class="gene_list"></ul>
 		</div>
 	</div>
 
@@ -44,6 +44,19 @@
 		</table>
 
 	</div>
+
+	<div class="panel_box">
+		<h4>Top genes</h4>
+		<div>
+		   <ul id="top_local_genes" class="gene_list"></ul>
+		</div>
+		<h4>Bottom genes</h4>
+		<div>
+		   <ul id="bottom_local_genes" class="gene_list"></ul>
+		</div>
+
+	</div>
+
 	<div id="user_message" class="alert alert-default" role="alert"></div>
 
 </div>
