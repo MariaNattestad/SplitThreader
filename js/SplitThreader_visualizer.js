@@ -1688,20 +1688,10 @@ var draw_genes_top = function() {
   }
   
 
-  var genes_to_draw = [];
-  for (var i in relevant_annotation) {
-    genes_to_draw.push(relevant_annotation[i]);
-  }
-  if (local_annotation.length < 10) {
-    for (var i in local_annotation) {
-      genes_to_draw.push(local_annotation[i]);
-    }
-  }
-
   var genes_top = top_zoom_canvas.selectAll("text.top_gene_label")
-    .data(genes_to_draw).enter()
+    .data(relevant_annotation).enter()
     .append("text")
-      .filter(function(d){return d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
+      .filter(function(d){return d.show && d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
       .text(function(d){return d.gene})
       .attr("x",function(d){return top_zoom_x_scale((d.start+d.end)/2)})
@@ -1713,9 +1703,9 @@ var draw_genes_top = function() {
 
 
     var gene_arrows_top = top_zoom_canvas.selectAll("path.top_gene_arrow")
-    .data(genes_to_draw).enter()
+    .data(relevant_annotation).enter()
     .append("path")
-      .filter(function(d){return d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
+      .filter(function(d){return d.show && d.chromosome == top_zoom_chromosome && top_zoom_x_scale(d.start) > 0 && top_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
       .attr("class","top_gene_arrow")
       .attr("d",function(d) {return arrow_path_generator(d,top_or_bottom="top")})
@@ -1749,21 +1739,10 @@ var draw_genes_bottom = function() {
   }
   
 
-
-  var genes_to_draw = [];
-  for (var i in relevant_annotation) {
-    genes_to_draw.push(relevant_annotation[i]);
-  }
-  if (local_annotation.length < 10) {
-    for (var i in local_annotation) {
-      genes_to_draw.push(local_annotation[i]);
-    }
-  }
-
   var genes_bottom = bottom_zoom_canvas.selectAll("text.bottom_gene_label")
-    .data(genes_to_draw).enter()
+    .data(relevant_annotation).enter()
     .append("text")
-      .filter(function(d){return d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
+      .filter(function(d){return d.show && d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
       .text(function(d){return d.gene})
       .attr("x",function(d){return bottom_zoom_x_scale((d.start+d.end)/2)})
@@ -1774,9 +1753,9 @@ var draw_genes_bottom = function() {
       // .on("click",function(d) {highlight_oncogene_with_boxes(d.gene)})
 
   var gene_arrows_bottom = bottom_zoom_canvas.selectAll("path.bottom_gene_arrow")
-    .data(genes_to_draw).enter()
+    .data(relevant_annotation).enter()
     .append("path")
-      .filter(function(d){return d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
+      .filter(function(d){return d.show &&  d.chromosome == bottom_zoom_chromosome && bottom_zoom_x_scale(d.start) > 0 && bottom_zoom_x_scale(d.end) < both_zoom_canvas_width})
       // .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
       .attr("class","bottom_gene_arrow")
       .attr("d",function(d) {return arrow_path_generator(d,top_or_bottom="bottom")})
@@ -1828,21 +1807,18 @@ function wait_then_draw_bottom() {
   }
 }
 
-var update_genes = function() {
+function update_genes() {
 
   draw_genes_top();
   draw_genes_bottom();
 
+  d3.select("#genes_labeled").selectAll("li").data(relevant_annotation).enter()
+    .append("li")
+      .html(function(d){return d.gene})
+      .style("color",function(d) {console.log("d.show:", d.show); if (d.show) {return "black"} else {return "white"}})
+      .on("click",function(d,i) {toggle_gene_highlighting(i)});
+
 }
-
-// var change_genes_shown = function(gene_list) {
-//   genes_to_show = gene_list
-//   relevant_annotation = []
-
-//   for (var gene in genes_to_show) {
-//     relevant_annotation.push(annotation_by_gene[gene]);
-//   }
-// }
 
 function arraysEqual(arr1, arr2) {
     if(arr1.length !== arr2.length)
@@ -1918,7 +1894,7 @@ function user_message(message_type,message) {
         message_style="warning";
         break;
       default:
-        message_style="default";
+        message_style="info";
     }
     d3.select("#user_message").html("<strong>"+ message_type + ": </strong>" + message).attr("class","alert alert-" + message_style);
   }
@@ -2171,9 +2147,7 @@ function user_set_min_split_reads() {
   draw_circos_connections();
 }
 
-function jump_to_gene(gene) {
-
-    var annotation_for_new_gene = annotation_by_gene[gene];
+function jump_to_gene(annotation_for_new_gene) {
 
     var shown_already = false
     var top_chromosome_readjust = false
@@ -2212,19 +2186,38 @@ function jump_to_gene(gene) {
     }
 }
 
+
+function toggle_gene_highlighting(gene_index_in_relevant_annotation) {
+  console.log(relevant_annotation[gene_index_in_relevant_annotation].gene);
+  if (relevant_annotation[gene_index_in_relevant_annotation].show == true) {
+    relevant_annotation[gene_index_in_relevant_annotation].show = false;
+  } else {
+    relevant_annotation[gene_index_in_relevant_annotation].show = true;
+  }
+  // ????????????  why not catching click event?????
+  update_genes();
+}
+
+
 function user_add_gene(annotation_for_new_gene) {
-  console.log(annotation_for_new_gene);
 
   if (annotation_for_new_gene != null) {
-    annotation_by_gene[annotation_for_new_gene.gene] = annotation_for_new_gene;
 
-    genes_to_show = genes_to_show + annotation_for_new_gene.gene;
-      
-    relevant_annotation.push(annotation_for_new_gene)
-    jump_to_gene(annotation_for_new_gene.gene);
+    for (var i in relevant_annotation) {
+      if (annotation_for_new_gene.gene == relevant_annotation[i].gene) {
+        console.log("added this gene already");
+        jump_to_gene(annotation_for_new_gene);
+        relevant_annotation[i].show = true;
+        return;
+      }
+    }
+
+    annotation_for_new_gene.show = true;
+    relevant_annotation.push(annotation_for_new_gene);
+
+    jump_to_gene(annotation_for_new_gene);
 
     update_genes();
-    console.log("updated_genes");
   }
 }
 
@@ -2299,12 +2292,7 @@ function select_gene(index) {
 
   d3.select("#search_input").property("value","");
  
-  if (genes_to_show.indexOf(annotation_data[index].gene) == -1) {
-    d3.select("#genes_labeled").append("li").html(annotation_data[index].gene);  
-    user_add_gene(annotation_data[index]);
-  } else {
-    jump_to_gene(annotation_data[index].gene);
-  }
+  user_add_gene(annotation_data[index]);
 }
 
 
@@ -2314,18 +2302,6 @@ d3.select("#search_input").on("keyup",function() { search_gene(this,"select_gene
 d3.select("#fusion_gene1_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(1,") });
 d3.select("#fusion_gene2_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(2,") });
 
-
-
-// <div id="fusion_gene1_box" class="gene_search_box">
-//         <input class="search_field" type="text" placeholder="Gene 1">
-//         <div class="livesearch"></div>
-//       </div>
-//       <div id="fusion_gene2_box" class="gene_search_box">
-//         <input class="search_field" type="text" placeholder="Gene 2">
-//         <div class="livesearch"></div>
-//       </div>
-//       <table id="gene_fusion_results">
-//       </table>
 
 //////////    Populate navbar with visualizer settings    ////////////////
 
@@ -2337,21 +2313,6 @@ function populate_navbar() {
                           // .attr("class","dropdown-toggle")
                           // .attr("data-toggle","dropdown")
                           // .attr("href","")
-
-
-  // gene_fusion_dropdown = d3.select("#navbar").append("li").attr("class","dropdown");
-
-  // gene_fusion_dropdown
-  //     .append("a")
-  //       .html("Fusions <span class='caret'></span>")
-  //       .attr("class","dropdown-toggle")
-  //       .attr("data-toggle","dropdown")
-  //       .attr("href","")
-
-  // gene_fusion_dropdown = gene_fusion_dropdown.append("ul")
-  //     .attr("class","dropdown-menu")
-  //     .attr("id", "settings_dropdown_menu")
-  //     .attr("role","menu")
 
   
   // Settings
