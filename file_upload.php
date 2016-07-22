@@ -2,7 +2,7 @@
     
     
     $code = escapeshellcmd($_POST["code_hidden"]);
-    $file_type = $_POST["file_type"];
+    $file_type = escapeshellcmd($_POST["file_type"]);
     $name = "./user_uploads/" . $code . "." . $file_type;
     
     move_uploaded_file($_FILES['file']['tmp_name'], $name);
