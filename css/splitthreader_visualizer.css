@@ -43,20 +43,21 @@
   overflow: scroll;
 }
 
-#genes_labeled {
+.gene_list {
   width: 100%;
   list-style-type:none;
   margin-top:10px;
   float: left;
 }
 
-ul#genes_labeled li {
+ul.gene_list li {
     display:inline-block;
     float: left;
+    font-size: 1vmax;
     background-color: #cccccc;
-    padding: 0.5vmax;
-    margin-right: 1vmax;
-    margin-bottom: 1vmax;
+    padding: 0.2vmax;
+    margin-right: 0.5vmax;
+    margin-bottom: 0.5vmax;
 }
 
 svg {
