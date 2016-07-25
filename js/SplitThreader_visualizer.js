@@ -357,13 +357,10 @@ function wait_then_run_when_all_data_loaded() {
   if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
     // console.log("ready")
     draw_everything(); 
-    //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
-    console.log("connection_data:");
-    console.log(connection_data[0]);
+    //////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
     // for SplitThreader.js graph the variants should be: {"variant_name":"variant1","chrom1":"1","pos1":50100,"strand1":"-","chrom2":"2","pos2":1000,"strand2":"-"},
-    console.log(genome_data);
     SplitThreader_graph.from_genomic_variants(connection_data,genome_data);
-    //////////////////////////    TESTING SplitThreader.js library   ////////////////////////////////
+    //////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
 
     user_message("Info","Loading data is complete")
   } else {
@@ -1686,7 +1683,6 @@ var draw_genes_top = function() {
         .html(function(d) {return d.gene + ", " })
         .on("click", user_add_gene);
   }
-  
 
   var genes_top = top_zoom_canvas.selectAll("text.top_gene_label")
     .data(relevant_annotation).enter()
@@ -1810,12 +1806,14 @@ function wait_then_draw_bottom() {
 function update_genes() {
 
   draw_genes_top();
-  draw_genes_bottom();
+  draw_genes_bottom();  
+
+  d3.select("#genes_labeled").selectAll("li").remove();
 
   d3.select("#genes_labeled").selectAll("li").data(relevant_annotation).enter()
     .append("li")
       .html(function(d){return d.gene})
-      .style("color",function(d) {console.log("d.show:", d.show); if (d.show) {return "black"} else {return "white"}})
+      .style("color",function(d) {if (d.show) {return "black"} else {return "white"}})
       .on("click",function(d,i) {toggle_gene_highlighting(i)});
 
 }
@@ -2188,13 +2186,11 @@ function jump_to_gene(annotation_for_new_gene) {
 
 
 function toggle_gene_highlighting(gene_index_in_relevant_annotation) {
-  console.log(relevant_annotation[gene_index_in_relevant_annotation].gene);
   if (relevant_annotation[gene_index_in_relevant_annotation].show == true) {
     relevant_annotation[gene_index_in_relevant_annotation].show = false;
   } else {
     relevant_annotation[gene_index_in_relevant_annotation].show = true;
   }
-  // ????????????  why not catching click event?????
   update_genes();
 }
 

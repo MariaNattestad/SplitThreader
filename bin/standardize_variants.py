@@ -12,68 +12,85 @@ def is_digit(number):
         return False
 
 def run(args):
-    
+
+    is_vcf_file = False
     is_a_lumpy_file = True
     contains_possible_numreads_column = True
 
     ID_names = set()
 
     line_counter = 0
-    f = open(args.bedpe)
+    f = open(args.input)
     for line in f:
         if line[0] == "#":
+            if line.find("VCF") != -1:
+                is_vcf_file = True
+                print "NOTE: Looks like a vcf file."
             continue
         fields = line.strip().split()
-        if len(fields) < 12:
-            print "ERROR: Variant file must have at least 12 columns. Use output from Lumpy or Sniffles"
-            return        
-        ################## Requirements for all bedpe files: ######################
+        
 
-        # fields[0] is a chromosome name
 
-        # fields[1] and fields[2] are positions, check they are numbers
+        # For both VCF and bedpe files:
+
+        # fields[1] is a position, check it's a number
         if not is_digit(fields[1]):
             print "ERROR: Column 2 must be a genomic position, but it is not a number:", fields[1]
             print line
             return
-        if not is_digit(fields[2]):
-            print "ERROR: Column 3 must be a genomic position, but it is not a number:", fields[2]
-            return
 
-        # fields[3] is a chromosome name
-        
-        # fields[4] and fields[5] are positions, check they are numbers        
-        if not is_digit(fields[4]):
-            print "ERROR: Column 5 must be a genomic position, but it is not a number:", fields[4]
-            return
-        if not is_digit(fields[5]):
-            print "ERROR: Column 6 must be a genomic position, but it is not a number:", fields[5]
-            return
 
-        # fields[6] is the ID name, this is standardized as a count in each of the clean_* functions
-        ID_names.add(fields[6])
+        if is_vcf_file: # For VCF files only
+            ID_names.add(fields[2])
+            
 
-        # fields[7] is a score that we don't use, so ignore this column
+        else: # For bedpe files only:
+            if len(fields) < 12:
+                print "ERROR: Variant file (except vcf) must have at least 12 columns. Use output from Lumpy or Sniffles"
+                return
 
-        # fields[8] and fields[9] are strands, so check they are + and -
-        if fields[8] not in ["+","-"] or fields[9] not in ["+","-"]:
-            print "ERROR: Columns 9 and 10 must only contain + or -"
-            return
+            # fields[0] is a chromosome name
 
-        # fields[10] is a variant type, ignore this for now
-        #################################################################################################
-        
-        #########################  see if we can find the number of split reads  ########################
+            # fields[2] is a position, check it's a number
+            
+            if not is_digit(fields[2]):
+                print "ERROR: Column 3 must be a genomic position, but it is not a number:", fields[2]
+                return
 
-        # fields[11] should be num_reads, we can fill this in from a Lumpy file through fields[12] (see next step)
-        if not fields[11].isdigit():
-            contains_possible_numreads_column = False
+            # fields[3] is a chromosome name
+            
+            # fields[4] and fields[5] are positions, check they are numbers        
+            if not is_digit(fields[4]):
+                print "ERROR: Column 5 must be a genomic position, but it is not a number:", fields[4]
+                return
+            if not is_digit(fields[5]):
+                print "ERROR: Column 6 must be a genomic position, but it is not a number:", fields[5]
+                return
 
-        # fields[12] contains info about STRANDS (including number of reads of support for each one) if this is a Lumpy output file
-        if len(fields) < 13:
-            is_a_lumpy_file = False
-        elif fields[12].find("STRANDS") == -1:
-            is_a_lumpy_file = False
+            # fields[6] is the ID name, this is standardized as a count in each of the clean_* functions
+            ID_names.add(fields[6])
+
+            # fields[7] is a score that we don't use, so ignore this column
+
+            # fields[8] and fields[9] are strands, so check they are + and -
+            if fields[8] not in ["+","-"] or fields[9] not in ["+","-"]:
+                print "ERROR: Columns 9 and 10 must only contain + or -"
+                return
+
+            # fields[10] is a variant type, ignore this for now
+            #################################################################################################
+            
+            #########################  see if we can find the number of split reads  ########################
+
+            # fields[11] should be num_reads, we can fill this in from a Lumpy file through fields[12] (see next step)
+            if not fields[11].isdigit():
+                contains_possible_numreads_column = False
+
+            # fields[12] contains info about STRANDS (including number of reads of support for each one) if this is a Lumpy output file
+            if len(fields) < 13:
+                is_a_lumpy_file = False
+            elif fields[12].find("STRANDS") == -1:
+                is_a_lumpy_file = False
 
         #################################################################################################
         line_counter += 1
@@ -84,9 +101,11 @@ def run(args):
     overwrite_ID_names = False
     if len(ID_names) != line_counter:
         overwrite_ID_names = True
-        print "NOTE: IDs in column 7 are not unique, replacing with numbers"
+        print "NOTE: IDs are not unique, replacing with numbers"
 
-    if is_a_lumpy_file:
+    if is_vcf_file:
+        clean_vcf(args,overwrite_ID_names=overwrite_ID_names)
+    elif is_a_lumpy_file:
         clean_lumpy(args,overwrite_ID_names=overwrite_ID_names)
     elif contains_possible_numreads_column:
         clean_sniffles(args,overwrite_ID_names=overwrite_ID_names)
@@ -100,7 +119,7 @@ def remove_chr(chromosome):
     return chromosome
 
 def clean_sniffles(args,overwrite_ID_names):
-    f = open(args.bedpe)
+    f = open(args.input)
     fout = open(args.out,"w")
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
@@ -121,7 +140,7 @@ def clean_sniffles(args,overwrite_ID_names):
 
 
 def clean_lumpy(args,overwrite_ID_names):
-    f = open(args.bedpe)
+    f = open(args.input)
     fout = open(args.out,"w")
 
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
@@ -161,9 +180,171 @@ def clean_lumpy(args,overwrite_ID_names):
     fout.close()
 
 
+def clean_vcf(args,overwrite_ID_names):
+    f = open(args.input)
+    fout = open(args.out,"w")
+
+    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
+
+
+    variant_type_list = set()
+    ID_counter = 1
+    for line in f:
+        if line[0] == "#":
+            continue
+        fields = line.strip().split()
+
+        info_fields = fields[7].split(";")
+
+        chrom1 = remove_chr(fields[0])
+        start1 = stop1 = fields[1]
+
+        chrom2 = chrom1
+        start2 = stop2 = 0
+        
+        ID_field = fields[2]
+        
+        strand1 = ""
+        strand2 = ""
+        variant_type = fields[4]
+        strand_info = None
+        numreads = -1
+        special_inversion_flag = None
+        special_CT_strand_code = None
+        
+        if fields[4].find("]") != -1 or fields[4].find("[") != -1:
+            # print "_________________________________"
+            # print fields[4]
+            # Find index of first bracket
+            bracket1 = fields[4].find("]")
+            strand2 = "+"
+            if bracket1 == -1:
+                bracket1 = fields[4].find("[")
+                strand2 = "-"
+            
+            # Find index of second bracket
+            bracket2 = fields[4][bracket1+1:].find("]")
+            if bracket2 == -1:
+                bracket2 = fields[4][bracket1+1:].find("[")
+            bracket2 += bracket1 + 1
+
+            # print bracket1,bracket2
+            remainder = fields[4][bracket1+1:bracket2]
+            # print remainder
+            
+            if bracket1 == 0:
+                strand1 = "-"
+            elif bracket2 == len(fields[4])-1:
+                strand1 = "+"
+            else:
+                print "Not sure"
+
+
+            chrom2 = remove_chr(remainder.split(":")[0])
+            start2 = stop2 = remainder.split(":")[1]
+
+        for field in info_fields:
+            if len(field.split("=")) == 2:
+                name,value = field.split("=")
+                if name == "CHR2":
+                    chrom2 = remove_chr(value)
+                if name == "END":
+                    start2 = stop2 = value
+                if name == "STRANDS":
+                    strand_info = value
+                if name == "SVTYPE":
+                    variant_type = value
+                if name == "SR":
+                    numreads = value
+                if name == "BND_DEPTH":
+                    numreads = value
+                if name == "CT":
+                    special_CT_strand_code = value
+            else:
+                if field == "INV3":
+                    special_inversion_flag = "INV3"
+                elif field == "INV5":
+                    special_inversion_flag = "INV5"
+
+        variant_type_list.add(variant_type)
+
+        if strand_info != None:
+            strand_info_list = []
+            while strand_info[3:].find(":") != -1:
+                num = strand_info[0:strand_info[3:].find(":")+1]
+                if num[-1] == ",":
+                    num = num[0:-1]
+                strand_info_list.append(num)
+                strand_info = strand_info[strand_info[3:].find(":")+1:]
+
+            strand_info_list.append(strand_info)
+
+            # print strand_info_list
+
+            for num in strand_info_list:
+                if strand1 == "" or len(strand_info_list)>1:
+                    strand1 = num[0]
+                elif strand1 == num[0]:
+                    # print "strand1 okay"
+                    pass
+                else:
+                    print "strand1 not matching:", strand1, num[0]
+                
+                if strand2 == "" or len(strand_info_list)>1:
+                    strand2 = num[1]
+                elif strand2 == num[1]:
+                    # print "strand2 okay"
+                    pass
+                else:
+                    print "strand2 not matching:", strand2, num[1]
+                numreads = int(num[3:])
+                if overwrite_ID_names:
+                    ID_field = ID_counter
+                elif len(strand_info_list) > 1:
+                    ID_field = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
+                fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,numreads]
+                ID_counter += 1
+                fout.write(",".join(map(str,fields_to_output)) + "\n")
+        else:
+            if strand1 == "" and strand2 == "":
+                if special_CT_strand_code != None:
+                    if special_CT_strand_code[0] == "5":
+                        strand1 = "-"
+                    else:
+                        strand1 = "+"
+                    if special_CT_strand_code[-1] == "5":
+                        strand2 = "-"
+                    else:
+                        strand2 = "+"
+                else:
+                    if variant_type == "DEL":
+                        strand1 = "+"
+                        strand2 = "-"
+                    elif variant_type == "DUP":
+                        strand1 = "-"
+                        strand2 = "+"
+                    elif variant_type == "INS":
+                        strand1 = strand2 = "+"
+                    elif variant_type == "INV" and special_inversion_flag != None:
+                        if special_inversion_flag == "INV3":
+                            strand1 = strand2 = "+"
+                        elif special_inversion_flag == "INV5":
+                            strand1 = strand2 = "-"
+                    else:
+                        print line
+
+            if overwrite_ID_names:
+                ID_field = ID_counter
+            fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,numreads]
+            ID_counter += 1
+            fout.write(",".join(map(str,fields_to_output)) + "\n")
+
+    print "All variant types:", ",".join(variant_type_list)
+
+
 def main():
     parser=argparse.ArgumentParser(description="Standardize variant bedpe file to fit for SplitThreader input")
-    parser.add_argument("-bedpe",help="Variant calls in bedpe format",dest="bedpe",required=True)
+    parser.add_argument("-input",help="Variant calls in bedpe or vcf format",dest="input",required=True)
     parser.add_argument("-out",help="Output filename",dest="out",required=True)
     parser.set_defaults(func=run)
     args=parser.parse_args()

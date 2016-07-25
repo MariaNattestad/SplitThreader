@@ -99,7 +99,11 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 	// Add breakpoints
 	for (var i = 0; i < variants.length; i++) {
 		variants[i].good = false;
-		if (positions_by_chrom[variants[i].chrom1] != undefined && positions_by_chrom[variants[i].chrom2] != undefined) {
+		if (positions_by_chrom[variants[i].chrom1] == undefined) {
+			console.log("Ignoring " + variants[i].variant_name + " because chromosome " + variants[i].chrom1 + " is not in genome set");
+		} else if (positions_by_chrom[variants[i].chrom2] == undefined) {
+			console.log("Ignoring " + variants[i].variant_name + " because chromosome " + variants[i].chrom2 + " is not in genome set");
+		} else {
 			if (variants[i].pos1 > positions_by_chrom[variants[i].chrom1]) {
 				console.log("Variant outside chromosome size range");
 				console.log(variants[i]);
@@ -111,8 +115,6 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 				positions_by_chrom[variants[i].chrom2].push(variants[i].pos2);
 				variants[i].good = true;
 			}
-		} else {
-			console.log("Ignoring " + variants[i].variant_name + " because chromosome not in genome set");
 		}
 	}
 
