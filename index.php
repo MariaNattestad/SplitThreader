@@ -16,7 +16,7 @@
                                 <div class="col-lg-6">
                                     <h3> Variant calls</h3>
                                     <!--    DROPZONE   -->
-                                    <div class="frame"> 
+                                    <div class="frame">
                                         <form action="file_upload.php"
                                             class="dropzone"
                                             id="VariantsDropzone">
@@ -61,16 +61,16 @@
                                               </div>
                                             </p> -->
                                             <!-- BUTTON FOR OPTIONAL PARAMETERS -->
-                                            <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample">
-                                                <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters
+                                            <!-- <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample"> -->
+                                                <!-- <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters -->
                                                 <!-- http://glyphicons.com/ -->
-                                            </a></p>
+                                            <!-- </a></p> -->
                                             <!-- Collapsible area containing optional parameters -->
-                                                <div class="collapse" id="collapseExample">
+                                                <!-- <div class="collapse" id="collapseExample"> -->
                                                     <div class=" thumbnail plot_frame frame">
                                                         <div class="card card-block">
                                                               <table class="table" id="config_table" style="display: table;">
-                                                                  <tr class="active">
+                                                                  <!-- <tr class="active">
                                                                       <th colspan="2">Variant filtering</th></tr>
                                                                   <tr>
                                                                       <td><label for="min_variant_size" class="form-control-label" >Minimum variant size</label></td>
@@ -79,7 +79,7 @@
                                                                   <tr>
                                                                       <td><label for="min_split_reads" class="form-control-label">Minimum split reads supporting variant</label></td>
                                                                       <td><input name="min_split_reads" id="min_split_reads" type="number" step="1" min="0" class="form-control" value = "0"></td>
-                                                                  </tr>
+                                                                  </tr> -->
                                                                   <tr class="active">
                                                                       <th colspan="2">Annotation</th></tr>
                                                                   <tr>
@@ -91,7 +91,7 @@
                                                               </table>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                <!-- </div> -->
                                             <!-- End of collapse area -->
                                             
                                             <p id="analysis_form">
@@ -108,7 +108,7 @@
                       <div class="panel-body">
                         <p>Upload variant calls and a copy number profile</p>
                         <ol>
-                          <li>Run <a href="https://github.com/fritzsedlazeck/Sniffles">Sniffles</a> (for PacBio data) or <a href="https://github.com/arq5x/lumpy-sv">Lumpy</a> (for Illumina data, select output as bedpe format) and upload the .bedpe file</li>
+                          <li>Run <a href="https://github.com/fritzsedlazeck/Sniffles">Sniffles</a> (for PacBio data) or <a href="https://github.com/arq5x/lumpy-sv">Lumpy</a> (for Illumina data, select output as bedpe format) and upload the .bedpe file. VCF files are supported, but do not always include the necessary information such as strand and number of reads, so some information may be missing. The script parses your file based on the format of VCF files from Manta, Delly, and Lumpy, and in some cases has to guess the strands from the variant types and other flags specific to each variant-caller's output. </li>
                           <li>Run <a href="https://github.com/marianattestad/copycat">Copycat</a> on your bam file to convert to binned copy numbers, and upload the resulting .csv file</li>
                         </ol>
                       </div>

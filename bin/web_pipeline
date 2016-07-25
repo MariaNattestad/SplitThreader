@@ -64,7 +64,7 @@ else
 fi
 
 echo "1. Reading input files" >> $LOG_FILE
-./bin/standardize_variants.py -bedpe $VARIANTS -out $OUTPUT_PREFIX.variants.csv >> $LOG_FILE
+./bin/standardize_variants.py -input $VARIANTS -out $OUTPUT_PREFIX.variants.csv >> $LOG_FILE
 
 if [ -e $OUTPUT_PREFIX.variants.csv ];
 then 
