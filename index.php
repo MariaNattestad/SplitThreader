@@ -76,10 +76,10 @@
                                                                       <td><label for="min_variant_size" class="form-control-label" >Minimum variant size</label></td>
                                                                       <td><input name="min_variant_size" id="min_variant_size" type="number" step="1" min="0" class="form-control" value = "0"></td>
                                                                   </tr>
-                                                                  <tr>
+                                                                  <!-- <tr>
                                                                       <td><label for="min_split_reads" class="form-control-label">Minimum split reads supporting variant</label></td>
                                                                       <td><input name="min_split_reads" id="min_split_reads" type="number" step="1" min="0" class="form-control" value = "0"></td>
-                                                                  </tr>
+                                                                  </tr> -->
                                                                   <tr class="active">
                                                                       <th colspan="2">Annotation</th></tr>
                                                                   <tr>
