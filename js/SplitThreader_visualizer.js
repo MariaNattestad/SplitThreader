@@ -326,10 +326,12 @@ svg.call(variant_tip);
 var run = function(){
   populate_navbar();
 
-  // read_config_file();
-  read_annotation_file(); // when not using config
-  read_genome_file();
+  read_annotation_file(); // when not using config and in case config file doesn't work or has no input
 
+  read_config_file();
+  
+  
+  read_genome_file();
   // read_coverage_file();
 
   read_spansplit_file();
