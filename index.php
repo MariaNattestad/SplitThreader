@@ -8,7 +8,7 @@
 
 <!--INSTRUCTIONS-->
   <div class="row">
-          <div class="col-lg-7"> 
+          <div class="col-lg-7">
                   <div class="panel panel-default">
                           <div class="panel-heading"> <h3 class="panel-title">Run SplitThreader</h3></div>
                           <div class="panel-body">
@@ -142,9 +142,14 @@
    
 <script type="text/javascript">
 
+var copynumber_done = false;
+var variants_done = false;
+
 Dropzone.options.CopyNumberDropzone = {
   accept: function(file, done) {
     console.log("uploaded");
+    copynumber_done = true;
+    check_if_both_done();
     done();
   },
   init: function() {
@@ -153,6 +158,8 @@ Dropzone.options.CopyNumberDropzone = {
       if (this.files[1]!=null){
         this.removeFile(this.files[0]);
       }
+      $("#submit_button").prop("disabled",true);
+      copynumber_done = false;
     });
   }
 };  
@@ -160,6 +167,8 @@ Dropzone.options.CopyNumberDropzone = {
 Dropzone.options.VariantsDropzone = {
   accept: function(file, done) {
     console.log("uploaded");
+    variants_done = true;
+    check_if_both_done();
     done();
   },
   init: function() {
@@ -168,9 +177,18 @@ Dropzone.options.VariantsDropzone = {
       if (this.files[1]!=null){
         this.removeFile(this.files[0]);
       }
+      $("#submit_button").prop("disabled",true);
+      variants_done = false;
     });
   }
 };
+
+function check_if_both_done() {
+  if (copynumber_done && variants_done) {
+    console.log("both done");
+    $("#submit_button").prop("disabled",false);
+  }
+}
 
 </script>
 </body>
