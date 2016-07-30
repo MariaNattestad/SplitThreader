@@ -161,14 +161,19 @@ Dropzone.options.CopyNumberDropzone = {
       $("#submit_button").prop("disabled",true);
       copynumber_done = false;
     });
+    this.on("complete", function (file) {
+        if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
+          console.log("uploaded");
+          copynumber_done = true;
+          check_if_both_done();
+        }
+    });
   }
 };  
 
 Dropzone.options.VariantsDropzone = {
   accept: function(file, done) {
-    console.log("uploaded");
-    variants_done = true;
-    check_if_both_done();
+    console.log("uploading");
     done();
   },
   init: function() {
@@ -178,13 +183,20 @@ Dropzone.options.VariantsDropzone = {
         this.removeFile(this.files[0]);
       }
       $("#submit_button").prop("disabled",true);
-      variants_done = false;
+        variants_done = false;
+    });
+      this.on("complete", function (file) {
+        if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
+          console.log("uploaded");
+          variants_done = true;
+          check_if_both_done();
+        }
     });
   }
 };
 
 function check_if_both_done() {
-  if (copynumber_done && variants_done) {
+  if (copynumber_done==true && variants_done==true) {
     console.log("both done");
     $("#submit_button").prop("disabled",false);
   }
