@@ -1,12 +1,19 @@
 #! /usr/bin/env python
 import argparse
+import gzip
 
 def run(args):
+
+
     f = open(args.csv)
+    header = f.readline()
+    # If file is gzipped, close it and open using gzip, then reread the header
+    if header[0:4]=="\x1f\x8b\x08\x08":
+        f.close()
+        f = gzip.open(args.csv)
+        header = f.readline().strip()
 
     column_index = {}
-    header = f.readline()
-
     delim = ","
     header_fields = header.split(",")
     if len(header_fields)<4 and len(header.split()) >= 4:

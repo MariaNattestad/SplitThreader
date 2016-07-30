@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import argparse
+import gzip
 
 # the standard .isdigit() does not work for negative numbers
 # and sometimes alternative chromosomes in Lumpy will have an interval that extends to -1
@@ -20,12 +21,27 @@ def run(args):
     ID_names = set()
 
     line_counter = 0
+    
+
+    is_gzipped = False
+    
     f = open(args.input)
+    header = f.readline()
+    # If file is gzipped, close it and open using gzip
+    if header[0:4]=="\x1f\x8b\x08\x08":
+        f.close()
+        is_gzipped = True
+        f = gzip.open(args.input)
+    else:
+        f.close()
+        f = open(args.input)
+    
+
     for line in f:
         if line[0] == "#":
             if line.find("VCF") != -1:
                 is_vcf_file = True
-                print "NOTE: Looks like a vcf file."
+                print "NOTE: Contains 'VCF' in a header row (starting with #), so treating it like a VCF file."
             continue
         fields = line.strip().split()
         
@@ -104,11 +120,11 @@ def run(args):
         print "NOTE: IDs are not unique, replacing with numbers"
 
     if is_vcf_file:
-        clean_vcf(args,overwrite_ID_names=overwrite_ID_names)
+        clean_vcf(args,overwrite_ID_names=overwrite_ID_names,is_gzipped = is_gzipped)
     elif is_a_lumpy_file:
-        clean_lumpy(args,overwrite_ID_names=overwrite_ID_names)
+        clean_lumpy(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
     elif contains_possible_numreads_column:
-        clean_sniffles(args,overwrite_ID_names=overwrite_ID_names)
+        clean_sniffles(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
     else:
         print "ERROR: This file needs column 12 to have the number of split reads supporting each variant, or it can be a Lumpy output file with the STRANDS tag included within column 13. This file has neither."
         return
@@ -118,8 +134,13 @@ def remove_chr(chromosome):
         chromosome = chromosome[3:]
     return chromosome
 
-def clean_sniffles(args,overwrite_ID_names):
-    f = open(args.input)
+def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
+    f = None
+    if is_gzipped == True:
+        f = gzip.open(args.input)
+    else:
+        f = open(args.input)
+
     fout = open(args.out,"w")
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
@@ -139,8 +160,14 @@ def clean_sniffles(args,overwrite_ID_names):
     fout.close()
 
 
-def clean_lumpy(args,overwrite_ID_names):
-    f = open(args.input)
+def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
+    
+    f = None
+    if is_gzipped == True:
+        f = gzip.open(args.input)
+    else:
+        f = open(args.input)
+
     fout = open(args.out,"w")
 
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
@@ -180,8 +207,14 @@ def clean_lumpy(args,overwrite_ID_names):
     fout.close()
 
 
-def clean_vcf(args,overwrite_ID_names):
-    f = open(args.input)
+def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
+    
+    f = None
+    if is_gzipped == True:
+        f = gzip.open(args.input)
+    else:
+        f = open(args.input)
+
     fout = open(args.out,"w")
 
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
