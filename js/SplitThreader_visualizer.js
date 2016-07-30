@@ -489,10 +489,9 @@ var load_coverage = function(chromosome,top_or_bottom) {
 	});
 }
 
-
 var read_spansplit_file = function() {
 	d3.csv(directory + nickname + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
-		// chrom1,pos1,chrom2,pos2,variant_name,strand1,strand2,split,span1,span2,flow_category,description
+		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
 
 		for (var i=0;i<spansplit_input.length;i++) {
@@ -509,12 +508,14 @@ var read_spansplit_file = function() {
 		connection_data = spansplit_input;
 
 		spansplit_done = true;
+		make_variant_table();
 	});
 }
 
 var read_annotation_file = function() {
+	console.log("looking for annotaiton file");
 	if (config["annotation"] != "none") {
-		// console.log("Reading annotation");
+		console.log("Reading annotation");
 
 		d3.csv(config["annotation"], function(error,annotation_input) {
 
@@ -534,7 +535,9 @@ var read_annotation_file = function() {
 			annotation_data = annotation_input;
 
 			annotation_done = true;
-			// console.log("Finished reading annotation")
+
+			create_gene_search_boxes();
+			console.log("Finished reading annotation")
 			// console.log(annotation_data[0])
 		});
 	} else {
@@ -1900,6 +1903,50 @@ function user_message(message_type,message) {
 	}
 }
 
+function search_select_gene(d) {
+	console.log("selected gene " + d.gene);
+	user_add_gene(d);
+}
+function search_select_fusion1(d) {
+	console.log("selected gene " + d.gene + " as fusion gene 1");
+	fusion_genes[1] = d;
+	d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
+	user_add_gene(d);
+}
+function search_select_fusion2(d) {
+	console.log("selected gene " + d.gene + " as fusion gene 2");
+	fusion_genes[2] = d;
+	d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
+	user_add_gene(d);
+}
+function create_gene_search_boxes() {
+	console.log("create_gene_search_boxes");
+	var gene_livesearch = d3.livesearch().max_suggestions_to_show(15).search_list(annotation_data).search_key("gene").placeholder(annotation_data[0].gene);
+	// console.log(gene_livesearch);
+	d3.select("#gene_livesearch").call(gene_livesearch.selection_function(search_select_gene));
+	d3.select("#fusion_gene1_livesearch").call(gene_livesearch.selection_function(search_select_fusion1));
+	d3.select("#fusion_gene2_livesearch").call(gene_livesearch.selection_function(search_select_fusion2));
+}
+
+function make_variant_table() {
+	console.log(connection_data);
+	var type_counts = {};
+	for (var i in connection_data) {
+		if (type_counts[connection_data[i].variant_type] == undefined) {
+			type_counts[connection_data[i].variant_type] = 1;
+		} else {
+			type_counts[connection_data[i].variant_type]++;
+		}
+	}
+	var header = ["type","count"]; //,"show"];
+	d3.select("#variant_table").append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
+	var rows = d3.select("#variant_table").selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
+	rows.append("td").html(function(d) {return d});;
+	rows.append("td").html(function(d) {return type_counts[d]});
+	// rows.append("td").append("input").property("type","checkbox");
+}
+
+
 
 // var get_annotation_by_gene_name = function(gene) {
 //   var annotation_index = annotation_genes_available.indexOf(gene);
@@ -2228,134 +2275,134 @@ function user_add_gene(annotation_for_new_gene) {
 
 
 
-function search_gene(input_field_element, select_function_name) {
+// function search_gene(input_field_element, select_function_name) {
 
 	
-	var search_value = input_field_element.value;
+// 	var search_value = input_field_element.value;
 
-	if (search_value.length==0) {
-		d3.select("#readname_livesearch").html("");
-		d3.select("#readname_livesearch").style("border","0px");
-		_readname_search.last_value = "";
-		return;
-	}
+// 	if (search_value.length==0) {
+// 		d3.select("#readname_livesearch").html("");
+// 		d3.select("#readname_livesearch").style("border","0px");
+// 		_readname_search.last_value = "";
+// 		return;
+// 	}
 
-	var key = d3.event.keyCode;
+// 	var key = d3.event.keyCode;
 
-	if (key == 13) { // Enter/Return key
-		var selected = d3.select("#read_select_" + _readname_search.highlighted_index);
-		if (selected[0] != null) {
-			select_read_by_index(selected.property("value"));
-			_readname_search.highlighted_index = 0;
-		}
-		return;
-	} else if (key == 40) { // down arrow
-		if (_readname_search.highlighted_index < _readname_search.last_index) {
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
-			_readname_search.highlighted_index++;
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");  
-		}
-		return;
-	} else if (key == 38) { // up arrow
-		if (_readname_search.highlighted_index > 0) {
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
-			_readname_search.highlighted_index--;
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
-		}
-		return; 
-	}
+// 	if (key == 13) { // Enter/Return key
+// 		var selected = d3.select("#read_select_" + _readname_search.highlighted_index);
+// 		if (selected[0] != null) {
+// 			select_read_by_index(selected.property("value"));
+// 			_readname_search.highlighted_index = 0;
+// 		}
+// 		return;
+// 	} else if (key == 40) { // down arrow
+// 		if (_readname_search.highlighted_index < _readname_search.last_index) {
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
+// 			_readname_search.highlighted_index++;
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");  
+// 		}
+// 		return;
+// 	} else if (key == 38) { // up arrow
+// 		if (_readname_search.highlighted_index > 0) {
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
+// 			_readname_search.highlighted_index--;
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
+// 		}
+// 		return; 
+// 	}
 
-	if (search_value == _readname_search.last_value) {
-		return;
-	}
-	_readname_search.last_value = search_value;
+// 	if (search_value == _readname_search.last_value) {
+// 		return;
+// 	}
+// 	_readname_search.last_value = search_value;
 
-	var max_suggestions_to_show = 10;
-	var suggestions = "";
-	var num_suggestions = 0;
-	for (var i in _Chunk_alignments) {
-		if (_Chunk_alignments[i].readname.indexOf(search_value) != -1) {
-			var func = "select_read_by_index('" + i + "')";
-			suggestions += '<li value="' + i + '"  id="read_select_' + num_suggestions + '" onclick="' + func + '">' + _Chunk_alignments[i].readname + '</li>';
-			_readname_search.last_index = num_suggestions;
-			num_suggestions++;
-			if (num_suggestions >= max_suggestions_to_show) {
-				suggestions += '<li>. . .</li>';
-				break;
-			}
-		}
-	}
-	if (suggestions == "") {
-		suggestions = "no match";
-	} 
+// 	var max_suggestions_to_show = 10;
+// 	var suggestions = "";
+// 	var num_suggestions = 0;
+// 	for (var i in _Chunk_alignments) {
+// 		if (_Chunk_alignments[i].readname.indexOf(search_value) != -1) {
+// 			var func = "select_read_by_index('" + i + "')";
+// 			suggestions += '<li value="' + i + '"  id="read_select_' + num_suggestions + '" onclick="' + func + '">' + _Chunk_alignments[i].readname + '</li>';
+// 			_readname_search.last_index = num_suggestions;
+// 			num_suggestions++;
+// 			if (num_suggestions >= max_suggestions_to_show) {
+// 				suggestions += '<li>. . .</li>';
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	if (suggestions == "") {
+// 		suggestions = "no match";
+// 	} 
 	
-	d3.select("#readname_livesearch").html(suggestions);
-	d3.select("#readname_livesearch").style("border","1px solid #A5ACB2");
+// 	d3.select("#readname_livesearch").html(suggestions);
+// 	d3.select("#readname_livesearch").style("border","1px solid #A5ACB2");
 
-	d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
-
-
-	// ???????????????????????????????????????????????????????
-
-	var str = input_field_element.value;
-	var parent = d3.select(input_field_element.parentNode);
+// 	d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
 
 
-	if (str.length==0) { 
-		parent.select(".livesearch").html("").style("border","0px");
-		return;
-	}
+// 	// ???????????????????????????????????????????????????????
 
-	var key = d3.event.keyCode;
+// 	var str = input_field_element.value;
+// 	var parent = d3.select(input_field_element.parentNode);
 
-	if (key == 13) { // Enter/Return key
-		var selected = d3.select("#read_select_" + _readname_search.highlighted_index);
-		if (selected[0] != null) {
-			select_read_by_index(selected.property("value"));
-			_readname_search.highlighted_index = 0;
-		}
-		return;
-	} else if (key == 40) { // down arrow
-		if (_readname_search.highlighted_index < _readname_search.last_index) {
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
-			_readname_search.highlighted_index++;
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");  
-		}
-		return;
-	} else if (key == 38) { // up arrow
-		if (_readname_search.highlighted_index > 0) {
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
-			_readname_search.highlighted_index--;
-			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
-		}
-		return; 
-	}
 
-	var search_value = str.toUpperCase();
+// 	if (str.length==0) { 
+// 		parent.select(".livesearch").html("").style("border","0px");
+// 		return;
+// 	}
 
-	var suggestions = "";
-	for (var i in annotation_data) {
-		if (annotation_data[i].gene.indexOf(search_value) != -1) {
-			suggestions += '<p onclick="' + select_function_name + i + ')">' + annotation_data[i].gene + "  [chr: " + annotation_data[i].chromosome + "]" + '</p>';
-		}
-	}
-	if (suggestions == "") {
-		suggestions = "no match";
-	}
-	parent.select(".livesearch").html(suggestions).style("border","1px solid #A5ACB2");
+// 	var key = d3.event.keyCode;
 
-}
+// 	if (key == 13) { // Enter/Return key
+// 		var selected = d3.select("#read_select_" + _readname_search.highlighted_index);
+// 		if (selected[0] != null) {
+// 			select_read_by_index(selected.property("value"));
+// 			_readname_search.highlighted_index = 0;
+// 		}
+// 		return;
+// 	} else if (key == 40) { // down arrow
+// 		if (_readname_search.highlighted_index < _readname_search.last_index) {
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
+// 			_readname_search.highlighted_index++;
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");  
+// 		}
+// 		return;
+// 	} else if (key == 38) { // up arrow
+// 		if (_readname_search.highlighted_index > 0) {
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#ffffff");
+// 			_readname_search.highlighted_index--;
+// 			d3.select("#read_select_" + _readname_search.highlighted_index).style("background-color","#eeeeee");
+// 		}
+// 		return; 
+// 	}
 
-function select_fusion_gene(num,index) {
-	d3.select("#gene_fusion_box").selectAll(".livesearch").html("").style("border","0px");
+// 	var search_value = str.toUpperCase();
 
-	d3.selectAll(".search_field").property("value","");
-	d3.select("#gene_fusion_table").select("#gene" + num).html(annotation_data[index].gene);
+// 	var suggestions = "";
+// 	for (var i in annotation_data) {
+// 		if (annotation_data[i].gene.indexOf(search_value) != -1) {
+// 			suggestions += '<p onclick="' + select_function_name + i + ')">' + annotation_data[i].gene + "  [chr: " + annotation_data[i].chromosome + "]" + '</p>';
+// 		}
+// 	}
+// 	if (suggestions == "") {
+// 		suggestions = "no match";
+// 	}
+// 	parent.select(".livesearch").html(suggestions).style("border","1px solid #A5ACB2");
 
-	fusion_genes[num] = annotation_data[index];
-	user_add_gene(annotation_data[index]);
+// }
+
+// function select_fusion_gene(num,index) {
+// 	d3.select("#gene_fusion_box").selectAll(".livesearch").html("").style("border","0px");
+
+// 	d3.selectAll(".search_field").property("value","");
+// 	d3.select("#gene_fusion_table").select("#gene" + num).html(annotation_data[index].gene);
+
+// 	fusion_genes[num] = annotation_data[index];
+// 	user_add_gene(annotation_data[index]);
 	
-}
+// }
 
 function submit_fusion() {
 	if (fusion_genes[1] != undefined && fusion_genes[2] != undefined) {
@@ -2377,20 +2424,20 @@ function submit_fusion() {
 
 d3.select("#submit_fusion").on("click",submit_fusion);
 
-function select_gene(index) {
-	d3.select(".livesearch").html("").style("border","0px");
+// function select_gene(index) {
+// 	d3.select(".livesearch").html("").style("border","0px");
 
-	d3.select("#search_input").property("value","");
+// 	d3.select("#search_input").property("value","");
  
-	user_add_gene(annotation_data[index]);
-}
+// 	user_add_gene(annotation_data[index]);
+// }
 
 
 
-d3.select("#search_input").on("keyup",function() { search_gene(this,"select_gene(") });
+// d3.select("#search_input").on("keyup",function() { search_gene(this,"select_gene(") });
 
-d3.select("#fusion_gene1_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(1,") });
-d3.select("#fusion_gene2_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(2,") });
+// d3.select("#fusion_gene1_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(1,") });
+// d3.select("#fusion_gene2_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(2,") });
 
 
 //////////    Populate navbar with visualizer settings    ////////////////
