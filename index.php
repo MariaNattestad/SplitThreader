@@ -8,12 +8,12 @@
 
 <!--INSTRUCTIONS-->
   <div class="row">
-          <div class="col-lg-7">
+          <div class="col-md-7">
                   <div class="panel panel-default">
                           <div class="panel-heading"> <h3 class="panel-title">Run SplitThreader</h3></div>
                           <div class="panel-body">
                               <div class="row">
-                                <div class="col-lg-6">
+                                <div class="col-sm-6">
                                     <h3> Variant calls</h3>
                                     <!--    DROPZONE   -->
                                     <div class="frame">
@@ -26,7 +26,7 @@
                                     </div>
                                     <!--   end of DROPZONE   -->
                                 </div>
-                                <div class="col-lg-6">
+                                <div class="col-sm-6">
                                     <h3> Copy number profile</h3>
                                     <!--    DROPZONE   -->
                                     <div class="frame"> 
@@ -102,7 +102,7 @@
                           </div>
                   </div>
           </div>
-          <div class="col-lg-5"> 
+          <div class="col-md-5"> 
                   <div class="panel panel-default">
                       <div class="panel-heading"> <h3 class="panel-title">Instructions</h3></div>
                       <div class="panel-body">
