@@ -148,8 +148,6 @@ var variants_done = false;
 Dropzone.options.CopyNumberDropzone = {
   accept: function(file, done) {
     console.log("uploaded");
-    copynumber_done = true;
-    check_if_both_done();
     done();
   },
   init: function() {
