@@ -2415,7 +2415,7 @@ function submit_fusion() {
 		var new_row = d3.select("#gene_fusion_table_results").insert("tr",":first-child").attr("class","record");
 			new_row.append("td").html(fusion_genes[1].name).property("width","20%");
 			new_row.append("td").html(fusion_genes[2].name).property("width","20%");
-			new_row.append("td").html(results.variant_names).property("width","60%");
+			new_row.append("td").html("distance: " + results.distance + "bp").property("width","60%");
 		highlight_gene_fusion(results);
 	} else {
 		user_message("Instructions","Select genes first using the Gene 1 and Gene 2 input fields");
