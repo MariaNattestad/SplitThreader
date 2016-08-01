@@ -15,6 +15,32 @@
 	
 	<div class="panel_box"><div id="user_message" class="alert alert-default" role="alert"></div></div>
 
+	<div class="panel-group ">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h4 class="panel-title">
+					<a data-toggle="collapse" class="active" href="#variant_detail_box">Variant detail</a>
+				</h4>
+			</div>
+			<div class="panel-collapse collapse in" id="variant_detail_box">
+				<div class="panel-body">
+					<div id="variant_detail_text">Click on a variant to show detail</div>
+					
+					<div id="send_to_ribbon_panel">
+						<p>Ribbon (<a href="http://genomeribbon.com">genomeribbon.com</a>) is a long-read alignment viewer that allows you to see all the reads mapping near a variant including their other alignments across the genome, and you can see detailed alignments for each read to determine which parts of the read are mapping where.</p>
+						<form action="/ribbon/index.php" method="post" target="_blank">
+							<div id="data_to_send_ribbon">
+								<!-- Hidden fields go here -->
+							</div>
+							<input type="submit" value="Send variant to Ribbon">	
+						</form>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 	<div class="panel-group ">
 		<div class="panel panel-default">
@@ -93,8 +119,6 @@
 	</div>
 
 
-
-
 	<div class="panel-group ">
 		<div class="panel panel-default">
 			<div class="panel-heading">
@@ -107,14 +131,12 @@
 					<h4> Top genes:</h4>
 					<ul id="top_local_genes" class="gene_list"></ul>
 					
-					<h4>Bottom genes</h4>
+					<h4>Bottom genes:</h4>
 					<ul id="bottom_local_genes" class="gene_list"></ul>
 				</div>
 			</div>
 		</div>
 	</div>
-
-
 
 </div>
 

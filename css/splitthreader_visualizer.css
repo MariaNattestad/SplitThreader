@@ -13,7 +13,9 @@
   width: 100%;
 }
 
-
+#send_to_ribbon_panel {
+  display:none;
+}
 #gene_fusion_table, #gene_fusion_table_results {
   width: 100%;
 }
@@ -23,6 +25,9 @@
   display: inline-block;
 }
 
+.spansplit_loop_top, .spansplit_loop_bottom, .spansplit_connection, .spansplit_stub_top, .spansplit_stub_bottom {
+  cursor: pointer;
+}
 /*#gene_fusion_table_results table, #gene_fusion_table_results th, #gene_fusion_table_results td {
   text-align: center;
   padding: 0.3vmin 0.3vmin 0.3vmin 0.3vmin;
