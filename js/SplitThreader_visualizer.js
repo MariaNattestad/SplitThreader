@@ -90,6 +90,7 @@ function responsive_sizing() {
 	_padding.bottom = svg_height*0.10; 
 	_padding.left = svg_width*0.02; 
 	_padding.right = svg_width*0.02; 
+	_padding.tooltip = svg_height*0.05;
 	_padding.between_circos_and_zoom_plots = svg_width*0.02; 
 
 	circos_size = svg_width*0.35; //Math.min(svg_width,svg_height)*0.50;
@@ -288,28 +289,25 @@ var bottom_loop_scale = d3.scale.linear()
 
 ///////////   Add tooltips   /////////////////
 
+var _tooltip = {};
+function show_tooltip(text,x,y,parent_object) {
+	parent_object.selectAll("g.tip").remove();
+	_tooltip.g = parent_object.append("g").attr("class","tip");
+	_tooltip.g.attr("transform","translate(" + x + "," + y +  ")").style("visibility","visible");
+	
+	_tooltip.width = (text.length + 4) * (svg_width/100);
+	_tooltip.height = (svg_height/20);
 
-// var box_tip = function() {console.log("No d3.tip offline")}
-// var variant_tip = function() {console.log("No d3.tip offline")};
+	_tooltip.rect = _tooltip.g.append("rect")
+			.attr("width",_tooltip.width)
+			.attr("x",(-_tooltip.width/2))
+			.attr("height",_tooltip.height)
+			.attr("y",(-_tooltip.height/2))
+			.attr("fill","black");
 
-var box_tip = d3.tip()
-	.attr('class', 'd3-tip')
-	.offset([-10, 0])
-	.html(function(d) {
-		return "" + d.height + " reads";
-	}
-)
-var variant_tip = d3.tip()
-	.attr('class', 'd3-tip')
-	.offset([-10, 0])
-	.html(function(d) {
-		// return "<strong>Reads: </strong>" + d.split + "";
-		return "" + d.split + " reads"; // + " Flow: "+  d.flow_category + "";
-	}
-)
-
-svg.call(box_tip);
-svg.call(variant_tip);
+	_tooltip.tip = _tooltip.g.append("text");
+	_tooltip.tip.text(text).attr("fill","white").style('text-anchor',"middle").attr("dominant-baseline","middle");
+}
 
 
 ///////////  Run the whole program by loading all files and when they are loaded drawing everything ///////////
@@ -1251,8 +1249,13 @@ var draw_connections = function() {
 				.attr("fill","none")
 				.attr("d",connection_path_generator)
 				.on('click',variant_click)
-				.on('mouseover',variant_tip.show)
-				.on('mouseout',variant_tip.hide)
+				.on('mouseover', function(d) {
+					var text = d.split + " reads";
+					var x = both_zoom_left_x_coordinate+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
+					var y = y_coordinate_for_connection("top") - _padding.tooltip;
+					show_tooltip(text,x,y,svg);
+				})
+				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
 
 
 				
@@ -1286,8 +1289,13 @@ var draw_connections = function() {
 				.attr("fill","none")
 				.attr("d",function(d){return loop_path_generator(d,"top")})
 				.on('click',variant_click)
-				.on('mouseover',variant_tip.show)
-				.on('mouseout',variant_tip.hide)
+				.on('mouseover', function(d) {
+					var text = d.split + " reads";
+					var x = both_zoom_left_x_coordinate+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
+					var y = y_coordinate_for_connection("top") - _padding.tooltip;
+					show_tooltip(text,x,y,svg);
+				})
+				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
 
 
 		svg.selectAll("path.spansplit_loop_bottom")
@@ -1301,14 +1309,19 @@ var draw_connections = function() {
 						return false;
 					}
 				})
-				.attr("class","spansplit_loop_top")
+				.attr("class","spansplit_loop_bottom")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
 				.attr("d",function(d){return loop_path_generator(d,"bottom")})
 				.on('click',variant_click)
-				.on('mouseover',variant_tip.show)
-				.on('mouseout',variant_tip.hide)
+				.on('mouseover', function(d) {
+					var text = d.split + " reads";
+					var x = both_zoom_left_x_coordinate+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
+					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
+					show_tooltip(text,x,y,svg);
+				})
+				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
 
 
 
@@ -1330,8 +1343,13 @@ var draw_connections = function() {
 				.attr("fill","none")
 				.attr("d",function(d){return stub_path_generator(d,"top")})
 				.on('click',variant_click)
-				.on('mouseover',variant_tip.show)
-				.on('mouseout',variant_tip.hide)
+				.on('mouseover', function(d) {
+					var text = d.split + " reads";
+					var x = both_zoom_left_x_coordinate+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
+					var y = y_coordinate_for_connection("top") - _padding.tooltip;
+					show_tooltip(text,x,y,svg);
+				})
+				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
 
 
 		svg.selectAll("path.spansplit_stub_bottom")
@@ -1351,8 +1369,13 @@ var draw_connections = function() {
 				.attr("fill","none")
 				.attr("d",function(d){ return stub_path_generator(d,"bottom")})
 				.on('click',variant_click)
-				.on('mouseover',variant_tip.show)
-				.on('mouseout',variant_tip.hide)
+				.on('mouseover', function(d) {
+					var text = d.split + " reads";
+					var x = both_zoom_left_x_coordinate+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
+					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
+					show_tooltip(text,x,y,svg);
+				})
+				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
 
 }
 
@@ -1381,16 +1404,13 @@ var arrow_path_generator = function(d, top_or_bottom) {
 		if (d.strand == "+") {
 			// console.log(d.gene)
 			// console.log("forward")
-			arrow_head = d.end
-			arrow_butt = d.start
+			arrow_head = d.end;
+			arrow_butt = d.start;
 			arrowhead_size = -1 * arrowhead_size;
 		} else if (d.strand == "-"){
-
 			// console.log(d.gene)
 			// console.log("reverse")
 		}
-
-
 
 		var x1 = _scales.zoom_plots["top"].x(arrow_butt),  // start (arrow butt)
 				x2 = _scales.zoom_plots["top"].x(arrow_head),  // end (arrow head)

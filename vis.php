@@ -126,7 +126,6 @@
 
 
 <script src="js/lib/d3.v3.min.js"></script>
-<script src="js/lib/d3.tip.v0.6.3.js"></script>
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/bootstrap.min.js"></script>
 <script src="js/lib/priority-queue.min.js"></script>
