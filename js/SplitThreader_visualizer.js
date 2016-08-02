@@ -16,14 +16,8 @@ var nickname=getUrlVars()["nickname"];
 // console.log("directory:" + directory);
 // console.log("nickname:" + nickname);
 
-var w = window,
-		d = document,
-		e = d.documentElement,
-		g = d.getElementsByTagName('body')[0];
 
-var svg_width;
-var svg_height;
-
+var _layout = {"svg_width":null, "svg_height": null};
 
 var _padding = {};
 var _settings = {};
@@ -54,14 +48,6 @@ var zoom_containers = {"top":null,"bottom":null};
 
 var bottom_zoom_canvas_top_y_coordinate; 
 
-
-
-var panel_top_position;
-var panel_height;
-var panel_width;
-
-var panel_canvas;
-
 var fusion_genes = {};
 
 var _SplitThreader_graph = new Graph();
@@ -73,27 +59,32 @@ function responsive_sizing() {
 	var panel_width_fraction = 0.25;
 	var top_banner_size = 65;
 
+	var w = window,
+		d = document,
+		e = d.documentElement,
+		g = d.getElementsByTagName('body')[0];
+
 
 	var window_width = (w.innerWidth || e.clientWidth || g.clientWidth);
-	svg_width = window_width*(1-panel_width_fraction);
-	svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96 - top_banner_size;
+	_layout.svg_width = window_width*(1-panel_width_fraction);
+	_layout.svg_height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96 - top_banner_size;
 
 	d3.select("#right_panel")
 		.style("display","block")
 		.style("width",window_width*panel_width_fraction*0.90 + "px")
-		.style("height",svg_height + "px")
+		.style("height",_layout.svg_height + "px")
 		.style("float","left");
 
 
 
-	_padding.top = svg_height*0.10;
-	_padding.bottom = svg_height*0.10; 
-	_padding.left = svg_width*0.02; 
-	_padding.right = svg_width*0.02; 
-	_padding.tooltip = svg_height*0.05;
-	_padding.between_circos_and_zoom_plots = svg_width*0.02; 
+	_padding.top = _layout.svg_height*0.10;
+	_padding.bottom = _layout.svg_height*0.10; 
+	_padding.left = _layout.svg_width*0.02; 
+	_padding.right = _layout.svg_width*0.02; 
+	_padding.tooltip = _layout.svg_height*0.05;
+	_padding.between_circos_and_zoom_plots = _layout.svg_width*0.02; 
 
-	circos_size = svg_width*0.35; //Math.min(svg_width,svg_height)*0.50;
+	circos_size = _layout.svg_width*0.35; //Math.min(_layout.svg_width,_layout.svg_height)*0.50;
 
 	radius = circos_size / 2 - _padding.left;
 
@@ -104,12 +95,12 @@ function responsive_sizing() {
 	////////  Create the SVG  ////////
 	svg = d3.select("#svg_landing")
 		.append("svg:svg")
-		.attr("width", svg_width)
-		.attr("height", svg_height)
+		.attr("width", _layout.svg_width)
+		.attr("height", _layout.svg_height)
 
-	both_zoom_canvas_height = (svg_height-_padding.top-_padding.bottom)/3;
+	both_zoom_canvas_height = (_layout.svg_height-_padding.top-_padding.bottom)/3;
 	both_zoom_left_x_coordinate = circos_size + _padding.between_circos_and_zoom_plots;
-	both_zoom_canvas_width = svg_width-both_zoom_left_x_coordinate-_padding.right;
+	both_zoom_canvas_width = _layout.svg_width-both_zoom_left_x_coordinate-_padding.right;
 
 
 
@@ -121,7 +112,7 @@ function responsive_sizing() {
 
 	////////  Bottom zoom plot  ////////
 
-	bottom_zoom_canvas_top_y_coordinate = svg_height-_padding.bottom-both_zoom_canvas_height;
+	bottom_zoom_canvas_top_y_coordinate = _layout.svg_height-_padding.bottom-both_zoom_canvas_height;
 
 	zoom_containers["bottom"] = svg.append("g")
 		// .attr("class","zoom_containers["bottom"]")
@@ -136,14 +127,6 @@ function responsive_sizing() {
 	chrom_label_size = radius/5;
 
 
-	////////  Set up panel canvas  ////////
-
-	panel_top_position = radius*2+_padding.top+_padding.between_circos_and_zoom_plots;
-	panel_height = svg_height - panel_top_position - _padding.bottom;
-	panel_width = radius*2 - _padding.between_circos_and_zoom_plots;
-
-	panel_canvas = svg.append("g")
-		.attr("transform", "translate(" + _padding.left + "," + panel_top_position + ")")
 }
 
 responsive_sizing();
@@ -289,8 +272,8 @@ function show_tooltip(text,x,y,parent_object) {
 	_tooltip.g = parent_object.append("g").attr("class","tip");
 	_tooltip.g.attr("transform","translate(" + x + "," + y +  ")").style("visibility","visible");
 	
-	_tooltip.width = (text.length + 4) * (svg_width/100);
-	_tooltip.height = (svg_height/20);
+	_tooltip.width = (text.length + 4) * (_layout.svg_width/100);
+	_tooltip.height = (_layout.svg_height/20);
 
 	_tooltip.rect = _tooltip.g.append("rect")
 			.attr("width",_tooltip.width)
@@ -577,7 +560,7 @@ var draw_circos = function() {
 					.attr("transform","translate(0,0)")
 					.call(drag);
 
-		var arc = d3.svg.arc(d)
+		var arc = d3.svg.arc()
 				.outerRadius(radius)
 				.innerRadius(radius-chrom_label_size)
 				.startAngle(function(d){return genome_to_angle(d.chromosome,0)})
@@ -1815,72 +1798,6 @@ function toggle_segment_copy_number() {
 	}
 }
 
-
-//////////    Printing messages to user in bottom left corner    ////////////////
-
-// function message_to_user(message) {
-//   // console.log(message)
-//   panel_canvas.selectAll("text").remove()
-
-//   var formatted_nickname = nickname.replace(/_/g ," "); // replace underscores with spaces in nickname
-
-//   // var parameters_to_print = "";
-//   // Object.keys(config).forEach(function(key,index) {
-//   //   parameters_to_print += key + ": " + config[key] + ', ';
-//   // })
-	
-//   var whole_message = message; //+ "\n" + parameters_to_print;
-
-	
-//   panel_canvas.append("text")
-//     .attr("class","sample_title")
-//     .text(formatted_nickname)
-//     .attr('y',0)
-//     .attr('dy',1)
-//     // .call(wrap,panel_width)
-
-//   panel_canvas.append("text")
-//     .attr("class","user_message")
-//     .text(whole_message)
-//     .attr('y',90)
-//     .attr("dy",1);
-
-//   panel_canvas.selectAll("text")
-//     .call(wrap,panel_width);
-
-//     // panel_canvas.append("text")
-//     // .attr("class","user_message")
-//     // .attr("y",50)
-//     // .text(parameters_to_print);
-// }
-
-
-
-//  Taken from https://bl.ocks.org/mbostock/7555321
-//  Used for message_to_user()
-function wrap(text, width) {
-	text.each(function() {
-		var text = d3.select(this),
-				words = text.text().split(/\s+/).reverse(),
-				word,
-				line = [],
-				lineNumber = 0,
-				lineHeight = 1.1, // ems
-				y = text.attr("y"),
-				dy = parseFloat(text.attr("dy")),
-				tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
-		while (word = words.pop()) {
-			line.push(word);
-			tspan.text(line.join(" "));
-			if (tspan.node().getComputedTextLength() > width) {
-				line.pop();
-				tspan.text(line.join(" "));
-				line = [word];
-				tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-			}
-		}
-	});
-}
 
 function user_set_min_variant_size() {
 	console.log("user_set_min_variant_size")
