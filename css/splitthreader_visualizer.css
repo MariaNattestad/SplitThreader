@@ -105,6 +105,7 @@ body {
 .axis line {
   stroke:#000;
 }
+
 .top_zoom_canvas, .bottom_zoom_canvas {
   fill:#eee;
 /*  stroke-width:1;

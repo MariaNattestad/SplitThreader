@@ -24,6 +24,9 @@
 			</div>
 			<div class="panel-collapse collapse in" id="variant_detail_box">
 				<div class="panel-body">
+
+					<table id="variant_table"></table>
+
 					<div id="variant_detail_text">Click on a variant to show detail</div>
 					
 					<div id="send_to_ribbon_panel">
@@ -42,24 +45,7 @@
 	</div>
 
 
-	<div class="panel-group ">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#show_genes_box">Variants</a>
-				</h4>
-			</div>
-			<div class="panel-collapse collapse in" id="show_genes_box">
-				<div class="panel-body">
-					
-					<table id="variant_table">
-					</table>
-
-				</div>
-			</div>
-		</div>
-	</div>
-
+	
 	<div class="panel-group ">
 		<div class="panel panel-default">
 			<div class="panel-heading">
@@ -75,6 +61,12 @@
 					<div class="livesearch"></div> -->
 					<div>
 					   <ul id="genes_labeled" class="gene_list"></ul>
+					</div>
+
+					<table id="gene_type_table"></table>
+					
+					<div class="checkbox">
+						<label><input id="show_local_gene_names" type="checkbox">Show gene names</label>
 					</div>
 					<div>
 						<h4> Top genes:</h4>
