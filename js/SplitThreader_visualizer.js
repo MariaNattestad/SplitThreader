@@ -10,7 +10,11 @@ function getUrlVars() {
 var _config_path="user_uploads/" + getUrlVars()["code"] + ".config";
 var _input_file_prefix = "user_data/" + getUrlVars()["code"] + "/" + getUrlVars()["nickname"];
 
-var _layout = {"svg": {"width":null, "height": null}, "circos_size": null, "radius": null, "zoom_plot":{"height": null, "width": null,"x":null}}; //??????????????
+var _layout = {
+	"svg": {"width":null, "height": null}, 
+	"circos": {"size":null, "label_size":null, "radius": null}, 
+	"zoom_plot": {"height": null, "width": null,"x":null,"bottom_y":null}
+};
 
 var _padding = {};
 var _settings = {};
@@ -25,20 +29,14 @@ _scales.zoom_plots= {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bott
 
 var _zoom_containers = {"top":null,"bottom":null};
 
-var svg;
-
-
-
-var circos_canvas;
-var chrom_label_size;
-
-
-
-var bottom_zoom_canvas_top_y_coordinate; 
-
-var fusion_genes = {};
+var _svg;
+var _circos_canvas;
 
 var _SplitThreader_graph = new Graph();
+
+
+var _Current_fusion_genes = {};
+
 
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
 
@@ -72,47 +70,47 @@ function responsive_sizing() {
 	_padding.tooltip = _layout.svg.height*0.05;
 	_padding.between_circos_and_zoom_plots = _layout.svg.width*0.02; 
 
-	_layout.circos_size = _layout.svg.width*0.35; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
+	_layout.circos.size = _layout.svg.width*0.35; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
 
-	_layout.radius = _layout.circos_size / 2 - _padding.left;
+	_layout.circos.radius = _layout.circos.size / 2 - _padding.left;
 
 	////////  Clear the svg to start drawing from scratch  ////////
 	
 	d3.selectAll("svg").remove()
 
 	////////  Create the SVG  ////////
-	svg = d3.select("#svg_landing")
+	_svg = d3.select("#svg_landing")
 		.append("svg:svg")
 		.attr("width", _layout.svg.width)
 		.attr("height", _layout.svg.height)
 
 	_layout.zoom_plot.height = (_layout.svg.height-_padding.top-_padding.bottom)/3;
-	_layout.zoom_plot.x = _layout.circos_size + _padding.between_circos_and_zoom_plots;
+	_layout.zoom_plot.x = _layout.circos.size + _padding.between_circos_and_zoom_plots;
 	_layout.zoom_plot.width = _layout.svg.width-_layout.zoom_plot.x-_padding.right;
 
 
 
 	////////  Top zoom plot  ////////
 
-	_zoom_containers["top"] = svg.append("g")
+	_zoom_containers["top"] = _svg.append("g")
 		// .attr("class","_zoom_containers["top"]")
 		.attr("transform","translate(" + _layout.zoom_plot.x + "," + _padding.top + ")")
 
 	////////  Bottom zoom plot  ////////
 
-	bottom_zoom_canvas_top_y_coordinate = _layout.svg.height-_padding.bottom-_layout.zoom_plot.height;
+	_layout.zoom_plot.bottom_y = _layout.svg.height-_padding.bottom-_layout.zoom_plot.height;
 
-	_zoom_containers["bottom"] = svg.append("g")
+	_zoom_containers["bottom"] = _svg.append("g")
 		// .attr("class","_zoom_containers["bottom"]")
-		.attr("transform","translate(" + _layout.zoom_plot.x + "," + bottom_zoom_canvas_top_y_coordinate + ")")
+		.attr("transform","translate(" + _layout.zoom_plot.x + "," + _layout.zoom_plot.bottom_y + ")")
 
 
 	////////  Set up circos canvas  ////////
-	circos_canvas = svg.append("svg:g")
-		// .attr("class","circos_canvas")
-		.attr("transform", "translate(" + (_layout.radius+_padding.left) + "," + (_layout.radius+_padding.top) + ")")
+	_circos_canvas = _svg.append("svg:g")
+		// .attr("class","_circos_canvas")
+		.attr("transform", "translate(" + (_layout.circos.radius+_padding.left) + "," + (_layout.circos.radius+_padding.top) + ")")
 
-	chrom_label_size = _layout.radius/5;
+	_layout.circos.label_size = _layout.circos.radius/5;
 
 
 }
@@ -244,12 +242,12 @@ var loop_height = 25;
 
 var top_loop_scale = d3.scale.linear()
 	.domain([1000000,100000000])
-	.range([loop_height,bottom_zoom_canvas_top_y_coordinate-_layout.zoom_plot.height-_padding.top])
+	.range([loop_height,_layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top])
 	.clamp(true)
 
 var bottom_loop_scale = d3.scale.linear()
 	.domain([1000000,100000000])
-	.range([loop_height,bottom_zoom_canvas_top_y_coordinate-_layout.zoom_plot.height-_padding.top])
+	.range([loop_height,_layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top])
 	.clamp(true)
 
 ///////////   Add tooltips   /////////////////
@@ -540,7 +538,7 @@ var draw_circos = function() {
 
 		//////////////////  Load connections and plot them on circos ////////////////////////////
 
-		var chromosome_labels = circos_canvas.selectAll("g.circos_chromosome")
+		var chromosome_labels = _circos_canvas.selectAll("g.circos_chromosome")
 			.data(genome_data)
 			.enter()
 				.append("g")
@@ -549,8 +547,8 @@ var draw_circos = function() {
 					.call(drag);
 
 		var arc = d3.svg.arc()
-				.outerRadius(_layout.radius)
-				.innerRadius(_layout.radius-chrom_label_size)
+				.outerRadius(_layout.circos.radius)
+				.innerRadius(_layout.circos.radius-_layout.circos.label_size)
 				.startAngle(function(d){return genome_to_angle(d.chromosome,0)})
 				.endAngle(function(d){return genome_to_angle(d.chromosome,d.size)})
 
@@ -563,7 +561,7 @@ var draw_circos = function() {
 		chromosome_labels.append("text")
 			.attr("transform",function(d) {
 				d.innerRadius = 0
-				d.outerRadius = _layout.radius;
+				d.outerRadius = _layout.circos.radius;
 				return "translate(" + arc.centroid(d) + ")";
 			})
 			 .attr("text-anchor", "middle")
@@ -575,7 +573,7 @@ var draw_circos = function() {
 
 ///////////    Add connections to the circos plot   /////////////////////
 function draw_circos_connections() {
-	var connection_point_radius = _layout.radius - chrom_label_size;
+	var connection_point_radius = _layout.circos.radius - _layout.circos.label_size;
 
 	var circos_connection_path_generator = function(d) {
 
@@ -593,10 +591,10 @@ function draw_circos_connections() {
 		 + ", S " + xmid                        + "," + ymid + "," + x2                          + "," + y2)
 	}
 
-	circos_canvas.selectAll("path.circos_connection").remove()
+	_circos_canvas.selectAll("path.circos_connection").remove()
 
 
-	circos_canvas.selectAll("path.circos_connection")
+	_circos_canvas.selectAll("path.circos_connection")
 		.data(connection_data)
 		.enter()
 		.append("path")
@@ -978,11 +976,11 @@ var draw_connections = function() {
 
 		var y_coordinate_for_connection = d3.scale.ordinal()
 			.domain(["top","bottom"])
-			.range([_layout.zoom_plot.height+_padding.top+foot_spacing_from_axis,bottom_zoom_canvas_top_y_coordinate-foot_spacing_from_axis])
+			.range([_layout.zoom_plot.height+_padding.top+foot_spacing_from_axis,_layout.zoom_plot.bottom_y-foot_spacing_from_axis])
 
 		var y_coordinate_for_zoom_plot_base = d3.scale.ordinal()
 			.domain(["top","bottom"])
-			.range([_layout.zoom_plot.height+_padding.top,bottom_zoom_canvas_top_y_coordinate])
+			.range([_layout.zoom_plot.height+_padding.top,_layout.zoom_plot.bottom_y])
 
 
 		//////////   Classify connections so we can plot them differently   ///////////
@@ -1167,15 +1165,15 @@ var draw_connections = function() {
 		//////////////////   Draw direct connections between these two chromosomes   /////////////////////////
 
 		// Clear previous lines
-		svg.selectAll("path.spansplit_connection").remove()
-		svg.selectAll("path.spansplit_stub_top").remove()
-		svg.selectAll("path.spansplit_stub_bottom").remove()
-		svg.selectAll("path.spansplit_loop_top").remove()
-		svg.selectAll("path.spansplit_loop_bottom").remove()
+		_svg.selectAll("path.spansplit_connection").remove()
+		_svg.selectAll("path.spansplit_stub_top").remove()
+		_svg.selectAll("path.spansplit_stub_bottom").remove()
+		_svg.selectAll("path.spansplit_loop_top").remove()
+		_svg.selectAll("path.spansplit_loop_bottom").remove()
 
 
 		// Draw new lines for connections
-		svg.selectAll("path.spansplit_connection")
+		_svg.selectAll("path.spansplit_connection")
 			.data(top_chrom_to_bottom_chrom)
 			.enter()
 			// .append("line")
@@ -1197,9 +1195,9 @@ var draw_connections = function() {
 					var text = d.split + " reads";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
-					show_tooltip(text,x,y,svg);
+					show_tooltip(text,x,y,_svg);
 				})
-				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
 
 
 				
@@ -1216,7 +1214,7 @@ var draw_connections = function() {
 		bottom_loop_scale.domain([0,d3.extent(within_bottom_chrom,function(d){return Math.abs(d.pos1-d.pos2)})[1]])
 
 		// Draw loops within each chromosome 
-		svg.selectAll("path.spansplit_loop_top")
+		_svg.selectAll("path.spansplit_loop_top")
 			.data(within_top_chrom)
 			.enter()
 			.append("path")
@@ -1237,12 +1235,12 @@ var draw_connections = function() {
 					var text = d.split + " reads";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
-					show_tooltip(text,x,y,svg);
+					show_tooltip(text,x,y,_svg);
 				})
-				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
 
 
-		svg.selectAll("path.spansplit_loop_bottom")
+		_svg.selectAll("path.spansplit_loop_bottom")
 			.data(within_bottom_chrom)
 			.enter()
 			.append("path")
@@ -1263,14 +1261,14 @@ var draw_connections = function() {
 					var text = d.split + " reads";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
-					show_tooltip(text,x,y,svg);
+					show_tooltip(text,x,y,_svg);
 				})
-				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
 
 
 
 		// Mark other connections as feet and short stubby lines straight up
-		svg.selectAll("path.spansplit_stub_top")
+		_svg.selectAll("path.spansplit_stub_top")
 			.data(top_chrom_to_other)
 			.enter()
 			.append("path")
@@ -1291,12 +1289,12 @@ var draw_connections = function() {
 					var text = d.split + " reads";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
-					show_tooltip(text,x,y,svg);
+					show_tooltip(text,x,y,_svg);
 				})
-				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
 
 
-		svg.selectAll("path.spansplit_stub_bottom")
+		_svg.selectAll("path.spansplit_stub_bottom")
 			.data(bottom_chrom_to_other)
 			.enter()
 			.append("path")
@@ -1317,9 +1315,9 @@ var draw_connections = function() {
 					var text = d.split + " reads";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
-					show_tooltip(text,x,y,svg);
+					show_tooltip(text,x,y,_svg);
 				})
-				.on('mouseout', function(d) {svg.selectAll("g.tip").remove();});
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
 
 }
 
@@ -1671,13 +1669,13 @@ function search_select_gene(d) {
 }
 function search_select_fusion1(d) {
 	// console.log("selected gene " + d.gene + " as fusion gene 1");
-	fusion_genes[1] = d;
+	_Current_fusion_genes[1] = d;
 	d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
 	user_add_gene(d);
 }
 function search_select_fusion2(d) {
 	// console.log("selected gene " + d.gene + " as fusion gene 2");
-	fusion_genes[2] = d;
+	_Current_fusion_genes[2] = d;
 	d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
 	user_add_gene(d);
 }
@@ -1885,16 +1883,16 @@ function user_add_gene(annotation_for_new_gene) {
 }
 
 function submit_fusion() {
-	if (fusion_genes[1] != undefined && fusion_genes[2] != undefined) {
+	if (_Current_fusion_genes[1] != undefined && _Current_fusion_genes[2] != undefined) {
 		// console.log("Ask SplitThreader graph whether this is a fusion");
 		
-		fusion_genes[1].name = fusion_genes[1].gene;
-		fusion_genes[2].name = fusion_genes[2].gene;
+		_Current_fusion_genes[1].name = _Current_fusion_genes[1].gene;
+		_Current_fusion_genes[2].name = _Current_fusion_genes[2].gene;
 
-		var results = _SplitThreader_graph.gene_fusion(fusion_genes[1],fusion_genes[2]);
+		var results = _SplitThreader_graph.gene_fusion(_Current_fusion_genes[1],_Current_fusion_genes[2]);
 		var new_row = d3.select("#gene_fusion_table_results").insert("tr",":first-child").attr("class","record");
-			new_row.append("td").html(fusion_genes[1].name).property("width","20%");
-			new_row.append("td").html(fusion_genes[2].name).property("width","20%");
+			new_row.append("td").html(_Current_fusion_genes[1].name).property("width","20%");
+			new_row.append("td").html(_Current_fusion_genes[2].name).property("width","20%");
 			new_row.append("td").html("distance: " + results.distance + "bp").property("width","60%");
 		highlight_gene_fusion(results);
 	} else {
