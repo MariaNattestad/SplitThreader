@@ -239,13 +239,7 @@ var hover_plot = null; // Which plot (top or bottom) are you about to drop the c
 
 var coverage_done = false;
 
-var top_coverage_loaded = false;
-var bottom_coverage_loaded = false;
-
-var spansplit_done = false;
-
-var annotation_done = false;
-
+var _data_ready = {"coverage": {"top": false, "bottom": false}, "spansplit": false};
 
 
 /////////  Gene fusions  /////////////
@@ -343,7 +337,7 @@ var draw_everything = function() {
 
 function wait_then_run_when_all_data_loaded() {
 	// console.log("checking")
-	if (top_coverage_loaded & bottom_coverage_loaded & spansplit_done) {
+	if (_data_ready.coverage["top"] & _data_ready.coverage["bottom"] & _data_ready.spansplit) {
 		// console.log("ready")
 		draw_everything(); 
 		//////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
@@ -446,11 +440,11 @@ var load_coverage = function(chromosome,top_or_bottom) {
 			}
 			if (top_or_bottom == "top") {
 				// console.log("Coverage for TOP finished loading");
-				top_coverage_loaded = true;
+				_data_ready.coverage["top"] = true;
 
 			} else {
 				// console.log("Coverage for BOTTOM finished loading")
-				bottom_coverage_loaded = true;
+				_data_ready.coverage["bottom"] = true;
 			}
 	});
 }
@@ -473,7 +467,7 @@ var read_spansplit_file = function() {
 		}
 		connection_data = spansplit_input;
 
-		spansplit_done = true;
+		_data_ready.spansplit = true;
 		make_variant_table();
 	});
 }
@@ -499,9 +493,6 @@ var read_annotation_file = function() {
 				// annotation_genes_available.push(annotation_input[i].gene)
 			}
 			annotation_data = annotation_input;
-
-			annotation_done = true;
-
 			create_gene_search_boxes();
 			make_gene_type_table();
 			console.log("Finished reading annotation")
@@ -511,24 +502,6 @@ var read_annotation_file = function() {
 		console.log("No annotation chosen");
 	}
 }
-
-
-// var read_fusion_report_file = function() {
-//   d3.csv(directory + nickname +".fusion_report.csv", function(error,fusions_input) {
-
-//     if (error) throw error;
-
-//     for (var i=0;i<fusions_input.length;i++) {
-//       fusions_input[i].variant_count = +fusions_input[i].variant_count
-//       ///// fusions_input[i].variant_names = fusions_input[i].variant_names.split("|") // produces an array of the variant names
-//     }
-//     gene_fusion_data = fusions_input;
-//     console.log("gene_fusion_data:");
-//     console.log(gene_fusion_data);
-//     show_gene_fusion_dropdown();
-//   });
-// }
-
 
 //////////////  Handle dragging chromosomes from circos onto zoom plots to select chromosomes to show /////////////////
 
@@ -1588,7 +1561,7 @@ var select_chrom_for_zoom_top = function(d) {
 	chosen_chromosomes["top"] = d;
 	if (coverage_by_chromosome[d] == undefined) {
 		// console.log("Loading " + d + " from file");
-		top_coverage_loaded = false;
+		_data_ready.coverage["top"] = false;
 		load_coverage(d,"top");
 		wait_then_draw_top();
 	} else {
@@ -1598,7 +1571,7 @@ var select_chrom_for_zoom_top = function(d) {
 }
 
 function wait_then_draw_top() {
-	if (top_coverage_loaded) {
+	if (_data_ready.coverage["top"]) {
 		draw_top_zoom();
 	} else {
 		window.setTimeout(wait_then_draw_top,300)  
@@ -1609,7 +1582,7 @@ var select_chrom_for_zoom_bottom = function(d) {
 	chosen_chromosomes["bottom"] = d;
 	if (coverage_by_chromosome[d] == undefined) {
 		// console.log("Loading " + d + " from file");
-		bottom_coverage_loaded = false;
+		_data_ready.coverage["bottom"] = false;
 		load_coverage(d,"bottom");
 		wait_then_draw_bottom();
 	} else {
@@ -1619,7 +1592,7 @@ var select_chrom_for_zoom_bottom = function(d) {
 }
 
 function wait_then_draw_bottom() {
-	if (bottom_coverage_loaded) {
+	if (_data_ready.coverage["bottom"]) {
 		draw_bottom_zoom();
 	} else {
 		window.setTimeout(wait_then_draw_bottom,300)  
