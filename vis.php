@@ -76,7 +76,14 @@
 					<div>
 					   <ul id="genes_labeled" class="gene_list"></ul>
 					</div>
-
+					<div>
+						<h4> Top genes:</h4>
+						<ul id="top_local_genes" class="gene_list"></ul>
+					</div>
+					<div>
+						<h4>Bottom genes:</h4>
+						<ul id="bottom_local_genes" class="gene_list"></ul>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -119,24 +126,6 @@
 	</div>
 
 
-	<div class="panel-group ">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#local_genes_box">Local genes</a>
-				</h4>
-			</div>
-			<div class="panel-collapse collapse in" id="local_genes_box">
-				<div class="panel-body">
-					<h4> Top genes:</h4>
-					<ul id="top_local_genes" class="gene_list"></ul>
-					
-					<h4>Bottom genes:</h4>
-					<ul id="bottom_local_genes" class="gene_list"></ul>
-				</div>
-			</div>
-		</div>
-	</div>
 
 </div>
 
