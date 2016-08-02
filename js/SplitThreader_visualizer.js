@@ -1387,7 +1387,8 @@ function variant_click(d) {
 
 	// console.log(JSON.stringify(d));
 	d3.select("#data_to_send_ribbon").html("");
-	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","one_bedpe").property("value", JSON.stringify(data));
+	// this is only one .bedpe record, so we put [] around it and generalize the Ribbon-side code to arrays of bedpe objects
+	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify([data]));
 	d3.select("#send_to_ribbon_panel").style("display","block");
 }
 
