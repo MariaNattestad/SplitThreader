@@ -17,25 +17,69 @@ var _layout = {
 };
 
 var _padding = {};
+
+var _static = {};
+_static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
+
+
 var _settings = {};
 _settings.show_gene_types = {};
 _settings.show_variant_types = {};
 _settings.show_local_gene_names = false;
-
+_settings.color_index = 1;
 
 var _scales = {};
-_scales.zoom_plots= {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
+_scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
+_scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_settings.color_index]);
 
 
+// Data
+var _SplitThreader_graph = new Graph();
+var _Current_fusion_genes = {};
+
+
+// Elements on the page
 var _zoom_containers = {"top":null,"bottom":null};
-
 var _svg;
 var _circos_canvas;
 
-var _SplitThreader_graph = new Graph();
 
 
-var _Current_fusion_genes = {};
+
+
+
+
+var genome_size_total = 0;
+
+var pixels_per_bin = 1; 
+
+var segment_copy_number = false;
+
+
+var chromosome_start_positions = []
+var chromosome_position_scale = d3.scale.ordinal()
+	.range(chromosome_start_positions)
+
+
+var genome_data = [];
+var coverage = null;
+
+var coverage_by_chromosome = {};
+
+var connection_data = null;
+var annotation_data = null;
+var gene_fusion_data = null;
+var annotation_by_chrom = {};
+
+
+var genes_to_show = [];
+var relevant_annotation = []; // has to be a list for d3 display
+var annotation_by_gene = {}; // only contains genes we have searched for
+
+
+var chosen_chromosomes = {"top":null, "bottom":null};
+
+
 
 
 ////////////////////////////////////            DRAWING              ///////////////////////////////////////////
@@ -122,47 +166,6 @@ responsive_sizing();
 
 ////////////////////////////////////            DATA              ///////////////////////////////////////////
 
-var chromosomes = []; //["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X","Y"];
-var chromosome_colors = ["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"];
-// var chromosome_colors = ['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']
-
-
-// Custom color scale to match karyotype
-var color = d3.scale.ordinal()
-		.domain(chromosomes) // input domain
-		.range(chromosome_colors); // output range
-
-
-var genome_size_total = 0;
-
-var pixels_per_bin = 1; 
-
-var segment_copy_number = false;
-
-
-var chromosome_start_positions = []
-var chromosome_position_scale = d3.scale.ordinal()
-	.domain(chromosomes)
-	.range(chromosome_start_positions)
-
-
-var genome_data = [];
-var coverage = null;
-
-var coverage_by_chromosome = {};
-
-var connection_data = null;
-var annotation_data = null;
-var gene_fusion_data = null;
-var annotation_by_chrom = {};
-
-
-var genes_to_show = [];
-var relevant_annotation = []; // has to be a list for d3 display
-var annotation_by_gene = {}; // only contains genes we have searched for
-
-
-var chosen_chromosomes = {"top":null, "bottom":null};
 
 // var chosen_chromosomes["bottom"] = null;
 
@@ -386,7 +389,6 @@ var read_genome_file = function() {
 				load_coverage(genome_data[0].chromosome,top_or_bottom="bottom")
 			}
 		}
-		
 	});
 }
 
@@ -554,7 +556,7 @@ var draw_circos = function() {
 
 
 		chromosome_labels.append("path")
-				.attr("fill", function(d) { return color(d.chromosome); } ) //set the color for each slice to be chosen from the color function defined above
+				.attr("fill", function(d) { return _scales.chromosome_colors(d.chromosome); } ) //set the color for each slice to be chosen from the color function defined above
 				.attr("d", arc)
 				// .call(drag)
 
@@ -604,7 +606,7 @@ function draw_circos_connections() {
 		})
 			.attr("class","circos_connection")
 			.style("stroke-width",1)
-			.style("stroke",function(d){return color(d.chrom1);})
+			.style("stroke",function(d){return _scales.chromosome_colors(d.chrom1);})
 			.style("fill","none")
 			.attr("d",circos_connection_path_generator)
 			
@@ -851,8 +853,8 @@ var top_update_coverage = function(genomic_bins_per_bar) {
 				.attr("y",function(d){return _scales.zoom_plots["top"].y(d.coverage)})
 				.attr("width",function(d){return Math.ceil(_scales.zoom_plots["top"].x(d.end)-_scales.zoom_plots["top"].x(d.start))})
 				.attr("height",function(d){return _layout.zoom_plot.height-_scales.zoom_plots["top"].y(d.coverage)})
-				.style("fill",function(d){return color(chosen_chromosomes["top"])})
-				.style("stroke",function(d){return color(chosen_chromosomes["top"])})
+				.style("fill",function(d){return _scales.chromosome_colors(chosen_chromosomes["top"])})
+				.style("stroke",function(d){return _scales.chromosome_colors(chosen_chromosomes["top"])})
 
 
 			draw_connections();
@@ -890,8 +892,8 @@ var bottom_update_coverage = function(genomic_bins_per_bar) {
 				.attr("y", 0)
 				.attr("width",function(d){return _scales.zoom_plots["bottom"].x(d.end)-_scales.zoom_plots["bottom"].x(d.start)})
 				.attr("height",function(d){return _scales.zoom_plots["bottom"].y(d.coverage)})
-				.style("fill",function(d){return color(chosen_chromosomes["bottom"])})
-				.style("stroke",function(d){return color(chosen_chromosomes["bottom"])})
+				.style("fill",function(d){return _scales.chromosome_colors(chosen_chromosomes["bottom"])})
+				.style("stroke",function(d){return _scales.chromosome_colors(chosen_chromosomes["bottom"])})
 
 
 			draw_connections();
@@ -1746,7 +1748,7 @@ var color_connections = function(d) {
 		if (variants_to_highlight.indexOf(d.variant_name)!=-1) {
 				return color_for_highlighted_connections;
 		} else {
-				return color(d.chrom2); 
+				return _scales.chromosome_colors(d.chrom2); 
 		}
 }
 
