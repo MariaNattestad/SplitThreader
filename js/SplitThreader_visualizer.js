@@ -24,6 +24,8 @@ var _scales = {};
 _scales.zoom_plots= {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
 
 
+var _zoom_containers = {"top":null,"bottom":null};
+
 var svg;
 
 var both_zoom_canvas_height;
@@ -34,7 +36,7 @@ var both_zoom_canvas_width;
 var circos_canvas;
 var chrom_label_size;
 
-var zoom_containers = {"top":null,"bottom":null};
+
 
 var bottom_zoom_canvas_top_y_coordinate; 
 
@@ -96,16 +98,16 @@ function responsive_sizing() {
 
 	////////  Top zoom plot  ////////
 
-	zoom_containers["top"] = svg.append("g")
-		// .attr("class","zoom_containers["top"]")
+	_zoom_containers["top"] = svg.append("g")
+		// .attr("class","_zoom_containers["top"]")
 		.attr("transform","translate(" + both_zoom_left_x_coordinate + "," + _padding.top + ")")
 
 	////////  Bottom zoom plot  ////////
 
 	bottom_zoom_canvas_top_y_coordinate = _layout.svg_height-_padding.bottom-both_zoom_canvas_height;
 
-	zoom_containers["bottom"] = svg.append("g")
-		// .attr("class","zoom_containers["bottom"]")
+	_zoom_containers["bottom"] = svg.append("g")
+		// .attr("class","_zoom_containers["bottom"]")
 		.attr("transform","translate(" + both_zoom_left_x_coordinate + "," + bottom_zoom_canvas_top_y_coordinate + ")")
 
 
@@ -172,7 +174,7 @@ var chosen_chromosomes = {"top":null, "bottom":null};
 
 //////////   Set up zoom top canvas and scales //////////
 
-zoom_containers["top"].on("mouseover",function(){
+_zoom_containers["top"].on("mouseover",function(){
 	hover_plot = "top";
 });
 
@@ -194,7 +196,7 @@ var top_bins_per_bar = 5;
 //////////   Set up zoom bottom canvas and scales //////////
 
 
-zoom_containers["bottom"].on("mouseover",function(){
+_zoom_containers["bottom"].on("mouseover",function(){
 	hover_plot = "bottom";
 })
 
@@ -618,8 +620,8 @@ function draw_circos_connections() {
 
 var draw_top_zoom = function() {
 
-			zoom_containers["top"].selectAll("*").remove()
-			zoom_plot_canvas["top"] = zoom_containers["top"].append("g");
+			_zoom_containers["top"].selectAll("*").remove()
+			zoom_plot_canvas["top"] = _zoom_containers["top"].append("g");
 
 			var zoom_top_position_start = d3.min(coverage_by_chromosome[chosen_chromosomes["top"]],function(d){return d.start});
 
@@ -679,13 +681,13 @@ var draw_top_zoom = function() {
 			///////////////// Plot axes and labels ////////////////////////////////
 
 			var top_zoom_x_axis = d3.svg.axis().scale(_scales.zoom_plots["top"].x).orient("top").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-			var top_zoom_x_axis_label = zoom_containers["top"].append("g")
+			var top_zoom_x_axis_label = _zoom_containers["top"].append("g")
 				.attr("class","axis")
 				.attr("transform","translate(" + 0 + "," + 0 + ")")
 				.call(top_zoom_x_axis)
 
 			var top_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots["top"].y).orient("left").ticks(8).tickSize(5,0,1)
-			var top_zoom_y_axis_label = zoom_containers["top"].append("g")
+			var top_zoom_y_axis_label = _zoom_containers["top"].append("g")
 				.attr("class","axis")
 				// .attr("transform","translate(" + 0 + "," + both_zoom_canvas_height + ")")
 				.call(top_zoom_y_axis)
@@ -730,8 +732,8 @@ var draw_top_zoom = function() {
 
 var draw_bottom_zoom = function() {
 
-			zoom_containers["bottom"].selectAll("*").remove()
-			zoom_plot_canvas["bottom"] = zoom_containers["bottom"].append("g");
+			_zoom_containers["bottom"].selectAll("*").remove()
+			zoom_plot_canvas["bottom"] = _zoom_containers["bottom"].append("g");
 
 
 			var zoom_bottom_position_start = d3.min(coverage_by_chromosome[chosen_chromosomes["bottom"]],function(d){return d.start});
@@ -781,13 +783,13 @@ var draw_bottom_zoom = function() {
 ///////////////// Plot axes and labels ////////////////////////////////
 
 			var bottom_zoom_x_axis = d3.svg.axis().scale(_scales.zoom_plots["bottom"].x).orient("bottom").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-			var bottom_zoom_x_axis_label = zoom_containers["bottom"].append("g")
+			var bottom_zoom_x_axis_label = _zoom_containers["bottom"].append("g")
 				.attr("class","axis")
 				.attr("transform","translate(" + 0 + "," + both_zoom_canvas_height + ")")
 				.call(bottom_zoom_x_axis)
 
 			var bottom_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots["bottom"].y).orient("left").ticks(8).tickSize(5,0,1)
-			var bottom_zoom_y_axis_label = zoom_containers["bottom"].append("g")
+			var bottom_zoom_y_axis_label = _zoom_containers["bottom"].append("g")
 				.attr("class","axis")
 				// .attr("transform","translate(" + 0 + "," + both_zoom_canvas_height + ")")
 				.call(bottom_zoom_y_axis)
