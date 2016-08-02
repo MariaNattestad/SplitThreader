@@ -1038,14 +1038,23 @@ function reverse_chrom1_and_chrom2(d) {
 	tmp = reversed.pos1;
 	reversed.pos1=reversed.pos2;
 	reversed.pos2=tmp;
+	// Flip starts and stops around (for completeness when sending data to Ribbon)
+	tmp = reversed.start1;
+	reversed.start1=reversed.start2;
+	reversed.start2=tmp;
+
+	tmp = reversed.stop1;
+	reversed.stop1=reversed.stop2;
+	reversed.stop2=tmp;
+
 	// Flip strands around
 	var tmp = reversed.strand1;
 	reversed.strand1=reversed.strand2;
 	reversed.strand2=tmp;
 	// Flip span counts around
-	var tmp = reversed.span1;
-	reversed.span1=reversed.span2;
-	reversed.span2=tmp;
+	// var tmp = reversed.span1;
+	// reversed.span1=reversed.span2;
+	// reversed.span2=tmp;
 	return reversed;
 
 }
@@ -1252,6 +1261,7 @@ var draw_connections = function() {
 		svg.selectAll("path.spansplit_loop_top").remove()
 		svg.selectAll("path.spansplit_loop_bottom").remove()
 
+
 		// Draw new lines for connections
 		svg.selectAll("path.spansplit_connection")
 			.data(top_chrom_to_bottom_chrom)
@@ -1377,9 +1387,9 @@ var draw_connections = function() {
 }
 
 function variant_click(d) {
-	console.log(d); //????????????????
 	var data = d;
-	var header = ["chrom1","start1","stop1","chrom2","start2","stop2","variant_name","score","strand1","strand2","variant_type","split"];
+	// var header = ["chrom1","start1","stop1","chrom2","start2","stop2","variant_name","score","strand1","strand2","variant_type","split"];
+	var header = ["variant_type","variant_name","score","split","chrom1","chrom2"];
 	d3.select("#variant_detail_text").html("");
 	var rows = d3.select("#variant_detail_text").append("table").selectAll("tr").data(header).enter().append("tr");
 	rows.append("th").html(function(d) {return d;});
@@ -1388,7 +1398,7 @@ function variant_click(d) {
 	// console.log(JSON.stringify(d));
 	d3.select("#data_to_send_ribbon").html("");
 	// this is only one .bedpe record, so we put [] around it and generalize the Ribbon-side code to arrays of bedpe objects
-	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify([data]));
+	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify([data].concat(connection_data)));
 	d3.select("#send_to_ribbon_panel").style("display","block");
 }
 

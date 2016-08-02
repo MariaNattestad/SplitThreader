@@ -43,7 +43,7 @@
 */
 
 th, td {
-  text-align: center;
+  /*text-align: center;*/
   padding: 0.3vmin 0.3vmin 0.3vmin 0.3vmin;
   border: 1px solid #cccccc;
 }
