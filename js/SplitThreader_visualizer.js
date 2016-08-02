@@ -7,17 +7,11 @@ function getUrlVars() {
 		return vars;
 }
 
-var run_id_code=getUrlVars()["code"];
-
-var directory="user_data/" + run_id_code + "/";
-var config_path="user_uploads/" + run_id_code + ".config";
-var nickname=getUrlVars()["nickname"];
-
-// console.log("directory:" + directory);
-// console.log("nickname:" + nickname);
+var _config_path="user_uploads/" + getUrlVars()["code"] + ".config";
+var _input_file_prefix = "user_data/" + getUrlVars()["code"] + "/" + getUrlVars()["nickname"];
 
 
-var _layout = {"svg_width":null, "svg_height": null};
+var _layout = {"svg_width":null, "svg_height": null, "circos_size": null, "radius": null};
 
 var _padding = {};
 var _settings = {};
@@ -28,10 +22,6 @@ _settings.show_local_gene_names = false;
 
 var _scales = {};
 _scales.zoom_plots= {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
-
-var circos_size;
-
-var radius;
 
 
 var svg;
@@ -84,9 +74,9 @@ function responsive_sizing() {
 	_padding.tooltip = _layout.svg_height*0.05;
 	_padding.between_circos_and_zoom_plots = _layout.svg_width*0.02; 
 
-	circos_size = _layout.svg_width*0.35; //Math.min(_layout.svg_width,_layout.svg_height)*0.50;
+	_layout.circos_size = _layout.svg_width*0.35; //Math.min(_layout.svg_width,_layout.svg_height)*0.50;
 
-	radius = circos_size / 2 - _padding.left;
+	_layout.radius = _layout.circos_size / 2 - _padding.left;
 
 	////////  Clear the svg to start drawing from scratch  ////////
 	
@@ -99,7 +89,7 @@ function responsive_sizing() {
 		.attr("height", _layout.svg_height)
 
 	both_zoom_canvas_height = (_layout.svg_height-_padding.top-_padding.bottom)/3;
-	both_zoom_left_x_coordinate = circos_size + _padding.between_circos_and_zoom_plots;
+	both_zoom_left_x_coordinate = _layout.circos_size + _padding.between_circos_and_zoom_plots;
 	both_zoom_canvas_width = _layout.svg_width-both_zoom_left_x_coordinate-_padding.right;
 
 
@@ -122,9 +112,9 @@ function responsive_sizing() {
 	////////  Set up circos canvas  ////////
 	circos_canvas = svg.append("svg:g")
 		// .attr("class","circos_canvas")
-		.attr("transform", "translate(" + (radius+_padding.left) + "," + (radius+_padding.top) + ")")
+		.attr("transform", "translate(" + (_layout.radius+_padding.left) + "," + (_layout.radius+_padding.top) + ")")
 
-	chrom_label_size = radius/5;
+	chrom_label_size = _layout.radius/5;
 
 
 }
@@ -348,7 +338,7 @@ config["annotation"] = "resources/annotation/Human_hg19.genes.csv";
 
 
 var read_config_file = function() {
-	d3.csv(config_path, function(error,config_input) {
+	d3.csv(_config_path, function(error,config_input) {
 		if (error) throw error;
 		// console.log("CONFIG FILE:");
 		for (var i=0;i<config_input.length;i++){
@@ -367,7 +357,7 @@ var read_config_file = function() {
 
 
 var read_genome_file = function() {
-		d3.csv(directory + nickname + ".genome.csv", function(error,genome_input) {
+		d3.csv(_input_file_prefix + ".genome.csv", function(error,genome_input) {
 		if (error) throw error;
 		
 		var sum_genome_size = 0;
@@ -409,7 +399,7 @@ var read_genome_file = function() {
 var load_coverage = function(chromosome,top_or_bottom) {
 
 	// console.log("loading chromosome coverage from file");
-	d3.csv(directory + nickname + ".copynumber.segmented." + chromosome + ".csv?id=" + Math.random(), function(error,coverage_input) {
+	d3.csv(_input_file_prefix + ".copynumber.segmented." + chromosome + ".csv?id=" + Math.random(), function(error,coverage_input) {
 			if (error) throw error;
 
 			coverage_by_chromosome[chromosome] = [];
@@ -433,7 +423,7 @@ var load_coverage = function(chromosome,top_or_bottom) {
 }
 
 var read_spansplit_file = function() {
-	d3.csv(directory + nickname + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
+	d3.csv(_input_file_prefix + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
 		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
 
@@ -561,8 +551,8 @@ var draw_circos = function() {
 					.call(drag);
 
 		var arc = d3.svg.arc()
-				.outerRadius(radius)
-				.innerRadius(radius-chrom_label_size)
+				.outerRadius(_layout.radius)
+				.innerRadius(_layout.radius-chrom_label_size)
 				.startAngle(function(d){return genome_to_angle(d.chromosome,0)})
 				.endAngle(function(d){return genome_to_angle(d.chromosome,d.size)})
 
@@ -575,7 +565,7 @@ var draw_circos = function() {
 		chromosome_labels.append("text")
 			.attr("transform",function(d) {
 				d.innerRadius = 0
-				d.outerRadius = radius;
+				d.outerRadius = _layout.radius;
 				return "translate(" + arc.centroid(d) + ")";
 			})
 			 .attr("text-anchor", "middle")
@@ -587,7 +577,7 @@ var draw_circos = function() {
 
 ///////////    Add connections to the circos plot   /////////////////////
 function draw_circos_connections() {
-	var connection_point_radius = radius - chrom_label_size;
+	var connection_point_radius = _layout.radius - chrom_label_size;
 
 	var circos_connection_path_generator = function(d) {
 
@@ -1984,7 +1974,7 @@ function resizeWindow()
 {
 	responsive_sizing();
 	draw_everything();
-	// message_to_user("");
+
 }
 
 
