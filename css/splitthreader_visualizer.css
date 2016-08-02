@@ -106,6 +106,9 @@ body {
   stroke:#000;
 }
 
+#variant_detail_text {
+  padding: 2vh 0 2vh 0;
+}
 .top_zoom_canvas, .bottom_zoom_canvas {
   fill:#eee;
 /*  stroke-width:1;

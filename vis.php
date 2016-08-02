@@ -19,7 +19,7 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#variant_detail_box">Variant detail</a>
+					<a data-toggle="collapse" class="active" href="#variant_detail_box">Variants</a>
 				</h4>
 			</div>
 			<div class="panel-collapse collapse in" id="variant_detail_box">
