@@ -13,7 +13,8 @@ var _input_file_prefix = "user_data/" + getUrlVars()["code"] + "/" + getUrlVars(
 var _layout = {
 	"svg": {"width":null, "height": null}, 
 	"circos": {"size":null, "label_size":null, "radius": null}, 
-	"zoom_plot": {"height": null, "width": null,"x":null,"bottom_y":null}
+	"zoom_plot": {"height": null, "width": null,"x":null,"bottom_y":null},
+	"connections": {"stub_height": 10}
 };
 
 var _padding = {};
@@ -21,6 +22,7 @@ var _padding = {};
 var _static = {};
 _static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
 _static.fraction_y_scale_height = 1.4;
+_static.spansplit_bar_length = 10;
 
 var _settings = {};
 _settings.show_gene_types = {};
@@ -33,7 +35,7 @@ _settings.segment_copy_number = false;
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
 _scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_settings.color_index]);
-
+_scales.connection_loops = {"top":d3.scale.linear(), "bottom":d3.scale.linear()};
 
 ///////////////////////    Data    ///////////////////////
 // For plotting:
@@ -68,10 +70,7 @@ var _plot_canvas = {"top": null, "bottom": null};
 
 
 
-
-
-
-
+///////////   Style connections and spansplit lines on the zoom plots   ///////////////
 
 
 function responsive_sizing() {
@@ -123,6 +122,7 @@ function responsive_sizing() {
 
 
 
+
 	////////  Top zoom plot  ////////
 
 	_zoom_containers["top"] = _svg.append("g")
@@ -135,6 +135,17 @@ function responsive_sizing() {
 
 	_zoom_containers["bottom"] = _svg.append("g")
 		.attr("transform","translate(" + _layout.zoom_plot.x + "," + _layout.zoom_plot.bottom_y + ")");
+
+
+	var max_loop = _layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top;
+	var min_loop = (max_loop)/10;
+	_scales.connection_loops["top"]
+		.range([min_loop,max_loop])
+		.clamp(true);
+
+	_scales.connection_loops["bottom"]
+		.range([min_loop,max_loop])
+		.clamp(true);
 
 
 	////////  Set up circos canvas  ////////
@@ -172,23 +183,6 @@ var genome_to_circos_x = function(chromosome,position) {
 var genome_to_circos_y = function(chromosome,position) {
 	return (Math.sin(genome_to_angle(chromosome,position) - (Math.PI/2)));
 }
-
-///////////   Style connections and spansplit lines on the zoom plots   ///////////////
-
-var stub_height = 10;
-var spansplit_bar_length = 10;
-var loop_height = 25;
-
-
-var top_loop_scale = d3.scale.linear()
-	.domain([1000000,100000000])
-	.range([loop_height,_layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top])
-	.clamp(true)
-
-var bottom_loop_scale = d3.scale.linear()
-	.domain([1000000,100000000])
-	.range([loop_height,_layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top])
-	.clamp(true)
 
 ///////////   Add tooltips   /////////////////
 
@@ -679,7 +673,6 @@ var draw_zoom_plot = function(top_or_bottom) {
 	_plot_canvas[top_or_bottom].call(zoom);
 	// _plot_canvas[top_or_bottom].on("dblclick.zoom",null);
 	// _plot_canvas[top_or_bottom].on("click", function(){console.log("click");zoom(_plot_canvas["top"])});
-
 }
 
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
@@ -952,7 +945,7 @@ var draw_connections = function() {
 						y1 = y_coordinate_for_connection(top_or_bottom);
 
 				var x2 = x1,
-						y2 = y1 + stub_height*(Number(top_or_bottom=="top")*2-1)
+						y2 = y1 + _layout.connections.stub_height*(Number(top_or_bottom=="top")*2-1)
 						direction1 = Number(d.strand1=="-")*2-1; // negative strands means the read is mappping to the right of the breakpoint
 						
 				return (
@@ -972,9 +965,9 @@ var draw_connections = function() {
 				var xmid = (x1+x2)/2;
 				var ymid = y1;
 				if (top_or_bottom == "top") {
-					ymid = y1 + top_loop_scale(Math.abs(d.pos1-d.pos2))
+					ymid = y1 + _scales.connection_loops["top"](Math.abs(d.pos1-d.pos2))
 				} else {
-					ymid = y1 - bottom_loop_scale(Math.abs(d.pos1-d.pos2))
+					ymid = y1 - _scales.connection_loops["bottom"](Math.abs(d.pos1-d.pos2))
 				}
 						// ymid = y1 + loop_scale(Math.abs(d.pos1-d.pos2))*(Number(top_or_bottom=="top")*2-1),
 
@@ -1038,8 +1031,8 @@ var draw_connections = function() {
 		// within_top_chrom.forEach(function(d,i){max_top_distance = d3.max([max_top_distance,Math.abs(d.pos1-d.pos2)])})
 		// within_bottom_chrom.forEach(function(d,i){max_top_distance = d3.max([max_top_distance,Math.abs(d.pos1-d.pos2)])})
 
-		top_loop_scale.domain([0,d3.extent(within_top_chrom,function(d){return Math.abs(d.pos1-d.pos2)})[1]])
-		bottom_loop_scale.domain([0,d3.extent(within_bottom_chrom,function(d){return Math.abs(d.pos1-d.pos2)})[1]])
+		_scales.connection_loops["top"].domain([0,d3.extent(within_top_chrom,function(d){return Math.abs(d.pos1-d.pos2)})[1]])
+		_scales.connection_loops["bottom"].domain([0,d3.extent(within_bottom_chrom,function(d){return Math.abs(d.pos1-d.pos2)})[1]])
 
 		// Draw loops within each chromosome 
 		_svg.selectAll("path.spansplit_loop_top")
