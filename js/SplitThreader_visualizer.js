@@ -47,18 +47,12 @@ var _circos_canvas;
 
 
 
-
-
-var genome_size_total = 0;
-
 var pixels_per_bin = 1; 
 
 var segment_copy_number = false;
 
 
-var chromosome_start_positions = []
-var chromosome_position_scale = d3.scale.ordinal()
-	.range(chromosome_start_positions)
+var _chromosome_start_positions = {};
 
 
 var genome_data = [];
@@ -224,11 +218,8 @@ var color_for_highlighted_connections = "black";
 ////////// Calculate polar coordinates ///////////
 
 var genome_to_angle = function(chromosome,position) {
-	var start_position_of_this_chromosome = chromosome_position_scale(chromosome);
-
-	return ((start_position_of_this_chromosome+position)/genome_size_total)*2*Math.PI;
+	return ((_chromosome_start_positions[chromosome]+position)/_chromosome_start_positions["total"])*2*Math.PI;
 }
-
 var genome_to_circos_x = function(chromosome,position) {
 	return (Math.cos(genome_to_angle(chromosome,position) - (Math.PI/2)));
 }
@@ -367,11 +358,16 @@ var read_genome_file = function() {
 		}
 
 		genome_data = [];  // set global variable for accessing this elsewhere
+		var cumulative_genome_size = 0;
+		_chromosome_start_positions = {};
 		for (var i=0; i< genome_input.length;i++) {
 			if (genome_input[i].size > sum_genome_size*0.01){ //only include chromosomes accounting for at least 1% of the total genome sequence
-				genome_data.push({"chromosome":genome_input[i].chromosome, "size":genome_input[i].size})
+				genome_data.push({"chromosome":genome_input[i].chromosome, "size":genome_input[i].size, "cum_pos":cumulative_genome_size});
+				_chromosome_start_positions[genome_input[i].chromosome] = cumulative_genome_size;
+				cumulative_genome_size += genome_input[i].size;
 			}
 		}
+		_chromosome_start_positions["total"] = cumulative_genome_size;
 
 		draw_circos();
 
@@ -500,12 +496,7 @@ function dragmove(d) {
 ////////////   Draw circos plot chromosome labels  ////////////
 
 var draw_circos = function() {
-		genome_size_total = 0;
-		for (var i = 0; i < genome_data.length; i++) {
-			chromosome_start_positions.push(genome_size_total); 
-			genome_size_total += genome_data[i].size; 
-		}
-
+	
 		///////////////////// Set up circos plot ////////////////////////////
 				
 		var drag = d3.behavior.drag()
@@ -602,13 +593,14 @@ function draw_circos_connections() {
 		.append("path")
 		.filter(function(d){
 			var variant_size = Math.abs(d.pos2-d.pos1);
-			return d.split > config["min_split_reads"] && (variant_size > config["min_variant_size"] || d.chrom1 != d.chrom2);
+			// return d.split > config["min_split_reads"] && (variant_size > config["min_variant_size"] || d.chrom1 != d.chrom2);
+			return _chromosome_start_positions[d.chrom1] != undefined && _chromosome_start_positions[d.chrom2] != undefined;
 		})
 			.attr("class","circos_connection")
 			.style("stroke-width",1)
 			.style("stroke",function(d){return _scales.chromosome_colors(d.chrom1);})
 			.style("fill","none")
-			.attr("d",circos_connection_path_generator)
+			.attr("d",circos_connection_path_generator);
 			
 }
 
