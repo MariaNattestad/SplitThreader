@@ -163,3 +163,26 @@ text {
 .sample_title {
   font: 3vmin sans-serif;
 }
+.gene_label {
+  text-anchor: middle;
+}
+
+.top_local_genes text, .bottom_local_genes text{
+  fill: #999999;  /* fill is text color in svg */
+  font-size: 0.8vmin;
+}
+
+
+.top_local_genes path, .bottom_local_genes path {
+  stroke: #999999;
+  stroke-width: 2;
+  fill: none;
+}
+
+
+.top_chosen_genes path, .bottom_chosen_genes path {
+  stroke: #000000;
+  stroke-width: 2;
+  fill: none;
+}
+

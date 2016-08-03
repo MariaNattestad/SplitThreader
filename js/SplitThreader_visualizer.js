@@ -19,10 +19,16 @@ var _layout = {
 
 var _padding = {};
 
+
+
 var _static = {};
 _static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
 _static.fraction_y_scale_height = 1.4;
 _static.spansplit_bar_length = 10;
+_static.foot_spacing_from_axis = 5;
+_static.foot_length = 15;
+
+
 
 var _settings = {};
 _settings.show_gene_types = {};
@@ -105,6 +111,7 @@ function responsive_sizing() {
 	_padding.right = _layout.svg.width*0.02; 
 	_padding.tooltip = _layout.svg.height*0.05;
 	_padding.between_circos_and_zoom_plots = _layout.svg.width*0.02; 
+	_padding.gene_offset = _layout.svg.height*0.05;
 
 	_layout.circos.size = _layout.svg.width*0.35; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
 
@@ -204,8 +211,8 @@ function show_tooltip(text,x,y,parent_object) {
 	_tooltip.g = parent_object.append("g").attr("class","tip");
 	_tooltip.g.attr("transform","translate(" + x + "," + y +  ")").style("visibility","visible");
 	
-	_tooltip.width = (text.length + 4) * (_layout.svg.width/100);
-	_tooltip.height = (_layout.svg.height/20);
+	_tooltip.width = (text.length + 4) * (_layout.svg.width/150);
+	_tooltip.height = (_layout.svg.height/30);
 
 	_tooltip.rect = _tooltip.g.append("rect")
 			.attr("width",_tooltip.width)
@@ -752,11 +759,6 @@ function scale_coverage_by_chromosome(top_or_bottom,coverage) {
 }
 
 
-var foot_spacing_from_axis = 5;
-var foot_length = 15;
-
-var gene_offset = 40;
-
 
 
 function reverse_chrom1_and_chrom2(d) {
@@ -803,7 +805,7 @@ var draw_connections = function() {
 
 		var y_coordinate_for_connection = d3.scale.ordinal()
 			.domain(["top","bottom"])
-			.range([_layout.zoom_plot.height+_padding.top+foot_spacing_from_axis,_layout.zoom_plot.bottom_y-foot_spacing_from_axis])
+			.range([_layout.zoom_plot.height+_padding.top+_static.foot_spacing_from_axis,_layout.zoom_plot.bottom_y-_static.foot_spacing_from_axis])
 
 		var y_coordinate_for_zoom_plot_base = d3.scale.ordinal()
 			.domain(["top","bottom"])
@@ -907,20 +909,20 @@ var draw_connections = function() {
 								categorized_variant_data.bottom_to_other.push(d) // save as bottom stub, 1 is already bottom, so no need to flip
 							} // else: don't save it anywhere since it won't be shown even as a stub 
 					// Top chromosome to another chromosome
-					} else if (d.chrom1 == _chosen_chromosomes["top"]) {
+					} else if (d.chrom1 == _chosen_chromosomes["top"] && within_view_1_top) {
 						categorized_variant_data.top_to_other.push(d)
 						// console.log("top to other")
 						// console.log(d)
-					} else if (d.chrom2 == _chosen_chromosomes["top"]) {
+					} else if (d.chrom2 == _chosen_chromosomes["top"] && within_view_2_top) {
 						categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d))
 						// console.log("top to other reversed")
 						// console.log(reverse_chrom1_and_chrom2(d))
 					// Bottom chromosome to another chromosome
-					} else if (d.chrom1 == _chosen_chromosomes["bottom"]) {
+					} else if (d.chrom1 == _chosen_chromosomes["bottom"] && within_view_1_bottom) {
 						categorized_variant_data.bottom_to_other.push(d)
 						// console.log("bottom to other")
 						// console.log(d)
-					} else if (d.chrom2 == _chosen_chromosomes["bottom"]) {
+					} else if (d.chrom2 == _chosen_chromosomes["bottom"] && within_view_2_bottom) {
 						categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d))
 						// console.log("bottom to other reversed")
 						// console.log(reverse_chrom1_and_chrom2(d))
@@ -940,10 +942,10 @@ var draw_connections = function() {
 						direction2 = Number(d.strand2=="-")*2-1;
 
 				return (
-						 "M " + (x1+foot_length*direction1) + "," + y1
+						 "M " + (x1+_static.foot_length*direction1) + "," + y1
 				 + ", L " + x1                          + "," + y1 
 				 + ", L " + x2                          + "," + y2
-				 + ", L " + (x2+foot_length*direction2) + "," + y2)
+				 + ", L " + (x2+_static.foot_length*direction2) + "," + y2)
 		}
 
 		var stub_path_generator = function(d,top_or_bottom) {
@@ -956,7 +958,7 @@ var draw_connections = function() {
 						direction1 = Number(d.strand1=="-")*2-1; // negative strands means the read is mappping to the right of the breakpoint
 						
 				return (
-						 "M " + (x1+foot_length*direction1) + "," + y1
+						 "M " + (x1+_static.foot_length*direction1) + "," + y1
 				 + ", L " + x1                          + "," + y1 
 				 + ", L " + x2                          + "," + y2)
 		}
@@ -982,11 +984,11 @@ var draw_connections = function() {
 						direction2 = Number(d.strand2=="-")*2-1;
 
 				return (
-						 "M " + (x1+foot_length*direction1) + "," + y1
+						 "M " + (x1+_static.foot_length*direction1) + "," + y1
 				 + ", L " + x1                          + "," + y1 
 				 + ", S " + xmid                        + "," + ymid + "," + x2                          + "," + y2
 				 // + ", L " + x2                          + "," + y2
-				 + ", L " + (x2+foot_length*direction2) + "," + y2)
+				 + ", L " + (x2+_static.foot_length*direction2) + "," + y2)
 		}
 
 
@@ -1138,13 +1140,13 @@ var arrow_path_generator = function(d, top_or_bottom) {
 
 		var x1 = _scales.zoom_plots["top"].x(arrow_butt),  // start (arrow butt)
 				x2 = _scales.zoom_plots["top"].x(arrow_head),  // end (arrow head)
-				y = gene_offset;
+				y = _padding.gene_offset;
 				
 
 		if (top_or_bottom == "bottom") {
 			x1 = _scales.zoom_plots["bottom"].x(arrow_butt);  // start (arrow butt)
 			x2 = _scales.zoom_plots["bottom"].x(arrow_head);  // end (arrow head)
-			y = _layout.zoom_plot.height-gene_offset;
+			y = _layout.zoom_plot.height-_padding.gene_offset;
 		}
 
 		return (
@@ -1162,6 +1164,8 @@ var draw_genes = function(top_or_bottom) {
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_chosen_genes").remove();
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_local_genes").remove();
 
+	
+	/////////////////////    Draw genes in view according to settings    //////////////////////
 
 	var local_annotation = [];
 	for (var i in _Annotation_by_chrom[_chosen_chromosomes[top_or_bottom]]) {
@@ -1181,56 +1185,83 @@ var draw_genes = function(top_or_bottom) {
 				.on("click", user_add_gene);
 	}
 
+
+
+	var show_local = false;
+	for (type in _settings.show_gene_types) {
+		if (_settings.show_gene_types[type] == true) {
+			show_local = true;
+			break;
+		}
+	}
+
+	if (show_local) {
+		var gene_labels = _plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_local_genes")
+			.data(local_annotation).enter()
+			.append("g")
+				.filter(function(d){return _settings.show_gene_types[d.type] && d.chromosome == _chosen_chromosomes[top_or_bottom] && _scales.zoom_plots[top_or_bottom].x(d.start) > 0 && _scales.zoom_plots[top_or_bottom].x(d.end) < _layout.zoom_plot.width})
+				.attr("class",top_or_bottom + "_local_genes")
+			.on('mouseover', function(d) {
+					var text = d.gene + " (" + d.type + ")";
+					var x = _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2);
+					var y = (top_or_bottom == "top") ? (_padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
+					show_tooltip(text,x,y,_plot_canvas[top_or_bottom]);
+				})
+			.on('mouseout', function(d) {_plot_canvas[top_or_bottom].selectAll("g.tip").remove();});		
+
+
+		if (_settings.show_local_gene_names) {
+			var gene_label_text = gene_labels.append("text")
+			.text(function(d){return d.gene})
+			.attr("x",function(d){return _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2)})
+			.attr("class","gene_label")
+			.attr("dominant-baseline","middle");
+
+			if (top_or_bottom == "top") {
+				gene_label_text.attr("y",(_padding.gene_offset/2))
+			} else {
+				gene_label_text.attr("y",(_layout.zoom_plot.height-_padding.gene_offset/2))
+			}
+		}
+		
+		gene_labels.append("path")
+			.attr("class","gene_arrow")
+			.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom)});		
+	}
+
+
+	/////////////////////    Draw highlighted genes (from search or gene fusions)    //////////////////////
+
 	var gene_labels = _plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_chosen_genes")
 		.data(_Annotation_to_highlight).enter()
 		.append("g")
 			.filter(function(d){return d.show && d.chromosome == _chosen_chromosomes[top_or_bottom] && _scales.zoom_plots[top_or_bottom].x(d.start) > 0 && _scales.zoom_plots[top_or_bottom].x(d.end) < _layout.zoom_plot.width})
-			.attr("class",top_or_bottom + "_chosen_genes");				
+			.attr("class",top_or_bottom + "_chosen_genes")
+			.on('mouseover', function(d) {
+					var text = d.gene + " (" + d.type + ")";
+					var x = _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2);
+					var y = (top_or_bottom == "top") ? (_padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
+					show_tooltip(text,x,y,_plot_canvas[top_or_bottom]);
+				})
+			.on('mouseout', function(d) {_plot_canvas[top_or_bottom].selectAll("g.tip").remove();});		
 
 	var gene_label_text = gene_labels.append("text")
 		.text(function(d){return d.gene})
 		.attr("x",function(d){return _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2)})
 		.attr("class","gene_label")
-		.style('text-anchor',"middle")
 		.attr("dominant-baseline","middle");
 
 	if (top_or_bottom == "top") {
-		gene_label_text.attr("y",(gene_offset/2))
+		gene_label_text.attr("y",(_padding.gene_offset/2))
 	} else {
-		gene_label_text.attr("y",(_layout.zoom_plot.height-gene_offset/2))
+		gene_label_text.attr("y",(_layout.zoom_plot.height-_padding.gene_offset/2))
 	}
 	
 	gene_labels.append("path")
 		.attr("class","gene_arrow")
-		.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom)})
-		.style("stroke-width",2)
-		.style("stroke","black")
-		.style("fill","none");
+		.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom)});
 
 
-	// var show_local = false;
-	// for (type in _settings.show_gene_types) {
-	// 	if (_settings.show_gene_types[type] == true) {
-	// 		show_local = true;
-	// 		break;
-	// 	}
-	// }
-
-	// if (show_local) {
-	// 	var gene_arrows_top = _plot_canvas[top_or_bottom].selectAll("path.top_gene_arrow")
-	// 		.data(local_annotation).enter()
-	// 		.append("path")
-	// 			.filter(function(d){return _settings.show_gene_types[d.type] && d.chromosome == _chosen_chromosomes[top_or_bottom] && _scales.zoom_plots[top_or_bottom].x(d.start) > 0 && _scales.zoom_plots[top_or_bottom].x(d.end) < _layout.zoom_plot.width})
-	// 			.attr("class","top_gene_arrow")
-	// 			.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom=top_or_bottom)})
-	// 			.style("stroke-width",2)
-	// 			.style("stroke","black")
-	// 			.style("fill","none");
-
-	// 	if (_settings.show_local_gene_names) {
-
-	// 	}
-	// }
 
 }
 
@@ -1400,6 +1431,8 @@ function gene_type_checkbox(d) {
 function make_gene_type_table() {
 	var type_counts = {};
 	_settings.show_gene_types = {};
+	var min_to_show_separately = 1000;
+
 	for (var i in _Annotation_data) {
 		if (type_counts[_Annotation_data[i].type] == undefined) {
 			type_counts[_Annotation_data[i].type] = 1;
@@ -1408,6 +1441,13 @@ function make_gene_type_table() {
 			type_counts[_Annotation_data[i].type]++;
 		}
 	}
+	// type_counts["other"] = 0;
+	// for (var type in type_counts) {
+	// 	if (type_counts[type] < min_to_show_separately) {
+	// 		type_counts["other"] += type_counts[type];
+	// 		delete type_counts[type];
+	// 	}
+	// }
 	var header = ["type","count","show"];
 	d3.select("#gene_type_table").html("");
 	d3.select("#gene_type_table").append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});

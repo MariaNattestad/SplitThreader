@@ -63,11 +63,9 @@
 					   <ul id="genes_labeled" class="gene_list"></ul>
 					</div>
 
-					<table id="gene_type_table"></table>
 					
-					<div class="checkbox">
-						<label><input id="show_local_gene_names" type="checkbox">Show gene names</label>
-					</div>
+					
+					
 					<div>
 						<h4> Top genes:</h4>
 						<ul id="top_local_genes" class="gene_list"></ul>
@@ -76,6 +74,12 @@
 						<h4>Bottom genes:</h4>
 						<ul id="bottom_local_genes" class="gene_list"></ul>
 					</div>
+
+					<table id="gene_type_table"></table>
+					<div class="checkbox">
+						<label><input id="show_local_gene_names" type="checkbox">Show gene names</label>
+					</div>
+
 				</div>
 			</div>
 		</div>
