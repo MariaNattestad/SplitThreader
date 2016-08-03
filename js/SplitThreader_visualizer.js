@@ -7,7 +7,6 @@ function getUrlVars() {
 		return vars;
 }
 
-var _config_path="user_uploads/" + getUrlVars()["code"] + ".config";
 var _input_file_prefix = "user_data/" + getUrlVars()["code"] + "/" + getUrlVars()["nickname"];
 
 var _layout = {
@@ -18,8 +17,6 @@ var _layout = {
 };
 
 var _padding = {};
-
-
 
 var _static = {};
 _static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
@@ -235,12 +232,8 @@ function show_tooltip(text,x,y,parent_object) {
 ///////////  Run the whole program by loading all files and when they are loaded drawing everything ///////////
 
 var run = function(){
-	populate_navbar();
 
-	read_annotation_file(); // when not using config and in case config file doesn't work or has no input
-
-	// read_config_file();	
-	
+	read_annotation_file();
 	read_genome_file();
 	read_spansplit_file();
 	
@@ -273,35 +266,6 @@ function wait_then_run_when_all_data_loaded() {
 		window.setTimeout(wait_then_run_when_all_data_loaded,300)  
 	}
 }
-
-///////////   Make these adjustable by user   ////////////
-
-var max_zoom = 50; //Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
-
-var _config = {};
-///////////////////////////   Read input files   //////////////////////////////////
-
-// var read_config_file = function() {
-// 	d3.csv(_config_path, function(error,config_input) {
-// 		if (error) {
-// 			read_annotation_file();
-// 			throw error;
-// 		}
-// 		// console.log("CONFIG FILE:");
-		
-// 		for (var i=0;i<config_input.length;i++){
-// 			// console.log(config_input[i]);
-// 			if (isNaN(config_input[i].val)) {
-// 				_config[config_input[i].parameter] = config_input[i].val; // string doesn't contain a number
-// 			} else {
-// 				_config[config_input[i].parameter] = +config_input[i].val; // string does contain a number
-// 			}
-// 		}
-		
-// 		// console.log(config);
-// 		read_annotation_file();
-// 	});
-// }
 
 
 
@@ -683,7 +647,7 @@ var draw_zoom_plot = function(top_or_bottom) {
 	var zoom = d3.behavior.zoom()
 		.x(_scales.zoom_plots[top_or_bottom].x)
 		// .y(_scales.zoom_plots[top_or_bottom].y)
-		.scaleExtent([1,genomic_bins_per_pixel*max_zoom])
+		.scaleExtent([1,genomic_bins_per_pixel*50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
 		.duration(100)
 		.on("zoom",
 				zoom_handler
@@ -1489,33 +1453,6 @@ var thickness_of_connections = function(d) {
 		}
 }
 
-//////////    Settings    ////////////////
-
-// function user_set_min_variant_size() {
-// 	console.log("user_set_min_variant_size")
-
-// 	config["min_variant_size"] = prompt("set minimum variant size:",config["min_variant_size"])
-
-// 	d3.select("#user_set_min_variant_size")
-// 			.text("Minimum variant size = " + config["min_variant_size"])
-
-// 	draw_connections();
-// 	draw_circos_connections();
-
-// }
-
-// function user_set_min_split_reads() {
-// 	console.log("user_set_min_split_reads")
-
-// 	config["min_split_reads"] = prompt("set minimum number of split reads per variant: ",config["min_split_reads"])
-
-// 	d3.select("#user_set_min_split_reads")
-// 			.text("Minimum split reads = " + config["min_split_reads"])
-
-// 	draw_connections();
-// 	draw_circos_connections();
-// }
-
 function jump_to_gene(annotation_for_new_gene) {
 
 		var shown_already = false
@@ -1606,69 +1543,6 @@ function submit_fusion() {
 	}
 }
 
-
-// function select_gene(index) {
-// 	d3.select(".livesearch").html("").style("border","0px");
-
-// 	d3.select("#search_input").property("value","");
- 
-// 	user_add_gene(_Annotation_data[index]);
-// }
-
-
-
-// d3.select("#search_input").on("keyup",function() { search_gene(this,"select_gene(") });
-
-// d3.select("#fusion_gene1_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(1,") });
-// d3.select("#fusion_gene2_box").select(".search_field").on("keyup",function() { search_gene(this,"select_fusion_gene(2,") });
-
-
-//////////    Populate navbar with visualizer settings    ////////////////
-
-function populate_navbar() {
-
-	// Separating bar
-	d3.select("#navbar").append("li").attr("class","dropdown").append("a")
-				.html("|")
-													// .attr("class","dropdown-toggle")
-													// .attr("data-toggle","dropdown")
-													// .attr("href","")
-
-	
-	// Settings
-	settings_link = d3.select("#navbar")
-		.append("li")
-			.attr("class","dropdown");
-
-	settings_link
-			.append("a")
-				.html("Settings <span class='caret'></span>")
-				.attr("class","dropdown-toggle")
-				.attr("data-toggle","dropdown")
-				.attr("href","");
-		
-	settings = settings_link.append("ul")
-			.attr("class","dropdown-menu")
-			.attr("id", "settings_dropdown_menu")
-			.attr("role","menu");
-
-
-	settings.append("li").attr("class","dropdown-header")
-		.text("Features")
-
-	settings.append("li").append("a")
-		.attr("href",void(0))
-		.attr("id","toggle_segment_copy_number")
-		.on("click",toggle_segment_copy_number)
-		.text("Show segmented read coverage");
-	
-}
-
-// ===========================================================================
-// == Responsiveness
-// ===========================================================================
-
-// 
 // Resize SVG and sidebar when window size changes
 window.onresize = resizeWindow;
 function resizeWindow()
