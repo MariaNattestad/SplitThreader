@@ -3,12 +3,12 @@
   display:inline-block;
 }
 
-.panel_box {
+/*.panel_box {
   margin-left: 2vmax;
   margin-right: 2vmax;
   margin-top: 2vmax;
   display: block;
-}
+}*/
 .search_field {
   width: 100%;
 }
@@ -21,7 +21,8 @@
 }
 
 #user_message {
-  margin: 2vmin;
+  margin-bottom: 1vmin;
+  width: 100%;
   display: inline-block;
 }
 
@@ -75,18 +76,25 @@ th, td {
   padding: 0 0 0 0;
   margin-top:10px;
   /*float: left;*/
+  border: 1px solid #cccccc;
   margin-left: 0;
 }
 
 .gene_list li {
     display:inline-block;
     /*float: left;*/
-    font-size: 1vmax;
+    font-size: 0.7vw;
     background-color: #cccccc;
-    padding: 0.2vmax;
-    margin-right: 0.5vmax;
-    margin-bottom: 0.5vmax;
+    padding: 0.1vw;
+    margin-right: 0.2vw;
+    margin-bottom: 0.2vw;
     cursor: pointer;
+}
+
+#genes_labeled li {
+  font-size: 1vw;
+  margin-right: 0.5vw;
+  margin-bottom: 0.5vw;
 }
 
 svg {
@@ -123,34 +131,6 @@ body {
   /*stroke-width:0.5px;*/
   shape-rendering: crispEdges;
 }
-.d3-tip {
-  line-height: 1;
-  font-weight: bold;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  border-radius: 2px;
-}
-
-/* Creates a small triangle extender for the tooltip */
-.d3-tip:after {
-  box-sizing: border-box;
-  display: inline;
-  font-size: 1vmin;
-  width: 100%;
-  line-height: 1;
-  color: rgba(0, 0, 0, 0.8);
-  content: "\25BC";
-  position: absolute;
-  text-align: center;
-}
-
-/* Style northward tooltips differently */
-.d3-tip.n:after {
-  margin: -1px 0 0 0;
-  top: 100%;
-  left: 0;
-}
 
 text {
   font: 1vmax sans-serif;
@@ -186,3 +166,15 @@ text {
   fill: none;
 }
 
+.panel-group {
+  margin-bottom: 1vmin;
+}
+
+#gene_type_table_box {
+  height: 120px;
+  overflow-y: scroll;
+}
+
+.box {
+  border: 1px solid #cccccc;
+}

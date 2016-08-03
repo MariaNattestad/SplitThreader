@@ -13,7 +13,25 @@
 
 <div id="right_panel">
 	
-	<div class="panel_box"><div id="user_message" class="alert alert-default" role="alert"></div></div>
+	<div id="user_message" class="alert alert-default" role="alert"></div>
+
+	<div class="panel-group ">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+				<h4 class="panel-title">
+					<a data-toggle="collapse" class="active" href="#settings_box">Settings</a>
+				</h4>
+			</div>
+			<div class="panel-collapse collapse in" id="settings_box">
+				<div class="panel-body">
+					<div class="checkbox">
+						<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 	<div class="panel-group ">
 		<div class="panel panel-default">
@@ -64,8 +82,6 @@
 					</div>
 
 					
-					
-					
 					<div>
 						<h4> Top genes:</h4>
 						<ul id="top_local_genes" class="gene_list"></ul>
@@ -74,8 +90,9 @@
 						<h4>Bottom genes:</h4>
 						<ul id="bottom_local_genes" class="gene_list"></ul>
 					</div>
-
-					<table id="gene_type_table"></table>
+					<div id="gene_type_table_box">
+						<table id="gene_type_table"></table>
+					</div>
 					<div class="checkbox">
 						<label><input id="show_local_gene_names" type="checkbox">Show gene names</label>
 					</div>
@@ -108,8 +125,8 @@
 
 						<table id="gene_fusion_table">
 							<tr id="input_row">
-								<td width="20%" id="gene1"></td>
-								<td width="20%" id="gene2"></td>
+								<td width="20%" id="gene1">search gene above</td>
+								<td width="20%" id="gene2">search gene above</td>
 								<td width="60%"> <button id="submit_fusion">Submit</button></td>
 							</tr>
 						</table>

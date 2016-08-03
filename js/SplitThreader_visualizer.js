@@ -186,6 +186,12 @@ d3.select("#show_local_gene_names").on("change",function() {
 	update_genes();
 });
 
+d3.select("#show_segmented_coverage").on("change",function() {
+	_settings.segment_copy_number = d3.event.target.checked;
+	update_coverage("top");
+	update_coverage("bottom");
+});
+
 d3.select("#submit_fusion").on("click",submit_fusion);
 
 
@@ -1448,12 +1454,20 @@ function make_gene_type_table() {
 	// 		delete type_counts[type];
 	// 	}
 	// }
+
+	// Put into list so we can sort it
+	var data_for_table = [];
+	for (var type in type_counts) {
+		data_for_table.push({"type":type,"count":type_counts[type]})
+	}
+	data_for_table.sort(function(a, b){return b.count-a.count});
+
 	var header = ["type","count","show"];
 	d3.select("#gene_type_table").html("");
 	d3.select("#gene_type_table").append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
-	var rows = d3.select("#gene_type_table").selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
-	rows.append("td").html(function(d) {return d});;
-	rows.append("td").html(function(d) {return type_counts[d]});
+	var rows = d3.select("#gene_type_table").selectAll("tr.data").data(data_for_table).enter().append("tr").attr("class","data");
+	rows.append("td").html(function(d) {return d.type});
+	rows.append("td").html(function(d) {return d.count});
 	rows.append("td").append("input").property("type","checkbox").property("checked",false).on("change",gene_type_checkbox);
 }
 
@@ -1476,30 +1490,6 @@ var thickness_of_connections = function(d) {
 }
 
 //////////    Settings    ////////////////
-
-
-function toggle_segment_copy_number() {
-	if (_settings.segment_copy_number == false) {
-		_settings.segment_copy_number = true;
-		//  REDRAW copy number:
-		console.log(_bins_per_bar["top"])
-		update_coverage("top");
-		update_coverage("bottom");
-		// Change text on menu:
-		d3.select("#toggle_segment_copy_number")
-			.text("Show raw read coverage")
-	} else {
-		_settings.segment_copy_number = false;
-		//  REDRAW copy number:
-		console.log(_bins_per_bar["top"])
-		update_coverage("top");
-		update_coverage("bottom");
-		// Change text on menu:
-		d3.select("#toggle_segment_copy_number")
-			.text("Show segmented read coverage")
-	}
-}
-
 
 // function user_set_min_variant_size() {
 // 	console.log("user_set_min_variant_size")
