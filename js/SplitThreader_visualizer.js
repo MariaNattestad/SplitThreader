@@ -66,7 +66,6 @@ var gene_fusion_data = null;
 var annotation_by_chrom = {};
 
 
-var genes_to_show = [];
 var relevant_annotation = []; // has to be a list for d3 display
 var annotation_by_gene = {}; // only contains genes we have searched for
 
@@ -202,8 +201,6 @@ var bottom_bins_per_bar = 5;
 
 var dragging_chromosome = null; // Which chromosome are you dragging from the circos plot?
 var hover_plot = null; // Which plot (top or bottom) are you about to drop the chromosome onto?
-
-var coverage_done = false;
 
 var _data_ready = {"coverage": {"top": false, "bottom": false}, "spansplit": false};
 
@@ -1433,7 +1430,6 @@ var draw_genes_top = function() {
 	// 		.data(local_annotation).enter()
 	// 		.append("path")
 	// 			.filter(function(d){return _settings.show_gene_types[d.type] && d.chromosome == chosen_chromosomes["top"] && _scales.zoom_plots["top"].x(d.start) > 0 && _scales.zoom_plots["top"].x(d.end) < _layout.zoom_plot.width})
-	// 			// .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
 	// 			.attr("class","top_gene_arrow")
 	// 			.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom="top")})
 	// 			.style("stroke-width",2)
@@ -1479,7 +1475,6 @@ var draw_genes_bottom = function() {
 		.data(relevant_annotation).enter()
 		.append("text")
 			.filter(function(d){return d.show && d.chromosome == chosen_chromosomes["bottom"] && _scales.zoom_plots["bottom"].x(d.start) > 0 && _scales.zoom_plots["bottom"].x(d.end) < _layout.zoom_plot.width})
-			// .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
 			.text(function(d){return d.gene})
 			.attr("x",function(d){return _scales.zoom_plots["bottom"].x((d.start+d.end)/2)})
 			.attr("y",(_layout.zoom_plot.height-gene_offset/2))
@@ -1499,7 +1494,6 @@ var draw_genes_bottom = function() {
 		.data(local_annotation).enter()
 		.append("path")
 			.filter(function(d){return _settings.show_gene_types[d.type] &&  d.chromosome == chosen_chromosomes["bottom"] && _scales.zoom_plots["bottom"].x(d.start) > 0 && _scales.zoom_plots["bottom"].x(d.end) < _layout.zoom_plot.width})
-			// .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
 			.attr("class","bottom_gene_arrow")
 			.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom="bottom")})
 			.style("stroke-width",2)
@@ -1511,7 +1505,6 @@ var draw_genes_bottom = function() {
 		.data(relevant_annotation).enter()
 		.append("path")
 			.filter(function(d){return d.show &&  d.chromosome == chosen_chromosomes["bottom"] && _scales.zoom_plots["bottom"].x(d.start) > 0 && _scales.zoom_plots["bottom"].x(d.end) < _layout.zoom_plot.width})
-			// .filter(function(d){return genes_to_show.indexOf(d.gene)!=-1})
 			.attr("class","bottom_gene_arrow")
 			.attr("d",function(d) {return arrow_path_generator(d,top_or_bottom="bottom")})
 			.style("stroke-width",2)
