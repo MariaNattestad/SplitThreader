@@ -210,6 +210,7 @@ d3.select("#min_variant_size").on("keyup",function() {
 		_settings.min_variant_size = 0;
 	}
 	draw_connections();
+	draw_circos_connections();
 });
 d3.select("#min_split_reads").on("keyup",function() {
 	_settings.min_split_reads = parseInt(this.value);
@@ -217,6 +218,7 @@ d3.select("#min_split_reads").on("keyup",function() {
 		_settings.min_split_reads = 0;
 	}
 	draw_connections();
+	draw_circos_connections();
 });
 
 d3.select("#submit_fusion").on("click",submit_fusion);
@@ -1192,8 +1194,6 @@ var draw_genes = function(top_or_bottom) {
 				.on("click", user_add_gene);
 	}
 
-
-
 	var show_local = false;
 	for (type in _settings.show_gene_types) {
 		if (_settings.show_gene_types[type] == true) {
@@ -1444,7 +1444,7 @@ function populate_ribbon_link() {
 
 
 function gene_type_checkbox(d) {
-	_settings.show_gene_types[d] = d3.event.target.checked;
+	_settings.show_gene_types[d.type] = d3.event.target.checked;
 	update_genes();
 }
 function make_gene_type_table() {

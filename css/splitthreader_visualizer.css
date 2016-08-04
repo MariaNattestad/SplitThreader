@@ -149,7 +149,7 @@ text {
 
 .top_local_genes text, .bottom_local_genes text{
   fill: #999999;  /* fill is text color in svg */
-  font-size: 0.8vmin;
+  font-size: 1vmax;
 }
 
 

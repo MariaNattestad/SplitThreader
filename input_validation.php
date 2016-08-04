@@ -36,9 +36,8 @@
     
     $continue_button= "<form 
         action=\"$run_url\" 
-        method=\"post\">";
-            // <input type=\"hidden\" name = \"code\" value=\"$code\">   
-            // <input type=\"hidden\" name=\"nickname\" value=\"$nickname\">  
+        method=\"post\"><input type=\"hidden\" name = \"code\" value=\"$code\"><input type=\"hidden\" name=\"nickname\" value=\"$nickname\">";
+            
             // <input type=\"hidden\" name=\"annotation\" value=\"$annotation\">
             // <input type=\"hidden\" name=\"email\" value=\"$_POST\[\"email\"\]\">
         //     <button type=\"submit\" class=\"center btn btn-success\">Continue</button>
