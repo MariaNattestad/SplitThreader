@@ -178,3 +178,7 @@ text {
 .box {
   border: 1px solid #cccccc;
 }
+
+.invisible_table, .invisible_table tr, .invisible_table td {
+  border: none;
+}

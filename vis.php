@@ -27,6 +27,10 @@
 					<div class="checkbox">
 						<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
 					</div>
+
+					<label for="color_scheme_dropdown">Annotation</label>
+					<select class="form-control" id="annotation_dropdown">
+				 	</select>
 				</div>
 			</div>
 		</div>
@@ -42,6 +46,16 @@
 			</div>
 			<div class="panel-collapse collapse in" id="variant_detail_box">
 				<div class="panel-body">
+					<table class="invisible_table">
+				 		<tr>
+				 			<td>Minimum variant size: </td>
+				 			<td><input id="min_variant_size" type="text"></td>
+				 		</tr>
+				 		<tr>
+				 			<td>Minimum split reads:</td>
+				 			<td><input id="min_split_reads" type="text"></td>
+				 		</tr>
+				 	</table>
 
 					<table id="variant_table"></table>
 

@@ -53,47 +53,6 @@
                                                  <input type="text" name="nickname" class="form-control" placeholder = "description of dataset, cell line, data type, etc.">
                                               </div>
                                             </p>
-                                            <!-- EMAIL -->
-                                            <!-- <p>
-                                              <div class="input-group input-group-lg">
-                                                <span class="input-group-addon">Email</span>
-                                                <input type="email" name="email" class="form-control" placeholder="email@gmail.com">
-                                              </div>
-                                            </p> -->
-                                            <!-- BUTTON FOR OPTIONAL PARAMETERS -->
-                                            <!-- <p><a class="btn btn-default" data-toggle="collapse" href="#collapseExample" aria-haspopup="true" aria-expanded="false" aria-controls="collapseExample"> -->
-                                                <!-- <span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Optional parameters -->
-                                                <!-- http://glyphicons.com/ -->
-                                            <!-- </a></p> -->
-                                            <!-- Collapsible area containing optional parameters -->
-                                                <!-- <div class="collapse" id="collapseExample"> -->
-                                                    <div class=" thumbnail plot_frame frame">
-                                                        <div class="card card-block">
-                                                              <table class="table" id="config_table" style="display: table;">
-                                                                  <tr class="active">
-                                                                      <th colspan="2">Variant filtering</th></tr>
-                                                                  <tr>
-                                                                      <td><label for="min_variant_size" class="form-control-label" >Minimum variant size</label></td>
-                                                                      <td><input name="min_variant_size" id="min_variant_size" type="number" step="1" min="0" class="form-control" value = "0"></td>
-                                                                  </tr>
-                                                                  <!-- <tr>
-                                                                      <td><label for="min_split_reads" class="form-control-label">Minimum split reads supporting variant</label></td>
-                                                                      <td><input name="min_split_reads" id="min_split_reads" type="number" step="1" min="0" class="form-control" value = "0"></td>
-                                                                  </tr> -->
-                                                                  <tr class="active">
-                                                                      <th colspan="2">Annotation</th></tr>
-                                                                  <tr>
-                                                                    <td colspan="2">                                                                      
-                                                                          <div class="radio"><label><input type="radio" checked name="annotation" value="none"> None </label></div>
-                                                                          <?php $filenames = glob("resources/annotation/*.genes.csv"); foreach ($filenames as $value) {$output=str_replace("resources/annotation/","",$value); $output=str_replace(".genes.csv","",$output); echo '<div class="radio"><label><input type="radio" name="annotation" value="' . $value .'"> ' . $output. ' (Gencode) </label></div>';}; ?>
-                                                                    </td>
-                                                                  </tr>
-                                                              </table>
-                                                        </div>
-                                                    </div>
-                                                <!-- </div> -->
-                                            <!-- End of collapse area -->
-                                            
                                             <p id="analysis_form">
                                           <!--  submit button set from within front_page_script.js --> 
                                             </p>

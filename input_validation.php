@@ -12,8 +12,8 @@
     if( !isset($_POST['code']) ) { $aResult['error'] = 'ERROR: No code passed to input_validation.php';}
     $code=$_POST["code"];
 
-    if( !isset($_POST['annotation']) ) { $aResult['error'] = 'ERROR: No annotation passed to input_validation.php';}
-    $annotation=$_POST["annotation"];
+    // if( !isset($_POST['annotation']) ) { $aResult['error'] = 'ERROR: No annotation passed to input_validation.php';}
+    // $annotation=$_POST["annotation"];
 
     $nickname = "my_sample";
 
@@ -25,7 +25,6 @@
         $_POST['nickname'] = $nickname;
     }
 
-    
     $url="analysis.php?code=$code";
     $run_url="run_algorithm.php";
     $filename_variants="user_uploads/$code.variants";
@@ -70,20 +69,23 @@
         //     echo $item;
         //     echo $_POST[$item];
         // }
-        $data = "parameter,val\nmin_variant_size,";
-        foreach ($_POST as $key => $value) {
-            $data = $data . $key  . "," . $value . "\n";
-            $continue_button = $continue_button . "<input type=\"hidden\" name = \"" . $key . "\" value=\"" . $value . "\">";
-        }
+
+
+
+        // $data = "parameter,val\nmin_variant_size,";
+        // foreach ($_POST as $key => $value) {
+        //     $data = $data . $key  . "," . $value . "\n";
+        //     $continue_button = $continue_button . "<input type=\"hidden\" name = \"" . $key . "\" value=\"" . $value . "\">";
+        // }
 
         $continue_button = $continue_button . "<button type=\"submit\" class=\"center btn btn-success\">Continue</button>
         </form>";
 
         // $data = "parameter,val\nmin_variant_size," . $_POST['min_variant_size'] . "\n" . "min_split_reads," . $_POST['min_split_reads'] . "\n"  . "annotation," . $_POST['annotation'] . "\n";
-        $ret = file_put_contents('user_uploads/' . $code . '.config', $data, FILE_APPEND | LOCK_EX);
-        if($ret === false) {
-            die('There was an error writing this file');
-        }
+        // $ret = file_put_contents('user_uploads/' . $code . '.config', $data, FILE_APPEND | LOCK_EX);
+        // if($ret === false) {
+        //     die('There was an error writing this file');
+        // }
         // }
 
         echo "$continue_button";

@@ -13,17 +13,17 @@
     $nickname = $_POST["nickname"];
 
     $email = "default";
-    if( isset($_POST['email']) ) {
-        $email = $_POST["email"];
-        if (strpos($email, '@') == false)  {
-            $email = "not an email";
-        }
-    }
+    // if( isset($_POST['email']) ) {
+    //     $email = $_POST["email"];
+    //     if (strpos($email, '@') == false)  {
+    //         $email = "not an email";
+    //     }
+    // }
     
     $annotation = "none";
-    if( isset($_POST['annotation']) ) {
-        $annotation = $_POST['annotation'];
-    }
+    // if( isset($_POST['annotation']) ) {
+    //     $annotation = $_POST['annotation'];
+    // }
 
     $url="analysis.php?code=$code";
     $filename="user_uploads/$code";
