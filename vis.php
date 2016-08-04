@@ -63,7 +63,7 @@
 					
 					<div id="send_to_ribbon_panel">
 						<p>Ribbon (<a href="http://genomeribbon.com">genomeribbon.com</a>) is a long-read alignment viewer that allows you to see all the reads mapping near a variant including their other alignments across the genome, and you can see detailed alignments for each read to determine which parts of the read are mapping where.</p>
-						<form action="/ribbon/index.php" method="post" target="_blank">
+						<form action="http://genomeribbon.com/index.php" method="post" target="_blank">
 							<div id="data_to_send_ribbon">
 								<!-- Hidden fields go here -->
 							</div>
