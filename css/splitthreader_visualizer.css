@@ -14,7 +14,7 @@
 }
 
 #send_to_ribbon_panel {
-  display:none;
+  /*display:none;*/
 }
 #gene_fusion_table, #gene_fusion_table_results {
   width: 100%;
@@ -159,6 +159,16 @@ text {
   fill: none;
 }
 
+.variant {
+  stroke-opacity: 0.5;
+
+}
+
+.variant:hover {
+  stroke-opacity: 1;
+  stroke-width: 5 !important;
+}
+
 
 .top_chosen_genes path, .bottom_chosen_genes path {
   stroke: #000000;
@@ -181,4 +191,12 @@ text {
 
 .invisible_table, .invisible_table tr, .invisible_table td {
   border: none;
+}
+
+.nav-tabs li a {
+  padding: 0.7vw;
+}
+
+#submit_fusion {
+  margin: 0.5vmin;
 }

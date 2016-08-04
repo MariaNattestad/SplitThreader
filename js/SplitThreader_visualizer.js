@@ -176,6 +176,7 @@ _zoom_containers["bottom"].on("mouseover",function(){
 	_hover_plot = "bottom";
 });
 
+d3.select("#send_to_ribbon_form").property("action","http://genomeribbon.com");
 
 d3.select("#show_local_gene_names").on("change",function() {
 	_settings.show_local_gene_names = d3.event.target.checked;
@@ -218,8 +219,15 @@ d3.select("#min_split_reads").on("keyup",function() {
 	draw_connections();
 });
 
-
 d3.select("#submit_fusion").on("click",submit_fusion);
+
+
+// Advanced settings:
+
+d3.select("#ribbon_path").property("value","http://genomeribbon.com").
+	on("change",function() {
+	d3.select("#send_to_ribbon_form").property("action",d3.event.target.value);	
+});
 
 
 ////////// Calculate polar coordinates ///////////
@@ -387,8 +395,10 @@ var read_spansplit_file = function() {
 
 		_data_ready.spansplit = true;
 		make_variant_table();
+		populate_ribbon_link();
 	});
 }
+
 
 function read_annotation_file() {
 	console.log("looking for annotation file");
@@ -1010,7 +1020,7 @@ var draw_connections = function() {
 			.data(categorized_variant_data.top_to_bottom)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_connection")
+				.attr("class","spansplit_connection variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
@@ -1033,7 +1043,7 @@ var draw_connections = function() {
 			.data(categorized_variant_data.within_top)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_loop_top")
+				.attr("class","spansplit_loop_top  variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
@@ -1052,7 +1062,7 @@ var draw_connections = function() {
 			.data(categorized_variant_data.within_bottom)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_loop_bottom")
+				.attr("class","spansplit_loop_bottom  variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
@@ -1073,7 +1083,7 @@ var draw_connections = function() {
 			.data(categorized_variant_data.top_to_other)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_stub_top")
+				.attr("class","spansplit_stub_top  variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
@@ -1092,7 +1102,7 @@ var draw_connections = function() {
 			.data(categorized_variant_data.bottom_to_other)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_stub_bottom")
+				.attr("class","spansplit_stub_bottom  variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
@@ -1116,12 +1126,6 @@ function variant_click(d) {
 	var rows = d3.select("#variant_detail_text").append("table").selectAll("tr").data(header).enter().append("tr");
 	rows.append("th").html(function(d) {return d;});
 	rows.append("td").html(function(d) {return data[d];});
-
-	// console.log(JSON.stringify(d));
-	d3.select("#data_to_send_ribbon").html("");
-	// this is only one .bedpe record, so we put [] around it and generalize the Ribbon-side code to arrays of bedpe objects
-	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify([data].concat(_Variant_data)));
-	d3.select("#send_to_ribbon_panel").style("display","block");
 }
 
 var arrow_path_generator = function(d, top_or_bottom) {
@@ -1382,16 +1386,21 @@ function search_select_gene(d) {
 	user_add_gene(d);
 }
 function search_select_fusion1(d) {
-	// console.log("selected gene " + d.gene + " as fusion gene 1");
-	_current_fusion_genes[1] = d;
-	d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
-	user_add_gene(d);
+	if (d != undefined) {
+		// console.log("selected gene " + d.gene + " as fusion gene 1");
+		_current_fusion_genes[1] = d;
+		d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
+		user_add_gene(d);	
+	}
+	
 }
 function search_select_fusion2(d) {
-	// console.log("selected gene " + d.gene + " as fusion gene 2");
-	_current_fusion_genes[2] = d;
-	d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
-	user_add_gene(d);
+	if (d != undefined) {
+		// console.log("selected gene " + d.gene + " as fusion gene 2");
+		_current_fusion_genes[2] = d;
+		d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
+		user_add_gene(d);
+	}
 }
 function create_gene_search_boxes() {
 	var gene_livesearch = d3.livesearch().max_suggestions_to_show(15).search_list(_Annotation_data).search_key("gene").placeholder(_Annotation_data[0].gene);
@@ -1405,6 +1414,7 @@ function variant_type_checkbox(d) {
 	_settings.show_variant_types[d] = d3.event.target.checked;
 	draw_connections();
 }
+
 function make_variant_table() {
 	var type_counts = {};
 	_settings.show_variant_types = {};
@@ -1425,6 +1435,12 @@ function make_variant_table() {
 	rows.append("td").append("input").property("type","checkbox").property("checked",true).on("change",variant_type_checkbox);
 }
 
+function populate_ribbon_link() {
+	// console.log(JSON.stringify(d));
+	d3.select("#data_to_send_ribbon").html("");
+	// this is only one .bedpe record, so we put [] around it and generalize the Ribbon-side code to arrays of bedpe objects
+	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Variant_data));
+}
 
 
 function gene_type_checkbox(d) {
@@ -1566,7 +1582,7 @@ function submit_fusion() {
 		_current_fusion_genes[2].name = _current_fusion_genes[2].gene;
 
 		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2]);
-		var new_row = d3.select("#gene_fusion_table_results").insert("tr",":first-child").attr("class","record");
+		var new_row = d3.select("#gene_fusion_table_results").append("tr").attr("class","record");
 			new_row.append("td").html(_current_fusion_genes[1].name).property("width","20%");
 			new_row.append("td").html(_current_fusion_genes[2].name).property("width","20%");
 			new_row.append("td").html("distance: " + results.distance + "bp").property("width","60%");
