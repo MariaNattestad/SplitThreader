@@ -1188,8 +1188,6 @@ var draw_genes = function(top_or_bottom) {
 				.on("click", user_add_gene);
 	}
 
-
-
 	var show_local = false;
 	for (type in _settings.show_gene_types) {
 		if (_settings.show_gene_types[type] == true) {
@@ -1428,7 +1426,7 @@ function make_variant_table() {
 
 
 function gene_type_checkbox(d) {
-	_settings.show_gene_types[d] = d3.event.target.checked;
+	_settings.show_gene_types[d.type] = d3.event.target.checked;
 	update_genes();
 }
 function make_gene_type_table() {
