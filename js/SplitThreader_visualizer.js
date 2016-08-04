@@ -209,6 +209,7 @@ d3.select("#min_variant_size").on("keyup",function() {
 		_settings.min_variant_size = 0;
 	}
 	draw_connections();
+	draw_circos_connections();
 });
 d3.select("#min_split_reads").on("keyup",function() {
 	_settings.min_split_reads = parseInt(this.value);
@@ -216,6 +217,7 @@ d3.select("#min_split_reads").on("keyup",function() {
 		_settings.min_split_reads = 0;
 	}
 	draw_connections();
+	draw_circos_connections();
 });
 
 
