@@ -60,27 +60,31 @@
 						</div>
 					<!-- Gene settings -->
 						<div id="gene_settings" class="tab-pane fade">
-							<label for="color_scheme_dropdown">Annotation</label>
+							<label for="color_scheme_dropdown">Annotation:</label>
 							<select class="form-control" id="annotation_dropdown">
 							</select>
 
-							<div id="gene_livesearch"></div>
-							<div>
-							   <ul id="genes_labeled" class="gene_list"></ul>
+							<div id="show_genes_box">
+								<label>Label genes:</label>
+								<div id="gene_livesearch"></div>
+								<label>Genes labeled:</label> (click to show/hide)
+								<div>
+								   <ul id="genes_labeled" class="gene_list"></ul>
+								</div>
 							</div>
-							<div>
+							<!-- <div>
 								<h4> Top genes:</h4>
 								<ul id="top_local_genes" class="gene_list"></ul>
 							</div>
 							<div>
 								<h4>Bottom genes:</h4>
 								<ul id="bottom_local_genes" class="gene_list"></ul>
-							</div>
+							</div> -->
 							<div id="gene_type_table_box">
 								<table id="gene_type_table"></table>
 							</div>
 							<div class="checkbox">
-								<label><input id="show_local_gene_names" type="checkbox">Show gene names</label>
+								<label><input id="hide_local_gene_names" type="checkbox">Hide gene names</label>
 							</div>
 						</div>
 
@@ -94,11 +98,14 @@
 						<div id="advanced_settings" class="tab-pane fade">
 							<label>Ribbon path: <input id='ribbon_path'></label>
 						</div>
-				
+					
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+
+
 	<div class="panel-group ">
 		<div class="panel panel-default">
 			<div class="panel-heading">

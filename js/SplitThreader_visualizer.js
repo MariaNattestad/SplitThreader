@@ -29,7 +29,7 @@ _static.annotations_available = [{"name":"Human hg19 Gencode", "path":"resources
 var _settings = {};
 _settings.show_gene_types = {};
 _settings.show_variant_types = {};
-_settings.show_local_gene_names = false;
+_settings.show_local_gene_names = true;
 _settings.color_index = 1;
 _settings.segment_copy_number = false;
 _settings.min_variant_size = 0;
@@ -178,8 +178,8 @@ _zoom_containers["bottom"].on("mouseover",function(){
 
 d3.select("#send_to_ribbon_form").property("action","http://genomeribbon.com");
 
-d3.select("#show_local_gene_names").on("change",function() {
-	_settings.show_local_gene_names = d3.event.target.checked;
+d3.select("#hide_local_gene_names").on("change",function() {
+	_settings.show_local_gene_names = !d3.event.target.checked;
 	update_genes();
 });
 
@@ -426,6 +426,8 @@ function read_annotation_file() {
 				// annotation_genes_available.push(annotation_input[i].gene)
 			}
 			_Annotation_data = annotation_input;
+			_Annotation_data.sort(function(a,b){return a["gene"].length-b["gene"].length});
+
 			create_gene_search_boxes();
 			make_gene_type_table();
 			user_message("Info","Finished reading annotation");
@@ -1403,7 +1405,7 @@ function search_select_fusion2(d) {
 	}
 }
 function create_gene_search_boxes() {
-	var gene_livesearch = d3.livesearch().max_suggestions_to_show(15).search_list(_Annotation_data).search_key("gene").placeholder(_Annotation_data[0].gene);
+	var gene_livesearch = d3.livesearch().max_suggestions_to_show(15).search_list(_Annotation_data).search_key("gene").placeholder("ERBB2");
 	// console.log(gene_livesearch);
 	d3.select("#gene_livesearch").call(gene_livesearch.selection_function(search_select_gene));
 	d3.select("#fusion_gene1_livesearch").call(gene_livesearch.selection_function(search_select_fusion1));

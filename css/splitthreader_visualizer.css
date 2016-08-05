@@ -76,7 +76,7 @@ th, td {
   padding: 0 0 0 0;
   margin-top:10px;
   /*float: left;*/
-  border: 1px solid #cccccc;
+  /*border: 1px solid #cccccc;*/
   margin-left: 0;
 }
 
@@ -181,7 +181,7 @@ text {
 }
 
 #gene_type_table_box {
-  height: 120px;
+  height: 200px;
   overflow-y: scroll;
 }
 
@@ -199,4 +199,9 @@ text {
 
 #submit_fusion {
   margin: 0.5vmin;
+}
+
+#show_genes_box {
+  margin: 1vmin 0 1vmin 0;
+  width: 100%;
 }
