@@ -15,6 +15,10 @@
 	
 	<div id="user_message" class="alert alert-default" role="alert"></div>
 
+	<button id="zoom_in">+</button>
+	<button id="zoom_out">-</button>
+
+
 	<div class="panel-group ">
 		<div class="panel panel-default">
 			<div class="panel-heading">

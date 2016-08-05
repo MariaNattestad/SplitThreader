@@ -43,6 +43,10 @@ _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bot
 _scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_settings.color_index]);
 _scales.connection_loops = {"top":d3.scale.linear(), "bottom":d3.scale.linear()};
 
+
+
+_zoom_behaviors = {"top":d3.behavior.zoom(),"bottom":d3.behavior.zoom()};
+
 ///////////////////////    Data    ///////////////////////
 // For plotting:
 var _Genome_data = [];
@@ -223,6 +227,8 @@ d3.select("#min_split_reads").on("keyup",function() {
 
 d3.select("#submit_fusion").on("click",submit_fusion);
 
+d3.select("#zoom_in").on('click', zoom_click);
+d3.select("#zoom_out").on('click', zoom_click);
 
 // Advanced settings:
 
@@ -234,13 +240,13 @@ d3.select("#ribbon_path").property("value","http://genomeribbon.com").
 
 ////////// Calculate polar coordinates ///////////
 
-var genome_to_angle = function(chromosome,position) {
+function genome_to_angle(chromosome,position) {
 	return ((_Chromosome_start_positions[chromosome]+position)/_Chromosome_start_positions["total"])*2*Math.PI;
 }
-var genome_to_circos_x = function(chromosome,position) {
+function genome_to_circos_x(chromosome,position) {
 	return (Math.cos(genome_to_angle(chromosome,position) - (Math.PI/2)));
 }
-var genome_to_circos_y = function(chromosome,position) {
+function genome_to_circos_y(chromosome,position) {
 	return (Math.sin(genome_to_angle(chromosome,position) - (Math.PI/2)));
 }
 
@@ -269,8 +275,7 @@ function show_tooltip(text,x,y,parent_object) {
 
 ///////////  Run the whole program by loading all files and when they are loaded drawing everything ///////////
 
-var run = function(){
-
+function run(){
 	read_annotation_file();
 	read_genome_file();
 	read_spansplit_file();
@@ -279,7 +284,7 @@ var run = function(){
 	wait_then_run_when_all_data_loaded(); 
 }
 
-var draw_everything = function() {
+function draw_everything() {
 		draw_circos();
 		draw_zoom_plot("top");
 		draw_zoom_plot("bottom");
@@ -307,7 +312,7 @@ function wait_then_run_when_all_data_loaded() {
 
 
 
-var read_genome_file = function() {
+function read_genome_file() {
 		d3.csv(_input_file_prefix + ".genome.csv", function(error,genome_input) {
 		if (error) throw error;
 		
@@ -351,7 +356,7 @@ var read_genome_file = function() {
 
 ///////////////////   Load coverage  ////////////////////////////////
 
-var load_coverage = function(chromosome,top_or_bottom) {
+function load_coverage(chromosome,top_or_bottom) {
 
 	// console.log("loading chromosome coverage from file");
 	d3.csv(_input_file_prefix + ".copynumber.segmented." + chromosome + ".csv?id=" + Math.random(), function(error,coverage_input) {
@@ -377,7 +382,7 @@ var load_coverage = function(chromosome,top_or_bottom) {
 	});
 }
 
-var read_spansplit_file = function() {
+function read_spansplit_file() {
 	d3.csv(_input_file_prefix + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
 		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
@@ -466,7 +471,7 @@ function dragmove(d) {
 
 ////////////   Draw circos plot chromosome labels  ////////////
 
-var draw_circos = function() {
+function draw_circos() {
 	
 		///////////////////// Set up circos plot ////////////////////////////
 				
@@ -576,37 +581,37 @@ function draw_circos_connections() {
 
 ////////////////  Draw the top zoom plot  ////////////////////
 
-var draw_zoom_plot = function(top_or_bottom) {
+function draw_zoom_plot(top_or_bottom) {
 
 	// var top_or_bottom = "top";
 
 	_zoom_containers[top_or_bottom].selectAll("*").remove()
 	_plot_canvas[top_or_bottom] = _zoom_containers[top_or_bottom].append("g");
 
-	var zoom_top_position_start = d3.min(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]],function(d){return d.start});
+	var plot_position_start = d3.min(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]],function(d){return d.start});
 
-	var zoom_top_position_end = d3.max(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]],function(d){return d.start});
+	var plot_position_end = d3.max(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]],function(d){return d.start});
 	
 
 //////////////// Bin data to at most one bin per pixel ////////////////////////////
 	
 	var x_bin_size_domain = _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][0].end-_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][0].start;
 
-	var genomic_bins_per_pixel = Math.ceil((zoom_top_position_end-zoom_top_position_start)/x_bin_size_domain/_layout.zoom_plot.width);
+	var genomic_bins_per_pixel = Math.ceil((plot_position_end-plot_position_start)/x_bin_size_domain/_layout.zoom_plot.width);
 	// console.log("genomic_bins_per_pixel:")
 	// console.log(genomic_bins_per_pixel)
 
 	// file_bins/display_bins = (file_bins/pixels)*(pixels/display_bins)
-	genomic_bins_per_zoom_top_bin = genomic_bins_per_pixel; // *1=pixels_per_bin
+	var bins_per_rect = genomic_bins_per_pixel; // *1=pixels_per_bin
 
 	var new_coverage = []
 	if (_settings.segment_copy_number==true) {
-		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
-			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.coverage})})
+		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-bins_per_rect;i=i+bins_per_rect) {
+			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+bins_per_rect].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+bins_per_rect),function(d){return d.coverage})})
 		}
 	} else {
-		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_zoom_top_bin;i=i+genomic_bins_per_zoom_top_bin) {
-			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_zoom_top_bin].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_zoom_top_bin),function(d){return d.unsegmented_coverage})})
+		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-bins_per_rect;i=i+bins_per_rect) {
+			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+bins_per_rect].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+bins_per_rect),function(d){return d.unsegmented_coverage})})
 		}
 	}
 	
@@ -614,11 +619,11 @@ var draw_zoom_plot = function(top_or_bottom) {
 	/////////////////////// Set scales //////////////////////////////////
 
 	_scales.zoom_plots[top_or_bottom].x
-		.domain([zoom_top_position_start,zoom_top_position_end])
+		.domain([plot_position_start,plot_position_end])
 		.range([0,_layout.zoom_plot.width])
 	
 
-	var cov_array = []
+	var cov_array = [];
 	new_coverage.forEach(function (d,i) {
 			cov_array.push(d.coverage);
 	});
@@ -636,14 +641,14 @@ var draw_zoom_plot = function(top_or_bottom) {
 
 	///////////////// Plot axes and labels ////////////////////////////////
 
-	var zoom_x_axis_label;
-	var zoom_x_axis;
+	var x_axis_label;
+	var x_axis;
 	if (top_or_bottom == "top") {
-		zoom_x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-		zoom_x_axis_label = _zoom_containers[top_or_bottom].append("g")
+		x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
+		x_axis_label = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			.attr("transform","translate(" + 0 + "," + 0 + ")")
-			.call(zoom_x_axis)
+			.call(x_axis)
 
 		var top_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
 		var top_zoom_y_axis_label = _zoom_containers[top_or_bottom].append("g")
@@ -652,16 +657,16 @@ var draw_zoom_plot = function(top_or_bottom) {
 			.call(top_zoom_y_axis)
 
 
-		zoom_x_axis_label.append("text")
+		x_axis_label.append("text")
 				.text("Chromosome " + _chosen_chromosomes[top_or_bottom])
 				.style('text-anchor',"middle")
 				.attr("transform","translate("+ _layout.zoom_plot.width/2 + "," + -30 + ")")
 	} else {
-		zoom_x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-		zoom_x_axis_label = _zoom_containers[top_or_bottom].append("g")
+		x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
+		x_axis_label = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			.attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
-			.call(zoom_x_axis)
+			.call(x_axis)
 
 		var bottom_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
 		var bottom_zoom_y_axis_label = _zoom_containers[top_or_bottom].append("g")
@@ -669,7 +674,7 @@ var draw_zoom_plot = function(top_or_bottom) {
 			// .attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
 			.call(bottom_zoom_y_axis)
 
-		zoom_x_axis_label.append("text")
+		x_axis_label.append("text")
 				.text("Chromosome " + _chosen_chromosomes[top_or_bottom])
 				.style('text-anchor',"middle")
 				.attr("transform","translate("+ _layout.zoom_plot.width/2 + "," + 40 + ")")
@@ -683,15 +688,13 @@ var draw_zoom_plot = function(top_or_bottom) {
 	
 
 	var zoom_handler = function() {
-			zoom_x_axis_label.call(zoom_x_axis)
-			zoom_scale_factor = d3.event.scale;
-			// When replotting it uses the scales, which have just been automatically updated already, so there is no need to translate/scale the plot too
-			_bins_per_bar[top_or_bottom] = Math.ceil(genomic_bins_per_zoom_top_bin/zoom_scale_factor);
+			x_axis_label.call(x_axis)
+			var zoom_scale_factor = d3.event.scale;
+			_bins_per_bar[top_or_bottom] = Math.ceil(bins_per_rect/zoom_scale_factor);
 			update_coverage(top_or_bottom);
 	};
 
-	var zoom_scale_factor = 1;
-	var zoom = d3.behavior.zoom()
+	_zoom_behaviors[top_or_bottom]
 		.x(_scales.zoom_plots[top_or_bottom].x)
 		// .y(_scales.zoom_plots[top_or_bottom].y)
 		.scaleExtent([1,genomic_bins_per_pixel*50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
@@ -700,14 +703,22 @@ var draw_zoom_plot = function(top_or_bottom) {
 				zoom_handler
 		)
 
-	_plot_canvas[top_or_bottom].call(zoom);
+	_plot_canvas[top_or_bottom].call(_zoom_behaviors[top_or_bottom]);
 	// _plot_canvas[top_or_bottom].on("dblclick.zoom",null);
 	// _plot_canvas[top_or_bottom].on("click", function(){console.log("click");zoom(_plot_canvas["top"])});
 }
 
+function zoom_click() {
+	console.log("zoom_click");
+
+
+
+
+
+}
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
 
-var update_coverage = function(top_or_bottom) {
+function update_coverage (top_or_bottom) {
 
 	var genomic_bins_per_bar = _bins_per_bar[top_or_bottom];
 
@@ -818,7 +829,7 @@ function top_plus_bottom_minus(chromosome) {
 
 /////////   Draw connections between top and bottom zoom plots   /////////////
 
-var draw_connections = function() {
+function draw_connections() {
 
 		var y_coordinate_for_connection = d3.scale.ordinal()
 			.domain(["top","bottom"])
@@ -950,7 +961,7 @@ var draw_connections = function() {
 		}
 
 		// Line path generator for connections with feet on both sides to indicate strands
-		var connection_path_generator = function(d) {
+		function connection_path_generator(d) {
 				var x1 = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top"),  // top
 						y1 = y_coordinate_for_connection("top"),
 						x2 = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom2,d.pos2,"bottom"),  // bottom
@@ -965,7 +976,7 @@ var draw_connections = function() {
 				 + ", L " + (x2+_static.foot_length*direction2) + "," + y2)
 		}
 
-		var stub_path_generator = function(d,top_or_bottom) {
+		function stub_path_generator(d,top_or_bottom) {
 
 				var x1 = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,top_or_bottom),
 						y1 = y_coordinate_for_connection(top_or_bottom);
@@ -980,7 +991,7 @@ var draw_connections = function() {
 				 + ", L " + x2                          + "," + y2)
 		}
 
-		var loop_path_generator = function(d,top_or_bottom) {
+		function loop_path_generator(d,top_or_bottom) {
 
 				var x1 = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,top_or_bottom),
 						y1 = y_coordinate_for_connection(top_or_bottom),
@@ -1132,7 +1143,7 @@ function variant_click(d) {
 	rows.append("td").html(function(d) {return data[d];});
 }
 
-var arrow_path_generator = function(d, top_or_bottom) {
+function arrow_path_generator(d, top_or_bottom) {
 		// console.log("arrow path generator")
 
 		var arrowhead_size = 5;
@@ -1170,7 +1181,7 @@ var arrow_path_generator = function(d, top_or_bottom) {
 }
 
 
-var draw_genes = function(top_or_bottom) {
+function draw_genes(top_or_bottom) {
 
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_chosen_genes").remove();
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_local_genes").remove();
@@ -1274,7 +1285,7 @@ var draw_genes = function(top_or_bottom) {
 
 }
 
-var select_chrom_for_zoom_top = function(d) {
+function select_chrom_for_zoom_top(d) {
 	_chosen_chromosomes["top"] = d;
 	if (_Coverage_by_chromosome[d] == undefined) {
 		// console.log("Loading " + d + " from file");
@@ -1295,7 +1306,7 @@ function wait_then_draw_top() {
 	}
 }
 
-var select_chrom_for_zoom_bottom = function(d) {
+function select_chrom_for_zoom_bottom(d) {
 	_chosen_chromosomes["bottom"] = d;
 	if (_Coverage_by_chromosome[d] == undefined) {
 		// console.log("Loading " + d + " from file");
@@ -1342,9 +1353,7 @@ function arraysEqual(arr1, arr2) {
 }
 
 
-var zoom_distance_around_gene = 5000000;
-
-var highlight_gene_fusion = function(d) {
+function highlight_gene_fusion(d) {
 	select_chrom_for_zoom_top(d.chrom1);
 	select_chrom_for_zoom_bottom(d.chrom2);  
 
@@ -1486,7 +1495,7 @@ function make_gene_type_table() {
 	rows.append("td").append("input").property("type","checkbox").property("checked",false).on("change",gene_type_checkbox);
 }
 
-var color_connections = function(d) {
+function color_connections(d) {
 
 		if (d.highlight) {
 				return "black";
@@ -1495,7 +1504,7 @@ var color_connections = function(d) {
 		}
 }
 
-var thickness_of_connections = function(d) {
+function thickness_of_connections(d) {
 
 		if (d.highlight){
 				return 4;
