@@ -130,6 +130,7 @@ function responsive_sizing() {
 	_layout.zoom_plot.height = (_layout.svg.height-_padding.top-_padding.bottom)/3;
 	_layout.zoom_plot.x = _layout.circos.size + _padding.between_circos_and_zoom_plots;
 	_layout.zoom_plot.width = _layout.svg.width-_layout.zoom_plot.x-_padding.right;
+	_layout.zoom_plot.button_size = _layout.zoom_plot.height/7;
 
 
 
@@ -227,8 +228,7 @@ d3.select("#min_split_reads").on("keyup",function() {
 
 d3.select("#submit_fusion").on("click",submit_fusion);
 
-d3.select("#zoom_in").on('click', zoom_click);
-d3.select("#zoom_out").on('click', zoom_click);
+
 
 // Advanced settings:
 
@@ -596,18 +596,18 @@ function draw_zoom_plot(top_or_bottom) {
 //////////////// Bin data to at most one bin per pixel ////////////////////////////
 	var bp_per_genomic_bin = _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][0].end-_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][0].start;
 
-	var genomic_bins_per_pixel = Math.ceil((bp_max-bp_min)/bp_per_genomic_bin/_layout.zoom_plot.width);
-	console.log("genomic_bins_per_pixel:")
-	console.log(genomic_bins_per_pixel)
+	var num_genomic_bins_per_pixel = Math.ceil((bp_max-bp_min)/bp_per_genomic_bin/_layout.zoom_plot.width);
+	// console.log("num_genomic_bins_per_pixel:")
+	// console.log(num_genomic_bins_per_pixel)
 
 	var new_coverage = [];
 	if (_settings.segment_copy_number==true) {
-		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_pixel;i=i+genomic_bins_per_pixel) {
-			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_pixel].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_pixel),function(d){return d.coverage})})
+		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-num_genomic_bins_per_pixel;i=i+num_genomic_bins_per_pixel) {
+			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+num_genomic_bins_per_pixel].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+num_genomic_bins_per_pixel),function(d){return d.coverage})})
 		}
 	} else {
-		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_pixel;i=i+genomic_bins_per_pixel) {
-			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_pixel].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_pixel),function(d){return d.unsegmented_coverage})})
+		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-num_genomic_bins_per_pixel;i=i+num_genomic_bins_per_pixel) {
+			new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+num_genomic_bins_per_pixel].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+num_genomic_bins_per_pixel),function(d){return d.unsegmented_coverage})})
 		}
 	}
 	
@@ -683,43 +683,89 @@ function draw_zoom_plot(top_or_bottom) {
 	
 
 	var zoom_handler = function() {
-		if (d3.event.sourceEvent instanceof WheelEvent) {
-			d3.event.sourceEvent.stopPropagation();
-			console.log("scroll");
-			// d3.event.stopPropagation();
-			return;
-		} else {
-			console.log("mouse");
+		// if (d3.event.sourceEvent instanceof WheelEvent) {
+		// 	d3.event.sourceEvent.stopPropagation();
+		// 	console.log("scroll");
+		// 	d3.event.preventDefault();
+		// 	d3.event.stopPropagation();
+		// 	d3.event.sourceEvent.preventDefault();
+		// 	return;
+		// } else {
+			// console.log("mouse");
 			x_axis_label.call(x_axis);
 			var zoom_scale_factor = d3.event.scale;
-			_bins_per_bar[top_or_bottom] = Math.ceil(genomic_bins_per_pixel/zoom_scale_factor);
+			_bins_per_bar[top_or_bottom] = Math.ceil(num_genomic_bins_per_pixel/zoom_scale_factor);
 			update_coverage(top_or_bottom);
-		}
+		// }
 	};
+
+
+
 
 	_zoom_behaviors[top_or_bottom]
 		.x(_scales.zoom_plots[top_or_bottom].x)
 		// .y(_scales.zoom_plots[top_or_bottom].y)
-		.scaleExtent([1,genomic_bins_per_pixel*50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
+		.scaleExtent([1,num_genomic_bins_per_pixel*50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
 		.duration(100)
-		.on("zoom", zoom_handler);
+		.on("zoom", zoom_handler)
+		.center([_layout.zoom_plot.width / 2, _layout.zoom_plot.height / 2])
+		.size([_layout.zoom_plot.width, _layout.zoom_plot.height]);
 
 	_plot_canvas[top_or_bottom].call(_zoom_behaviors[top_or_bottom]);
+	
+	_plot_canvas[top_or_bottom].on("wheel.zoom", function(d) {
+		d3.event.preventDefault();
+	})
 	// _plot_canvas[top_or_bottom].on("dblclick.zoom",zoom_handler);
 	// _plot_canvas[top_or_bottom].on("click", function(){console.log("click");zoom(_plot_canvas["top"])});
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function coordinates(point, zoom) {
+	var scale = zoom.scale(), translate = zoom.translate();
+	return [(point[0] - translate[0]) / scale, (point[1] - translate[1]) / scale];
+}
+
+function find_point(coordinates, zoom) {
+	var scale = zoom.scale(), translate = zoom.translate();
+	return [coordinates[0] * scale + translate[0], coordinates[1] * scale + translate[1]];
+}
+
 function zoom_click() {
 	console.log("zoom_click");
+	top_or_bottom = this.getAttribute('data-plot');
+	console.log(top_or_bottom);
+	console.log(this);
+	_plot_canvas[top_or_bottom].call(_zoom_behaviors[top_or_bottom].event); // https://github.com/mbostock/d3/issues/2387
 
+	var zoom = _zoom_behaviors[top_or_bottom];
+	// Record the coordinates (in data space) of the center (in screen space).
+	var center0 = zoom.center();
+	console.log("center0:", center0);
+	var translate0 = zoom.translate();
+	console.log("translate0:", translate0);
+	var coordinates0 = coordinates(center0, zoom);
+	console.log("coordinates0:", coordinates0);
+	zoom.scale(zoom.scale() * Math.pow(2, +this.getAttribute("data-zoom")));
 
+	// Translate back to the center.
+	var center1 = find_point(coordinates0, zoom);
+	_zoom_behaviors[top_or_bottom].translate([translate0[0] + center0[0] - center1[0], translate0[1] + center0[1] - center1[1]]);
 
-
-
+	_plot_canvas[top_or_bottom].transition().duration(750).call(_zoom_behaviors[top_or_bottom].event);
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 //////////// Draw or redraw the coverage (at resoluton matching the current zoom level) ///////////////
 
 function update_coverage (top_or_bottom) {
+
+	_plot_canvas[top_or_bottom].selectAll("rect").remove();
 
 	var genomic_bins_per_bar = _bins_per_bar[top_or_bottom];
 
@@ -734,10 +780,46 @@ function update_coverage (top_or_bottom) {
 		}
 	}
 
+	// Plot background color:
 	_plot_canvas[top_or_bottom].append("rect")
 			.attr("width",_layout.zoom_plot.width)
 			.attr("height",_layout.zoom_plot.height)
 			.attr("class",top_or_bottom+"_zoom_canvas")
+
+	// Zoom +/- buttons:
+	var signs = ["+","-"];
+	for (var i in signs) {
+		var sign = signs[i];
+
+		var button_group = _zoom_containers[top_or_bottom].append("g")
+			.attr("transform",function() {
+				var x_shift = ((sign === "-") ? (_layout.zoom_plot.width - _layout.zoom_plot.button_size*1.5) : (_layout.zoom_plot.width - _layout.zoom_plot.button_size*3));
+				var y_shift = ((top_or_bottom === "top") ? _layout.zoom_plot.button_size/2 : (_layout.zoom_plot.height - _layout.zoom_plot.button_size*1.5));
+
+				console.log(x_shift);
+				console.log(y_shift);
+				return "translate(" + x_shift + "," + y_shift + ")";
+			})
+			.attr("class", "zoom_button")
+			.attr("data-zoom",sign+"1")
+			.attr("data-plot", top_or_bottom)
+			.style("cursor","pointer");
+
+			button_group.append("rect")
+				.style("fill","white")
+				.style("stroke","gray")
+				.attr("width", _layout.zoom_plot.button_size)
+				.attr("height", _layout.zoom_plot.button_size)
+			button_group.append("text")
+				.text(sign)
+				.attr("x", _layout.zoom_plot.button_size/2)
+				.attr("y", _layout.zoom_plot.button_size/2)
+				.style("fill","gray")
+				.attr("text-anchor", "middle")
+				.attr("dominant-baseline","middle");
+	}
+
+	d3.selectAll(".zoom_button").on('click', zoom_click);
 
 	var coverage_rects = _plot_canvas[top_or_bottom].selectAll("coverage_rect")
 		.data(new_coverage).enter()
