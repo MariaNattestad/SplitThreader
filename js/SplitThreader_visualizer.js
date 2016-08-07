@@ -13,7 +13,8 @@ var _layout = {
 	"svg": {"width":null, "height": null}, 
 	"circos": {"size":null, "label_size":null, "radius": null}, 
 	"zoom_plot": {"height": null, "width": null,"x":null,"bottom_y":null},
-	"connections": {"stub_height": 10}
+	"connections": {"stub_height": 10},
+	"hist": {"x":null, "y":null, "width":null, "height":null}
 };
 
 var _padding = {};
@@ -42,7 +43,7 @@ var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
 _scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_settings.color_index]);
 _scales.connection_loops = {"top":d3.scale.linear(), "bottom":d3.scale.linear()};
-
+_scales.hist = {"x": d3.scale.linear(), "y": d3.scale.linear()};
 
 
 _zoom_behaviors = {"top":d3.behavior.zoom(),"bottom":d3.behavior.zoom()};
@@ -133,8 +134,6 @@ function responsive_sizing() {
 	_layout.zoom_plot.button_size = _layout.zoom_plot.height/7;
 
 
-
-
 	////////  Top zoom plot  ////////
 
 	_zoom_containers["top"] = _svg.append("g")
@@ -159,12 +158,21 @@ function responsive_sizing() {
 		.range([min_loop,max_loop])
 		.clamp(true);
 
-
 	////////  Set up circos canvas  ////////
 	_circos_canvas = _svg.append("svg:g")
 		.attr("transform", "translate(" + (_layout.circos.radius+_padding.left) + "," + (_layout.circos.radius+_padding.top) + ")");
 
 	_layout.circos.label_size = _layout.circos.radius/5;
+
+
+	////////  Histogram canvas  ////////
+
+	_layout.hist.axis_space = _layout.svg.height*0.10
+	_layout.hist.y = _padding.top + _layout.circos.size;
+	_layout.hist.height = _layout.svg.height - _layout.hist.y - _layout.hist.axis_space;
+	_layout.hist.x = _layout.hist.axis_space;
+	_layout.hist.width = _layout.zoom_plot.x - _layout.hist.axis_space*2;
+	
 }
 
 responsive_sizing();
@@ -290,6 +298,7 @@ function draw_everything() {
 		draw_zoom_plot("bottom");
 		draw_connections();  
 		draw_circos_connections();
+		draw_histogram();
 }
 
 
@@ -734,20 +743,14 @@ function find_point(coordinates, zoom) {
 }
 
 function zoom_click() {
-	console.log("zoom_click");
 	top_or_bottom = this.getAttribute('data-plot');
-	console.log(top_or_bottom);
-	console.log(this);
 	_plot_canvas[top_or_bottom].call(_zoom_behaviors[top_or_bottom].event); // https://github.com/mbostock/d3/issues/2387
 
 	var zoom = _zoom_behaviors[top_or_bottom];
 	// Record the coordinates (in data space) of the center (in screen space).
 	var center0 = zoom.center();
-	console.log("center0:", center0);
 	var translate0 = zoom.translate();
-	console.log("translate0:", translate0);
 	var coordinates0 = coordinates(center0, zoom);
-	console.log("coordinates0:", coordinates0);
 	zoom.scale(zoom.scale() * Math.pow(2, +this.getAttribute("data-zoom")));
 
 	// Translate back to the center.
@@ -795,9 +798,6 @@ function update_coverage (top_or_bottom) {
 			.attr("transform",function() {
 				var x_shift = ((sign === "-") ? (_layout.zoom_plot.width - _layout.zoom_plot.button_size*1.5) : (_layout.zoom_plot.width - _layout.zoom_plot.button_size*3));
 				var y_shift = ((top_or_bottom === "top") ? _layout.zoom_plot.button_size/2 : (_layout.zoom_plot.height - _layout.zoom_plot.button_size*1.5));
-
-				console.log(x_shift);
-				console.log(y_shift);
 				return "translate(" + x_shift + "," + y_shift + ")";
 			})
 			.attr("class", "zoom_button")
@@ -805,18 +805,18 @@ function update_coverage (top_or_bottom) {
 			.attr("data-plot", top_or_bottom)
 			.style("cursor","pointer");
 
-			button_group.append("rect")
-				.style("fill","white")
-				.style("stroke","gray")
-				.attr("width", _layout.zoom_plot.button_size)
-				.attr("height", _layout.zoom_plot.button_size)
-			button_group.append("text")
-				.text(sign)
-				.attr("x", _layout.zoom_plot.button_size/2)
-				.attr("y", _layout.zoom_plot.button_size/2)
-				.style("fill","gray")
-				.attr("text-anchor", "middle")
-				.attr("dominant-baseline","middle");
+		button_group.append("rect")
+			.style("fill","white")
+			.style("stroke","gray")
+			.attr("width", _layout.zoom_plot.button_size)
+			.attr("height", _layout.zoom_plot.button_size)
+		button_group.append("text")
+			.text(sign)
+			.attr("x", _layout.zoom_plot.button_size/2)
+			.attr("y", _layout.zoom_plot.button_size/2)
+			.style("fill","gray")
+			.attr("text-anchor", "middle")
+			.attr("dominant-baseline","middle");
 	}
 
 	d3.selectAll(".zoom_button").on('click', zoom_click);
@@ -1536,6 +1536,84 @@ function populate_ribbon_link() {
 	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Variant_data));
 }
 
+
+function draw_histogram() {
+
+	if (_Variant_data == null) {
+		return;
+	}
+
+	_Variant_data.forEach(function(d) {d.size = Math.abs(d.stop2 - d.start1); if (d.chrom1 != d.chrom2) { d.size = -1 };});
+
+
+	var num_bins = 50;
+	var data_max = Math.ceil(d3.max(_Variant_data,function(d) {return d.size}));
+	var bin_size = data_max/num_bins;
+	// console.log(bin_size);
+
+
+	var hist_data = new Array(num_bins).fill(0);
+
+	for (var i in _Variant_data) {
+		var bin = Math.floor(_Variant_data[i].size / bin_size);
+		if (hist_data[bin] != undefined) {
+			hist_data[bin]++;
+		} //else {
+		// 	hist_data[bin] = 1;
+		// }
+	}
+
+	var plot_container = _svg.append("g");
+
+	plot_container.attr("transform","translate(" + _layout.hist.x + "," + _layout.hist.y + ")")
+		.append("rect")
+			.attr("x",0)
+			.attr("y",0)
+			.attr("width",_layout.hist.width)
+			.attr("height",_layout.hist.height)
+			.style("fill","#eeeeee");
+
+	// console.log(Math.max.apply(null, hist_data));
+	_scales.hist.x.domain([0, data_max]).range([0, 0 + _layout.hist.width]);
+	_scales.hist.y.domain([0, Math.max.apply(null, hist_data)]).range([0, 0+_layout.hist.height]);
+
+	console.log(hist_data);
+
+	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
+	var x_axis_label = plot_container.append("g")
+		.attr("class","axis")
+		.attr("transform","translate(" + 0 + "," + (0 + _layout.hist.height) + ")")
+		.call(x_axis);
+	x_axis_label.append("text")
+		.text("Variant size (excluding inter-chromosomal)")
+		.style('text-anchor',"middle")
+		.attr("transform","translate(" + (0 + _layout.hist.width/2) + "," + 40 + ")")
+
+
+	var y_axis = d3.svg.axis().scale(_scales.hist.y).orient("left").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
+	var y_axis_label = plot_container.append("g")
+		.attr("class","axis")
+		.attr("transform","translate(" + 0 + "," + 0 + ")")
+		.call(y_axis);
+	y_axis_label.append("text")
+		.text("Count")
+		.style('text-anchor',"middle")
+		.attr("transform","translate("+ -40 + "," + (0 + _layout.hist.height/2) + ")rotate(-90)")
+
+
+	var plot_canvas = plot_container.append("g");
+
+	console.log("bin size:", bin_size);
+
+	plot_canvas.selectAll("rect.bar").data(hist_data).enter()
+		.append("rect")
+			.attr("class","bar")
+			.attr("x",function(d,i){return _scales.hist.x(i)*bin_size})
+			.attr("y",function(d,i){return (_layout.hist.height - _scales.hist.y(d))})
+			.attr("width",_layout.hist.width/num_bins)
+			.attr("height", function(d,i) {return _scales.hist.y(d)})
+			.style("fill","black");
+}
 
 function gene_type_checkbox(d) {
 	_settings.show_gene_types[d.type] = d3.event.target.checked;
