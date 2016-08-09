@@ -82,15 +82,15 @@
                               $hours_ago = $minutes_ago/60;
                               if ($hours_ago > 24) {
                                 $days_ago = $hours_ago/24;
-                                $time_ago = "" . ceil($days_ago) . " days";
+                                $time_ago = "" . floor($days_ago) . " days";
                               } else {
-                                $time_ago = "" . ceil($hours_ago) . " hours";
+                                $time_ago = "" . floor($hours_ago) . " hours";
                               }
                             } else {
-                              $time_ago = "" . ceil($minutes_ago) . " minutes";
+                              $time_ago = "" . floor($minutes_ago) . " minutes";
                             }
                           } else {
-                            $time_ago = "" . ceil($seconds_ago) . " seconds";
+                            $time_ago = "" . floor($seconds_ago) . " seconds";
                           }
                           
                           

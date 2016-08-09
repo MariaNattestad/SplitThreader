@@ -28,6 +28,7 @@
 						<li class="active"><a data-toggle="tab" href="#variant_settings">Variants</a></li>
 						<li><a data-toggle="tab" href="#gene_settings">Genes</a></li>
 						<li><a data-toggle="tab" href="#copynumber_settings">Coverage</a></li>
+						<li><a data-toggle="tab" href="#explore_panel">Explore</a></li>
 						<li><a data-toggle="tab" href="#advanced_settings">Advanced</a></li>
 					</ul>
 
@@ -47,7 +48,16 @@
 
 								<table id="variant_table"></table>
 								
-								<hr>
+						</div>
+					<!-- Explore panel: Send to UCSC or Ribbon -->
+						<div id="explore_panel" class="tab-pane fade">
+							<p><label>Send to UCSC genome browser</label></p>
+							<p><a id="ucsc_go_top" target="_blank"  >Top: <span id="top_position"></span></a></p>
+							<p><a id="ucsc_go_bottom" target="_blank" >Bottom: <span id="bottom_position"></span></a></p>
+
+							<hr>
+
+							<p><label>Send to Ribbon long-read browser</label></p>
 								<div id="send_to_ribbon_panel">
 									<p>Ribbon (<a href="http://genomeribbon.com">genomeribbon.com</a>) is a long-read alignment viewer that allows you to see all the reads mapping near a variant including their other alignments across the genome, and you can see detailed alignments for each read to determine which parts of the read are mapping where.</p>
 									<form id="send_to_ribbon_form" method="post" target="_blank">
@@ -58,6 +68,8 @@
 									</form>
 								</div>
 						</div>
+
+
 					<!-- Gene settings -->
 						<div id="gene_settings" class="tab-pane fade">
 							<label for="color_scheme_dropdown">Annotation:</label>

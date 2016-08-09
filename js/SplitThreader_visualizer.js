@@ -627,6 +627,7 @@ function draw_zoom_plot(top_or_bottom) {
 		.domain([bp_min,bp_max])
 		.range([0,_layout.zoom_plot.width])
 	
+	show_positions();
 
 	var cov_array = [];
 	new_coverage.forEach(function (d,i) {
@@ -705,6 +706,7 @@ function draw_zoom_plot(top_or_bottom) {
 			var zoom_scale_factor = d3.event.scale;
 			_bins_per_bar[top_or_bottom] = Math.ceil(num_genomic_bins_per_pixel/zoom_scale_factor);
 			update_coverage(top_or_bottom);
+			show_positions();
 		// }
 	};
 
@@ -1577,8 +1579,6 @@ function draw_histogram() {
 	_scales.hist.x.domain([0, data_max]).range([0, 0 + _layout.hist.width]);
 	_scales.hist.y.domain([0, Math.max.apply(null, hist_data)]).range([0, 0+_layout.hist.height]);
 
-	console.log(hist_data);
-
 	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
 	var x_axis_label = plot_container.append("g")
 		.attr("class","axis")
@@ -1763,6 +1763,25 @@ function submit_fusion() {
 		user_message("Instructions","Select genes first using the Gene 1 and Gene 2 input fields");
 	}
 }
+
+
+function Mb_format(x) {
+	return Math.round(x/1000000,2) + " Mb";
+}
+function show_positions() {
+
+	var UCSC_database = "hg38";
+	var gunk = "";//"&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&hgsid=506154441_Jmpg1pYC6Ob8ehtL0bcG8wSWAUIg&position=chr9%3A133252000-133280861";
+
+	var options = ["top","bottom"];
+	for (var i in options){
+		var top_or_bottom = options[i];
+		var pos = _scales.zoom_plots[top_or_bottom].x.domain();
+		d3.select("#" + top_or_bottom + "_position").html(_chosen_chromosomes[top_or_bottom] + ":   " + Mb_format(pos[0]) + "-" + Mb_format(pos[1]));
+		d3.select("#ucsc_go_" + top_or_bottom).property("href",'https://genome.ucsc.edu/cgi-bin/hgTracks?db=' + UCSC_database + gunk + '&position=chr' + _chosen_chromosomes["top"] + '%3A' + Math.floor(pos[0]) + '-' + Math.floor(pos[1]));
+	}
+}
+
 
 // Resize SVG and sidebar when window size changes
 window.onresize = resizeWindow;
