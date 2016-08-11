@@ -29,7 +29,6 @@
 						<li><a data-toggle="tab" href="#gene_settings">Genes</a></li>
 						<li><a data-toggle="tab" href="#copynumber_settings">Coverage</a></li>
 						<li><a data-toggle="tab" href="#explore_panel">Explore</a></li>
-						<li><a data-toggle="tab" href="#advanced_settings">Advanced</a></li>
 					</ul>
 
 					<div class="tab-content">
@@ -64,6 +63,7 @@
 										<div id="data_to_send_ribbon">
 											<!-- Hidden fields go here -->
 										</div>
+										<label>Ribbon path: <input id='ribbon_path'></label>
 										<input type="submit" value="Send all variants to Ribbon">	
 									</form>
 								</div>
@@ -105,10 +105,6 @@
 							<div class="checkbox">
 								<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
 							</div>
-						</div>
-					<!-- Advanced settings -->
-						<div id="advanced_settings" class="tab-pane fade">
-							<label>Ribbon path: <input id='ribbon_path'></label>
 						</div>
 					
 					</div>

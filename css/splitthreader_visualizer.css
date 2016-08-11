@@ -20,6 +20,10 @@
   width: 100%;
 }
 
+path.chromosome_arc, .circos_chromosome text {
+  cursor: pointer;
+}
+
 #user_message {
   margin-bottom: 1vmin;
   width: 100%;
@@ -160,12 +164,12 @@ text {
 }
 
 .variant {
-  stroke-opacity: 0.5;
-
+  /*stroke-opacity: 0.8;*/
+  stroke-width: 2;
 }
 
 .variant:hover {
-  stroke-opacity: 1;
+  /*stroke-opacity: 1;*/
   stroke-width: 5 !important;
 }
 

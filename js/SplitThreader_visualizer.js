@@ -20,7 +20,7 @@ var _layout = {
 var _padding = {};
 
 var _static = {};
-_static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffffad","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
+_static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffff55","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
 _static.fraction_y_scale_height = 1.4;
 _static.spansplit_bar_length = 10;
 _static.foot_spacing_from_axis = 5;
@@ -401,9 +401,13 @@ function read_spansplit_file() {
 			spansplit_input[i].start2 = +spansplit_input[i].start2
 			spansplit_input[i].stop1 = +spansplit_input[i].stop1 
 			spansplit_input[i].stop2 = +spansplit_input[i].stop2
-			spansplit_input[i].pos1 = (spansplit_input[i].start1+spansplit_input[i].stop1)/2
-			spansplit_input[i].pos2 = (spansplit_input[i].start2+spansplit_input[i].stop2)/2
+			spansplit_input[i].pos1 = Math.floor(spansplit_input[i].start1+spansplit_input[i].stop1)/2
+			spansplit_input[i].pos2 = Math.floor(spansplit_input[i].start2+spansplit_input[i].stop2)/2
 			spansplit_input[i].split = +spansplit_input[i].split
+			spansplit_input[i].size = Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2);
+			if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
+				spansplit_input[i].size = -1;
+			}
 			// spansplit_input[i].span1 = +spansplit_input[i].span1
 			// spansplit_input[i].span2 = +spansplit_input[i].span2
 		}
@@ -528,12 +532,13 @@ function draw_circos() {
 				.outerRadius(_layout.circos.radius)
 				.innerRadius(_layout.circos.radius-_layout.circos.label_size)
 				.startAngle(function(d){return genome_to_angle(d.chromosome,0)})
-				.endAngle(function(d){return genome_to_angle(d.chromosome,d.size)})
+				.endAngle(function(d){return genome_to_angle(d.chromosome,d.size)});
 
 
 		chromosome_labels.append("path")
 				.attr("fill", function(d) { return _scales.chromosome_colors(d.chromosome); } ) //set the color for each slice to be chosen from the color function defined above
 				.attr("d", arc)
+				.attr("class","chromosome_arc");
 				// .call(drag)
 
 		chromosome_labels.append("text")
@@ -545,7 +550,7 @@ function draw_circos() {
 			 .attr("text-anchor", "middle")
 				.attr("dominant-baseline","middle")
 				.attr("class","chromosome_label")
-				.text(function(d, i) { return d.chromosome; })
+				.text(function(d, i) { return d.chromosome; });
 				// .call(drag)
 }
 
@@ -1127,7 +1132,7 @@ function draw_connections() {
 				.attr("d",connection_path_generator)
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads";
+					var text = d.split + " reads, interchromosomal";
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1150,7 +1155,7 @@ function draw_connections() {
 				.attr("d",function(d){return loop_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads";
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1169,13 +1174,12 @@ function draw_connections() {
 				.attr("d",function(d){return loop_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads";
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
 				})
 				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
-
 
 
 		// Mark other connections as feet and short stubby lines straight up
@@ -1190,7 +1194,10 @@ function draw_connections() {
 				.attr("d",function(d){return stub_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads";
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
+					if (d.size == -1) {
+						text = d.split + " reads, interchromosomal";
+					}
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1209,7 +1216,10 @@ function draw_connections() {
 				.attr("d",function(d){ return stub_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads";
+					var text = d.split + " reads, " + Mb_format(d.size);
+					if (d.size == -1) {
+						text = d.split + " reads, interchromosomal";
+					}
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1544,9 +1554,6 @@ function draw_histogram() {
 	if (_Variant_data == null) {
 		return;
 	}
-
-	_Variant_data.forEach(function(d) {d.size = Math.abs(d.stop2 - d.start1); if (d.chrom1 != d.chrom2) { d.size = -1 };});
-
 
 	var num_bins = 50;
 	var data_max = Math.ceil(d3.max(_Variant_data,function(d) {return d.size}));
