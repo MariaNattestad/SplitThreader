@@ -9,6 +9,9 @@ function getUrlVars() {
 
 var _input_file_prefix = "user_data/" + getUrlVars()["code"] + "/" + getUrlVars()["nickname"];
 
+d3.select("#title").html(getUrlVars()["nickname"].replace(/_/g," "));
+
+
 var _layout = {
 	"svg": {"width":null, "height": null}, 
 	"circos": {"size":null, "label_size":null, "radius": null}, 
@@ -20,12 +23,12 @@ var _layout = {
 var _padding = {};
 
 var _static = {};
-_static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffff55","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
+_static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffcc66","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
 _static.fraction_y_scale_height = 1.4;
 _static.spansplit_bar_length = 10;
 _static.foot_spacing_from_axis = 5;
 _static.foot_length = 15;
-_static.annotations_available = [{"name":"Human hg19 Gencode", "path":"resources/annotation/Human_hg19.genes.csv"}, {"name":"Human GRCh38 Gencode", "path":"resources/annotation/Human_GRCh38.genes.csv"}];
+_static.annotations_available = [{"name":"Human hg19 Gencode","ucsc":"hg19", "path":"resources/annotation/Human_hg19.genes.csv"}, {"name":"Human GRCh38 Gencode","ucsc":"hg38", "path":"resources/annotation/Human_GRCh38.genes.csv"}];
 
 var _settings = {};
 _settings.show_gene_types = {};
@@ -36,7 +39,7 @@ _settings.segment_copy_number = false;
 _settings.min_variant_size = 0;
 _settings.min_split_reads = 0;
 _settings.annotation_path = "resources/annotation/Human_hg19.genes.csv";
-
+_settings.ucsc_database = "hg19";
 
 
 var _scales = {};
@@ -86,7 +89,7 @@ var _plot_canvas = {"top": null, "bottom": null};
 
 function responsive_sizing() {
 	var panel_width_fraction = 0.25;
-	var top_banner_size = 65;
+	var top_banner_size = 90;
 
 	var w = window,
 		d = document,
@@ -95,8 +98,8 @@ function responsive_sizing() {
 
 
 	var window_width = (w.innerWidth || e.clientWidth || g.clientWidth);
-	_layout.svg.width = window_width*(1-panel_width_fraction);
-	_layout.svg.height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.96 - top_banner_size;
+	_layout.svg.width = window_width*(1-panel_width_fraction)*0.97;
+	_layout.svg.height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.95 - top_banner_size;
 
 	d3.select("#right_panel")
 		.style("display","block")
@@ -114,7 +117,7 @@ function responsive_sizing() {
 	_padding.between_circos_and_zoom_plots = _layout.svg.width*0.02; 
 	_padding.gene_offset = _layout.svg.height*0.05;
 
-	_layout.circos.size = _layout.svg.width*0.35; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
+	_layout.circos.size = _layout.svg.width*0.30; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
 
 	_layout.circos.radius = _layout.circos.size / 2 - _padding.left;
 
@@ -168,10 +171,12 @@ function responsive_sizing() {
 	////////  Histogram canvas  ////////
 
 	_layout.hist.axis_space = _layout.svg.height*0.10
-	_layout.hist.y = _padding.top + _layout.circos.size;
-	_layout.hist.height = _layout.svg.height - _layout.hist.y - _layout.hist.axis_space;
 	_layout.hist.x = _layout.hist.axis_space;
 	_layout.hist.width = _layout.zoom_plot.x - _layout.hist.axis_space*2;
+
+	_layout.hist.y = Math.max(_padding.top + _layout.circos.size, _layout.svg.height -  _layout.hist.width*1.6);
+	_layout.hist.height = _layout.svg.height - _layout.hist.y - _layout.hist.axis_space;
+	
 	
 }
 
@@ -205,13 +210,17 @@ d3.select("#show_segmented_coverage").on("change",function() {
 d3.select("select#annotation_dropdown").selectAll("option").data(_static.annotations_available).enter()
 	.append("option")
 		.text(function(d){return d.name})
-		.property("value",function(d){return d.path});
+		.property("value",function(d){return d.path})
+		.attr("ucsc", function(d){return d.ucsc});
 
 d3.select("select#annotation_dropdown").on("change",function(d) {
 	if (_settings.annotation_path == _static.annotations_available[this.options[this.selectedIndex].value]) {
 		user_message("Info","Already loaded this annotation");
 	} else {
 		_settings.annotation_path = this.options[this.selectedIndex].value;
+		_settings.ucsc_database = this.options[this.selectedIndex].getAttribute("ucsc");
+		d3.select("#ucsc_database").html(_settings.ucsc_database);
+		show_positions();
 		console.log("unload annotation");
 		read_annotation_file();
 	}
@@ -1155,7 +1164,7 @@ function draw_connections() {
 				.attr("d",function(d){return loop_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1174,7 +1183,7 @@ function draw_connections() {
 				.attr("d",function(d){return loop_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1194,7 +1203,7 @@ function draw_connections() {
 				.attr("d",function(d){return stub_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.type;
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
 					if (d.size == -1) {
 						text = d.split + " reads, interchromosomal";
 					}
@@ -1216,7 +1225,7 @@ function draw_connections() {
 				.attr("d",function(d){ return stub_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size);
+					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
 					if (d.size == -1) {
 						text = d.split + " reads, interchromosomal";
 					}
@@ -1233,9 +1242,13 @@ function variant_click(d) {
 	// var header = ["chrom1","start1","stop1","chrom2","start2","stop2","variant_name","score","strand1","strand2","variant_type","split"];
 	var header = ["variant_type","variant_name","score","split","chrom1","chrom2"];
 	d3.select("#variant_detail_text").html("");
-	var rows = d3.select("#variant_detail_text").append("table").selectAll("tr").data(header).enter().append("tr");
-	rows.append("th").html(function(d) {return d;});
-	rows.append("td").html(function(d) {return data[d];});
+	var rows = d3.select("#variant_detail_text").selectAll("p").data(header).enter().append("p");
+	rows.append("span").html(function(d) {return d + ": ";});
+	rows.append("span").html(function(d) {return data[d];});
+
+	// var rows = d3.select("#variant_detail_text").append("table").selectAll("tr").data(header).enter().append("tr");
+	// rows.append("th").html(function(d) {return d;});
+	// rows.append("td").html(function(d) {return data[d];});
 }
 
 function arrow_path_generator(d, top_or_bottom) {
@@ -1292,15 +1305,15 @@ function draw_genes(top_or_bottom) {
 		}
 	}
 
-	if (local_annotation.length > 30) {
-		d3.select("#" + top_or_bottom + "_local_genes").html(local_annotation.length + " genes. Double-click on plot to zoom and view details.");  
-	} else {
-		d3.select("#" + top_or_bottom + "_local_genes").html("");
-		d3.select("#" + top_or_bottom + "_local_genes").selectAll("li").data(local_annotation).enter()
-			.append("li")
-				.html(function(d) {return d.gene + ", " })
-				.on("click", user_add_gene);
-	}
+	// if (local_annotation.length > 30) {
+	// 	d3.select("#" + top_or_bottom + "_local_genes").html(local_annotation.length + " genes. Double-click on plot to zoom and view details.");  
+	// } else {
+	// 	d3.select("#" + top_or_bottom + "_local_genes").html("");
+	// 	d3.select("#" + top_or_bottom + "_local_genes").selectAll("li").data(local_annotation).enter()
+	// 		.append("li")
+	// 			.html(function(d) {return d.gene + ", " })
+	// 			.on("click", user_add_gene);
+	// }
 
 	var show_local = false;
 	for (type in _settings.show_gene_types) {
@@ -1489,14 +1502,16 @@ function user_message(message_type,message) {
 
 function search_select_gene(d) {
 	// console.log("selected gene " + d.gene);
-	user_add_gene(d);
+	highlight_gene(d);
+	jump_to_gene(d);
 }
+
 function search_select_fusion1(d) {
 	if (d != undefined) {
 		// console.log("selected gene " + d.gene + " as fusion gene 1");
 		_current_fusion_genes[1] = d;
 		d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
-		user_add_gene(d);	
+		highlight_gene(d);
 	}
 	
 }
@@ -1505,7 +1520,7 @@ function search_select_fusion2(d) {
 		// console.log("selected gene " + d.gene + " as fusion gene 2");
 		_current_fusion_genes[2] = d;
 		d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
-		user_add_gene(d);
+		highlight_gene(d);
 	}
 }
 function create_gene_search_boxes() {
@@ -1730,8 +1745,7 @@ function toggle_gene_highlighting(gene_index_in_relevant_annotation) {
 	update_genes();
 }
 
-
-function user_add_gene(annotation_for_new_gene) {
+function highlight_gene(annotation_for_new_gene) {
 
 	if (annotation_for_new_gene != null) {
 
@@ -1746,8 +1760,6 @@ function user_add_gene(annotation_for_new_gene) {
 
 		annotation_for_new_gene.show = true;
 		_Annotation_to_highlight.push(annotation_for_new_gene);
-
-		jump_to_gene(annotation_for_new_gene);
 
 		update_genes();
 	}
@@ -1776,16 +1788,13 @@ function Mb_format(x) {
 	return Math.round(x/1000000,2) + " Mb";
 }
 function show_positions() {
-
-	var UCSC_database = "hg38";
-	var gunk = "";//"&lastVirtModeType=default&lastVirtModeExtraState=&virtModeType=default&virtMode=0&nonVirtPosition=&hgsid=506154441_Jmpg1pYC6Ob8ehtL0bcG8wSWAUIg&position=chr9%3A133252000-133280861";
-
+	console.log(_settings.ucsc_database);
 	var options = ["top","bottom"];
 	for (var i in options){
 		var top_or_bottom = options[i];
 		var pos = _scales.zoom_plots[top_or_bottom].x.domain();
 		d3.select("#" + top_or_bottom + "_position").html(_chosen_chromosomes[top_or_bottom] + ":   " + Mb_format(pos[0]) + "-" + Mb_format(pos[1]));
-		d3.select("#ucsc_go_" + top_or_bottom).property("href",'https://genome.ucsc.edu/cgi-bin/hgTracks?db=' + UCSC_database + gunk + '&position=chr' + _chosen_chromosomes["top"] + '%3A' + Math.floor(pos[0]) + '-' + Math.floor(pos[1]));
+		d3.select("#ucsc_go_" + top_or_bottom).property("href",'https://genome.ucsc.edu/cgi-bin/hgTracks?db=' + _settings.ucsc_database + '&position=chr' + _chosen_chromosomes["top"] + '%3A' + Math.floor(pos[0]) + '-' + Math.floor(pos[1]));
 	}
 }
 

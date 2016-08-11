@@ -1,5 +1,6 @@
 #svg_landing {
   float:left;
+  padding: 1vmin 1vmin 1vmin 1vmin;
   display:inline-block;
 }
 
@@ -198,7 +199,7 @@ text {
 }
 
 .nav-tabs li a {
-  padding: 0.7vw;
+  padding: 0.5vw;
 }
 
 #submit_fusion {
@@ -208,4 +209,10 @@ text {
 #show_genes_box {
   margin: 1vmin 0 1vmin 0;
   width: 100%;
+}
+
+h1#title {
+  font-size: 1.6vw;
+  text-align: center;
+
 }

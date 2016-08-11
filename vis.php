@@ -9,6 +9,7 @@
 <link href="css/splitthreader_visualizer.css" rel="stylesheet">
 <link href="css/d3-livesearch.css" rel="stylesheet">
 
+<h1 id="title">Title goes here</h1>
 <div id="svg_landing"></div>
 
 <div id="right_panel">
@@ -19,7 +20,7 @@
 		<div class="panel panel-default">
 			<div class="panel-heading">
 				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#settings_panel">Settings</a>
+					<a data-toggle="collapse" class="active" href="#settings_panel">Tools</a>
 				</h4>
 			</div>
 			<div class="panel-collapse collapse in" id="settings_panel">
@@ -27,8 +28,8 @@
 					<ul class="nav nav-tabs">
 						<li class="active"><a data-toggle="tab" href="#variant_settings">Variants</a></li>
 						<li><a data-toggle="tab" href="#gene_settings">Genes</a></li>
-						<li><a data-toggle="tab" href="#copynumber_settings">Coverage</a></li>
-						<li><a data-toggle="tab" href="#explore_panel">Explore</a></li>
+						<li><a data-toggle="tab" href="#settings">Settings</a></li>
+						<!-- <li><a data-toggle="tab" href="#explore_panel">Explore</a></li> -->
 					</ul>
 
 					<div class="tab-content">
@@ -44,32 +45,14 @@
 										<td><input id="min_split_reads" type="text"></td>
 									</tr>
 								</table>
-
+								<hr>
+								<label>Filter variants:</label>
 								<table id="variant_table"></table>
-								
+								<hr>
+								<label>Variant details:</label>
+								<div id="variant_detail_text">Click on a variant to show detail</div>
 						</div>
-					<!-- Explore panel: Send to UCSC or Ribbon -->
-						<div id="explore_panel" class="tab-pane fade">
-							<p><label>Send to UCSC genome browser</label></p>
-							<p><a id="ucsc_go_top" target="_blank"  >Top: <span id="top_position"></span></a></p>
-							<p><a id="ucsc_go_bottom" target="_blank" >Bottom: <span id="bottom_position"></span></a></p>
-
-							<hr>
-
-							<p><label>Send to Ribbon long-read browser</label></p>
-								<div id="send_to_ribbon_panel">
-									<p>Ribbon (<a href="http://genomeribbon.com">genomeribbon.com</a>) is a long-read alignment viewer that allows you to see all the reads mapping near a variant including their other alignments across the genome, and you can see detailed alignments for each read to determine which parts of the read are mapping where.</p>
-									<form id="send_to_ribbon_form" method="post" target="_blank">
-										<div id="data_to_send_ribbon">
-											<!-- Hidden fields go here -->
-										</div>
-										<label>Ribbon path: <input id='ribbon_path'></label>
-										<input type="submit" value="Send all variants to Ribbon">	
-									</form>
-								</div>
-						</div>
-
-
+					
 					<!-- Gene settings -->
 						<div id="gene_settings" class="tab-pane fade">
 							<label for="color_scheme_dropdown">Annotation:</label>
@@ -101,29 +84,36 @@
 						</div>
 
 					<!-- Copynumber settings -->
-						<div id="copynumber_settings" class="tab-pane fade">
+						<div id="settings" class="tab-pane fade">
 							<div class="checkbox">
 								<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
 							</div>
+						<!-- </div>
+					Explore panel: Send to UCSC or Ribbon
+						<div id="explore_panel" class="tab-pane fade"> -->
+							<p><label>Send to UCSC genome browser</label></p>
+							<p>Database: <span id="ucsc_database">hg19 </span></p>
+							<p><a id="ucsc_go_top" target="_blank"  >Top: <span id="top_position"></span></a></p>
+							<p><a id="ucsc_go_bottom" target="_blank" >Bottom: <span id="bottom_position"></span></a></p>
+							<p>(change database in Genes tab under annotation)</p>
+
+							<hr>
+
+							<p><label>Send to Ribbon long-read browser</label></p>
+								<div id="send_to_ribbon_panel">
+									<p>Ribbon (<a href="http://genomeribbon.com">genomeribbon.com</a>) is a long-read alignment viewer that allows you to see all the reads mapping near a variant including their other alignments across the genome, and you can see detailed alignments for each read to determine which parts of the read are mapping where.</p>
+									<form id="send_to_ribbon_form" method="post" target="_blank">
+										<div id="data_to_send_ribbon">
+											<!-- Hidden fields go here -->
+										</div>
+										<label>Ribbon path: <input id='ribbon_path'></label>
+										<input type="submit" value="Send all variants to Ribbon">	
+									</form>
+								</div>
 						</div>
+
 					
 					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-
-
-	<div class="panel-group ">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#detail_box">Details</a>
-				</h4>
-			</div>
-			<div class="panel-collapse collapse in" id="detail_box">
-				<div class="panel-body">
-					<div id="variant_detail_text">Click on a variant to show detail</div>
 				</div>
 			</div>
 		</div>
