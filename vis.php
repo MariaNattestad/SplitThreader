@@ -9,7 +9,7 @@
 <link href="css/splitthreader_visualizer.css" rel="stylesheet">
 <link href="css/d3-livesearch.css" rel="stylesheet">
 
-<h1 id="title">Title goes here</h1>
+<h1 id="title"></h1>
 <div id="svg_landing"></div>
 
 <div id="right_panel">
@@ -83,10 +83,13 @@
 							</div>
 						</div>
 
-					<!-- Copynumber settings -->
+					<!-- Settings -->
 						<div id="settings" class="tab-pane fade">
 							<div class="checkbox">
 								<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
+							</div>
+							<div class="checkbox">
+								<label><input id="adaptive_coverage_scaling" type="checkbox">Adaptive coverage scaling</label>
 							</div>
 						<!-- </div>
 					Explore panel: Send to UCSC or Ribbon
