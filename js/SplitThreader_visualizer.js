@@ -579,8 +579,8 @@ function draw_circos_connections() {
 				ymid = 0;
 		
 		return (
-				 "M " + x1                          + "," + y1 
-		 + ", S " + xmid                        + "," + ymid + "," + x2                          + "," + y2)
+				 "M " + x1                          + " " + y1 
+		 + " S " + xmid                        + " " + ymid + " " + x2                          + " " + y2)
 	}
 
 	_circos_canvas.selectAll("path.circos_connection").remove()
@@ -1069,10 +1069,10 @@ function draw_connections() {
 						direction2 = Number(d.strand2=="-")*2-1;
 
 				return (
-						 "M " + (x1+_static.foot_length*direction1) + "," + y1
-				 + ", L " + x1                          + "," + y1 
-				 + ", L " + x2                          + "," + y2
-				 + ", L " + (x2+_static.foot_length*direction2) + "," + y2)
+						 "M " + (x1+_static.foot_length*direction1) + " " + y1
+				 + " L " + x1                          + " " + y1 
+				 + " L " + x2                          + " " + y2
+				 + " L " + (x2+_static.foot_length*direction2) + " " + y2)
 		}
 
 		function stub_path_generator(d,top_or_bottom) {
@@ -1085,9 +1085,9 @@ function draw_connections() {
 						direction1 = Number(d.strand1=="-")*2-1; // negative strands means the read is mappping to the right of the breakpoint
 						
 				return (
-						 "M " + (x1+_static.foot_length*direction1) + "," + y1
-				 + ", L " + x1                          + "," + y1 
-				 + ", L " + x2                          + "," + y2)
+						 "M " + (x1+_static.foot_length*direction1) + " " + y1
+				 + " L " + x1                          + " " + y1 
+				 + " L " + x2                          + " " + y2)
 		}
 
 		function loop_path_generator(d,top_or_bottom) {
@@ -1111,11 +1111,11 @@ function draw_connections() {
 						direction2 = Number(d.strand2=="-")*2-1;
 
 				return (
-						 "M " + (x1+_static.foot_length*direction1) + "," + y1
-				 + ", L " + x1                          + "," + y1 
-				 + ", S " + xmid                        + "," + ymid + "," + x2                          + "," + y2
-				 // + ", L " + x2                          + "," + y2
-				 + ", L " + (x2+_static.foot_length*direction2) + "," + y2)
+						 "M " + (x1+_static.foot_length*direction1) + " " + y1
+				 + " L " + x1                          + " " + y1 
+				 + " S " + xmid                        + " " + ymid + " " + x2                          + " " + y2
+				 // + " L " + x2                          + " " + y2
+				 + " L " + (x2+_static.foot_length*direction2) + " " + y2)
 		}
 
 
@@ -1280,11 +1280,11 @@ function arrow_path_generator(d, top_or_bottom) {
 		}
 
 		return (
-				 "M " + x1                          + "," + y
-		 + ", L " + x2                          + "," + y 
-		 + ", L " + (x2 + arrowhead_size)         + "," + (y + arrowhead_size)
-		 + ", L " + x2                          + "," + y 
-		 + ", L " + (x2 + arrowhead_size)         + "," + (y - arrowhead_size))
+				 "M " + x1                          + " " + y
+		 + " L " + x2                          + " " + y 
+		 + " L " + (x2 + arrowhead_size)         + " " + (y + arrowhead_size)
+		 + " L " + x2                          + " " + y 
+		 + " L " + (x2 + arrowhead_size)         + " " + (y - arrowhead_size))
 
 }
 
@@ -1788,7 +1788,6 @@ function Mb_format(x) {
 	return Math.round(x/1000000,2) + " Mb";
 }
 function show_positions() {
-	console.log(_settings.ucsc_database);
 	var options = ["top","bottom"];
 	for (var i in options){
 		var top_or_bottom = options[i];

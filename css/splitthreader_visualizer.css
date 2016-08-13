@@ -124,7 +124,7 @@ body {
 }
 .top_zoom_canvas, .bottom_zoom_canvas {
   fill:#eee;
-/*  stroke-width:1;
+/*  stroke-width:1px;
   stroke:#000;*/
 }
 .spansplit_connection {
@@ -160,24 +160,24 @@ text {
 
 .top_local_genes path, .bottom_local_genes path {
   stroke: #999999;
-  stroke-width: 2;
+  stroke-width: 2px;
   fill: none;
 }
 
 .variant {
   /*stroke-opacity: 0.8;*/
-  stroke-width: 2;
+  stroke-width: 2px;
 }
 
 .variant:hover {
   /*stroke-opacity: 1;*/
-  stroke-width: 5 !important;
+  stroke-width: 5px !important;
 }
 
 
 .top_chosen_genes path, .bottom_chosen_genes path {
   stroke: #000000;
-  stroke-width: 2;
+  stroke-width: 2px;
   fill: none;
 }
 
