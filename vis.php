@@ -88,9 +88,10 @@
 							<div class="checkbox">
 								<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
 							</div>
-							<div class="checkbox">
-								<label><input id="adaptive_coverage_scaling" type="checkbox">Adaptive coverage scaling</label>
-							</div>
+							<!-- <div class="checkbox"> -->
+								<!-- <label><input id="adaptive_coverage_scaling" type="checkbox" checked>Adaptive coverage scaling</label> -->
+							<!-- </div> -->
+							<label>Divide coverage by <input id="coverage_divisor" type="number" value="1"></label>
 						<!-- </div>
 					Explore panel: Send to UCSC or Ribbon
 						<div id="explore_panel" class="tab-pane fade"> -->

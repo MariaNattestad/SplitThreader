@@ -36,12 +36,12 @@ _settings.show_variant_types = {};
 _settings.show_local_gene_names = true;
 _settings.color_index = 1;
 _settings.segment_copy_number = false;
-_settings.adaptive_coverage_scaling = false;
+_settings.adaptive_coverage_scaling = true;
 _settings.min_variant_size = 0;
 _settings.min_split_reads = 0;
 _settings.annotation_path = "resources/annotation/Human_hg19.genes.csv";
 _settings.ucsc_database = "hg19";
-
+_settings.coverage_divisor = 1;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -49,6 +49,12 @@ _scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_
 _scales.connection_loops = {"top":d3.scale.linear(), "bottom":d3.scale.linear()};
 _scales.hist = {"x": d3.scale.linear(), "y": d3.scale.linear()};
 
+var _axes = {};
+_axes.top = {"x":null, "y":null};
+_axes.bottom = {"x":null, "y":null};
+var _axis_labels = {};
+_axis_labels.top = {"x":null, "y":null};
+_axis_labels.bottom = {"x":null, "y":null};
 
 _zoom_behaviors = {"top":d3.behavior.zoom(),"bottom":d3.behavior.zoom()};
 
@@ -64,6 +70,7 @@ var _SplitThreader_graph = new Graph();
 var _Chromosome_start_positions = {};
 var _Annotation_by_chrom = {};
 
+var _max_coverage_by_chrom = {};
 
 // Current state:
 var _data_ready = {"coverage": {"top": false, "bottom": false}, "spansplit": false};
@@ -136,6 +143,7 @@ function responsive_sizing() {
 	_layout.zoom_plot.x = _layout.circos.size + _padding.between_circos_and_zoom_plots;
 	_layout.zoom_plot.width = _layout.svg.width-_layout.zoom_plot.x-_padding.right;
 	_layout.zoom_plot.button_size = _layout.zoom_plot.height/7;
+	_layout.zoom_plot.button_margin = _layout.zoom_plot.button_size/3;
 
 
 	////////  Top zoom plot  ////////
@@ -234,6 +242,18 @@ d3.select("select#annotation_dropdown").on("change",function(d) {
 		console.log("unload annotation");
 		read_annotation_file();
 	}
+});
+
+d3.select("#coverage_divisor").on("keyup", function() {
+	_settings.coverage_divisor = parseInt(this.value);
+	if (isNaN(_settings.coverage_divisor)) {
+		_settings.coverage_divisor = 1;
+	} else if (_settings.coverage_divisor < 1) {
+		_settings.coverage_divisor = 1;
+		this.value = _settings.coverage_divisor;
+	}
+	update_coverage("top");
+	update_coverage("bottom");
 });
 
 d3.select("#min_variant_size").on("keyup",function() {
@@ -657,6 +677,7 @@ function draw_zoom_plot(top_or_bottom) {
 			max_local_coverage = new_coverage[i].coverage ;
 		}
 	}
+	_max_coverage_by_chrom[_chosen_chromosomes[top_or_bottom]] = max_local_coverage;
 
 	_scales.zoom_plots[top_or_bottom].y
 		.domain([0,max_local_coverage*_static.fraction_y_scale_height])
@@ -670,44 +691,42 @@ function draw_zoom_plot(top_or_bottom) {
 
 	///////////////// Plot axes and labels ////////////////////////////////
 
-	var x_axis_label;
-	var x_axis;
+
 	if (top_or_bottom == "top") {
-		x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-		x_axis_label = _zoom_containers[top_or_bottom].append("g")
+		_axes[top_or_bottom].x = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
+		_axis_labels[top_or_bottom].x = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			.attr("transform","translate(" + 0 + "," + 0 + ")")
-			.call(x_axis)
+			.call(_axes[top_or_bottom].x);
 
-		var top_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
-		var top_zoom_y_axis_label = _zoom_containers[top_or_bottom].append("g")
+		_axes[top_or_bottom].y = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1);
+		_axis_labels[top_or_bottom].y = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			// .attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
-			.call(top_zoom_y_axis)
+			.call(_axes[top_or_bottom].y)
 
-		x_axis_label.append("text")
+		_axis_labels[top_or_bottom].x.append("text")
 				.text("Chromosome " + _chosen_chromosomes[top_or_bottom])
 				.style('text-anchor',"middle")
 				.attr("transform","translate("+ _layout.zoom_plot.width/2 + "," + -30 + ")")
 	} else {
-		x_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
-		x_axis_label = _zoom_containers[top_or_bottom].append("g")
+		_axes[top_or_bottom].x = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
+		_axis_labels[top_or_bottom].x = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			.attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
-			.call(x_axis)
+			.call(_axes[top_or_bottom].x)
 
-		var bottom_zoom_y_axis = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
-		var bottom_zoom_y_axis_label = _zoom_containers[top_or_bottom].append("g")
+		_axes[top_or_bottom].y = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
+		_axis_labels[top_or_bottom].y = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			// .attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
-			.call(bottom_zoom_y_axis)
+			.call(_axes[top_or_bottom].y)
 
-		x_axis_label.append("text")
+		_axis_labels[top_or_bottom].x.append("text")
 				.text("Chromosome " + _chosen_chromosomes[top_or_bottom])
 				.style('text-anchor',"middle")
 				.attr("transform","translate("+ _layout.zoom_plot.width/2 + "," + 40 + ")")
 	}
-
 
 
 	/////////////////  Zoom  /////////////////
@@ -725,7 +744,7 @@ function draw_zoom_plot(top_or_bottom) {
 		// 	return;
 		// } else {
 			// console.log("mouse");
-			x_axis_label.call(x_axis);
+			_axis_labels.top.x.call(_axes[top_or_bottom].x);
 			var zoom_scale_factor = d3.event.scale;
 			_bins_per_bar[top_or_bottom] = Math.ceil(num_genomic_bins_per_pixel/zoom_scale_factor);
 			update_coverage(top_or_bottom);
@@ -800,19 +819,21 @@ function update_coverage (top_or_bottom) {
 	var xlim_start = _scales.zoom_plots[top_or_bottom].x.domain()[0];
 	var xlim_end = _scales.zoom_plots[top_or_bottom].x.domain()[1];
 
+
+
 	var new_coverage = [];
 	if (_settings.segment_copy_number==true) {
 		var num_bins = _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_bar;
 		for (var i=0;i<_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
 			if (_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start >= xlim_start && _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end <= xlim_end) {
-				new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})});
+				new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end,"coverage":(d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})/_settings.coverage_divisor) });
 			}
 		}
 	} else {
 		var num_bins = _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_bar;
 		for (var i=0;i<num_bins;i=i+genomic_bins_per_bar) {
 			if (_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start >= xlim_start && _Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end <= xlim_end) {
-				new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end,"coverage":d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})});
+				new_coverage.push({"start":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end,"coverage":(d3.mean(_Coverage_by_chromosome[_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.unsegmented_coverage})/_settings.coverage_divisor) });
 			}
 		}
 	}
@@ -825,8 +846,13 @@ function update_coverage (top_or_bottom) {
 			}
 		}
 		_scales.zoom_plots[top_or_bottom].y.domain([0,max_local_coverage*_static.fraction_y_scale_height]);
-	}
+	} else {
+		// Scale by overall max on chromosome:
+		_scales.zoom_plots[top_or_bottom].y.domain([0,_max_coverage_by_chrom[_chosen_chromosomes[top_or_bottom]]*_static.fraction_y_scale_height]);
 
+	}
+	_axis_labels[top_or_bottom].y.call(_axes[top_or_bottom].y);
+	
 
 	// Plot background color:
 	_plot_canvas[top_or_bottom].append("rect")
@@ -841,8 +867,8 @@ function update_coverage (top_or_bottom) {
 
 		var button_group = _zoom_containers[top_or_bottom].append("g")
 			.attr("transform",function() {
-				var x_shift = ((sign === "-") ? (_layout.zoom_plot.width - _layout.zoom_plot.button_size*1.5) : (_layout.zoom_plot.width - _layout.zoom_plot.button_size*3));
-				var y_shift = ((top_or_bottom === "top") ? _layout.zoom_plot.button_size/2 : (_layout.zoom_plot.height - _layout.zoom_plot.button_size*1.5));
+				var x_shift = ((sign === "-") ? (_layout.zoom_plot.width - _layout.zoom_plot.button_size - _layout.zoom_plot.button_margin) : (_layout.zoom_plot.width - _layout.zoom_plot.button_size*2 - _layout.zoom_plot.button_margin*2));
+				var y_shift = ((top_or_bottom === "top") ? _layout.zoom_plot.button_margin : (_layout.zoom_plot.height - _layout.zoom_plot.button_size - _layout.zoom_plot.button_margin));
 				return "translate(" + x_shift + "," + y_shift + ")";
 			})
 			.attr("class", "zoom_button")
@@ -854,7 +880,8 @@ function update_coverage (top_or_bottom) {
 			.style("fill","white")
 			.style("stroke","gray")
 			.attr("width", _layout.zoom_plot.button_size)
-			.attr("height", _layout.zoom_plot.button_size)
+			.attr("height", _layout.zoom_plot.button_size);
+
 		button_group.append("text")
 			.text(sign)
 			.attr("x", _layout.zoom_plot.button_size/2)
@@ -1297,14 +1324,12 @@ function arrow_path_generator(d, top_or_bottom) {
 			// console.log("reverse")
 		}
 
-		var x1 = _scales.zoom_plots["top"].x(arrow_butt),  // start (arrow butt)
-				x2 = _scales.zoom_plots["top"].x(arrow_head),  // end (arrow head)
-				y = _padding.gene_offset;
-				
+		var x1 = _scales.zoom_plots[top_or_bottom].x(arrow_butt),  // start (arrow butt)
+		x2 = _scales.zoom_plots[top_or_bottom].x(arrow_head),  // end (arrow head)
+		y = _padding.gene_offset;
+		
 
 		if (top_or_bottom == "bottom") {
-			x1 = _scales.zoom_plots["bottom"].x(arrow_butt);  // start (arrow butt)
-			x2 = _scales.zoom_plots["bottom"].x(arrow_head);  // end (arrow head)
 			y = _layout.zoom_plot.height-_padding.gene_offset;
 		}
 
