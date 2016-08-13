@@ -211,6 +211,15 @@ text {
   width: 100%;
 }
 
+.zoom_button rect {
+  fill: white;
+  stroke: gray;
+}
+.zoom_button text {
+  fill: gray;
+  font-size: 1.5vw;
+}
+
 h1#title {
   font-size: 1.6vw;
   text-align: center;

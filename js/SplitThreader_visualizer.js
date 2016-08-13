@@ -142,7 +142,7 @@ function responsive_sizing() {
 	_layout.zoom_plot.height = (_layout.svg.height-_padding.top-_padding.bottom)/3;
 	_layout.zoom_plot.x = _layout.circos.size + _padding.between_circos_and_zoom_plots;
 	_layout.zoom_plot.width = _layout.svg.width-_layout.zoom_plot.x-_padding.right;
-	_layout.zoom_plot.button_size = _layout.zoom_plot.height/7;
+	_layout.zoom_plot.button_size = _layout.zoom_plot.height/10;
 	_layout.zoom_plot.button_margin = _layout.zoom_plot.button_size/3;
 
 
@@ -573,7 +573,6 @@ function draw_circos() {
 				.startAngle(function(d){return genome_to_angle(d.chromosome,0)})
 				.endAngle(function(d){return genome_to_angle(d.chromosome,d.size)});
 
-
 		chromosome_labels.append("path")
 				.attr("fill", function(d) { return _scales.chromosome_colors(d.chromosome); } ) //set the color for each slice to be chosen from the color function defined above
 				.attr("d", arc)
@@ -877,8 +876,6 @@ function update_coverage (top_or_bottom) {
 			.style("cursor","pointer");
 
 		button_group.append("rect")
-			.style("fill","white")
-			.style("stroke","gray")
 			.attr("width", _layout.zoom_plot.button_size)
 			.attr("height", _layout.zoom_plot.button_size);
 
@@ -886,7 +883,6 @@ function update_coverage (top_or_bottom) {
 			.text(sign)
 			.attr("x", _layout.zoom_plot.button_size/2)
 			.attr("y", _layout.zoom_plot.button_size/2)
-			.style("fill","gray")
 			.attr("text-anchor", "middle")
 			.attr("dominant-baseline","middle");
 	}
