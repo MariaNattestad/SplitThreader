@@ -56,7 +56,7 @@ th, td {
 
 
 .gene_search_box {
-  width: 45%;
+  width: 30%;
   margin: 2%;
   display: inline-block;
   vertical-align:top;
@@ -204,6 +204,7 @@ text {
 
 #submit_fusion {
   margin: 0.5vmin;
+  display: inline-block;
 }
 
 #show_genes_box {
@@ -224,4 +225,12 @@ h1#title {
   font-size: 1.6vw;
   text-align: center;
 
+}
+
+#gene_fusion_table_results tr.record {
+  cursor:pointer;
+}
+
+#send_fusion_to_ribbon_form {
+  display: none;
 }

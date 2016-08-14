@@ -460,6 +460,23 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	// var gene1 = {"name":"test1","chromosome":"1","start":50080,"end":50370};
 	// var gene2 = {"name":"test2","chromosome":"2","start":1340, "end":1010};
 
+	if (gene1.name == undefined || gene2.name == undefined) {
+		throw "Gene annotion does not have key: name";
+		return null;
+	}
+	if (gene1.chromosome == undefined || gene2.chromosome == undefined) {
+		throw "Gene annotion does not have key: chromosome";
+		return null;
+	}
+	if (gene1.start == undefined || gene2.start == undefined) {
+		throw "Gene annotion does not have key: start";
+		return null;
+	}
+	if (gene1.end == undefined || gene2.end == undefined) {
+		throw "Gene annotion does not have key: end";
+		return null;
+	}
+
 	var list1 = this.port_list_by_interval(gene1);
 	var list2 = this.port_list_by_interval(gene2);
 
@@ -472,6 +489,8 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 
 	details.chrom1 = gene1.chromosome;
 	details.chrom2 = gene2.chromosome;
+	details.annotation1 = gene1;
+	details.annotation2 = gene2;
 	
 	return details;
 }

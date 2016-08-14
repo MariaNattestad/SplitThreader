@@ -28,8 +28,9 @@
 					<ul class="nav nav-tabs">
 						<li class="active"><a data-toggle="tab" href="#variant_settings">Variants</a></li>
 						<li><a data-toggle="tab" href="#gene_settings">Genes</a></li>
+						<li><a data-toggle="tab" href="#gene_fusions">Gene fusions</a></li>
 						<li><a data-toggle="tab" href="#settings">Settings</a></li>
-						<!-- <li><a data-toggle="tab" href="#explore_panel">Explore</a></li> -->
+						
 					</ul>
 
 					<div class="tab-content">
@@ -79,7 +80,7 @@
 								<table id="gene_type_table"></table>
 							</div>
 							<div class="checkbox">
-								<label><input id="hide_local_gene_names" type="checkbox">Hide gene names</label>
+								<label><input id="hide_local_gene_names" type="checkbox">Hide gene names for types selected in table above</label>
 							</div>
 						</div>
 
@@ -91,7 +92,7 @@
 							<!-- <div class="checkbox"> -->
 								<!-- <label><input id="adaptive_coverage_scaling" type="checkbox" checked>Adaptive coverage scaling</label> -->
 							<!-- </div> -->
-							<label>Divide coverage by <input id="coverage_divisor" type="number" value="1"></label>
+							<label>Divide coverage by: </label><input id="coverage_divisor" type="number" value="1">
 						<!-- </div>
 					Explore panel: Send to UCSC or Ribbon
 						<div id="explore_panel" class="tab-pane fade"> -->
@@ -116,53 +117,63 @@
 								</div>
 						</div>
 
-					
+						<div id="gene_fusions" class="tab-pane fade">
+								<div id="gene_fusion_table">
+									<div class="gene_search_box">
+										Gene 1
+										<div id="fusion_gene1_livesearch"></div>
+									</div>
+									<div class="gene_search_box">
+										Gene 2
+										<div id="fusion_gene2_livesearch"></div>
+									</div>
+									<div class="row">
+										<div class="gene_search_box">
+										Selected: <span id="gene1">(none)</span>
+										</div>
+
+										<div class="gene_search_box">
+										Selected: <span id="gene2">(none)</span>
+										</div>
+										<button id="submit_fusion">Submit</button>
+									</div>
+								</div>
+									
+								<!-- <table id="gene_fusion_table">
+									<tr id="input_row">
+										<td width="20%" id="gene1">search gene above</td>
+										<td width="20%" id="gene2">search gene above</td>
+										<td width="60%"> <button id="submit_fusion">Submit</button></td>
+									</tr>
+								</table> -->
+								<table id="gene_fusion_table_results">
+									
+								</table>
+								Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click its row in the table to see the fusion, list the variant names, and even be able to send the variant to Ribbon to look at the alignments at those breakpoints in the BAM file.
+								<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
+										<div>Variants for the selected fusion:
+											<ul id="variant_names_for_Ribbon">
+
+											</ul>
+										</div>
+										<div id="fusion_data_to_send_ribbon">
+											<!-- Hidden fields go here -->
+										</div>
+										<input type="submit" value="Send fusion variants to Ribbon">	
+									</form>
+								<hr>
+								<div>
+									<p>or upload a list of gene fusions</p>
+									<input type="file" id="gene_fusion_file" />
+									<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
+									</span>
+								</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-
-	<div class="panel-group ">
-		<div class="panel panel-default">
-			<div class="panel-heading">
-				<h4 class="panel-title">
-					<a data-toggle="collapse" class="active" href="#gene_fusion_box">Gene fusions</a>
-				</h4>
-			</div>
-			<div class="panel-collapse collapse in" id="gene_fusion_box">
-				<div class="panel-body">
-					<div id="gene_fusion_table">
-						<div class="gene_search_box">
-							Gene 1
-							<div id="fusion_gene1_livesearch"></div>
-							Selected: <span id="gene1">(none)</span>
-						</div>
-						<div class="gene_search_box">
-							Gene 2
-							<div id="fusion_gene2_livesearch"></div>
-							Selected: <span id="gene2">(none)</span>
-						</div>
-						<button id="submit_fusion">Submit</button>
-					</div>
-						
-						<!-- <table id="gene_fusion_table">
-							<tr id="input_row">
-								<td width="20%" id="gene1">search gene above</td>
-								<td width="20%" id="gene2">search gene above</td>
-								<td width="60%"> <button id="submit_fusion">Submit</button></td>
-							</tr>
-						</table> -->
-						<table id="gene_fusion_table_results">
-							
-						</table>
-				</div>
-			</div>
-		</div>
-	</div>
-
-
-
 </div>
 
 
