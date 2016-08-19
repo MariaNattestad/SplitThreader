@@ -243,3 +243,7 @@ h1#title {
   padding: 0.2vmin  0.2vmin 0.2vmin 0.2vmin;
   border: 0; /*.2px solid blue;*/
 }
+
+#variant_table_landing {
+  overflow: scroll;
+}

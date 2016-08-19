@@ -8,6 +8,7 @@
 
 <link href="css/splitthreader_visualizer.css" rel="stylesheet">
 <link href="css/d3-livesearch.css" rel="stylesheet">
+<link href="css/d3-superTable.css" rel="stylesheet">
 
 <h1 id="title"></h1>
 <div id="svg_landing"></div>
@@ -36,22 +37,9 @@
 					<div class="tab-content">
 					<!-- Variant settings -->
 						<div id="variant_settings" class="tab-pane fade in active">
-								<table class="invisible_table">
-									<tr>
-										<td>Minimum variant size: </td>
-										<td><input id="min_variant_size" type="number"></td>
-									</tr>
-									<tr>
-										<td>Minimum split reads:</td>
-										<td><input id="min_split_reads" type="number"></td>
-									</tr>
-								</table>
-								<hr>
-								<label>Filter variants:</label>
-								<table id="variant_table"></table>
-								<hr>
-								<label>Variant details:</label>
-								<div id="variant_detail_text">Click on a variant to show detail</div>
+							<div id="variant_table_landing">
+
+							</div>
 						</div>
 					
 					<!-- Gene settings -->
@@ -101,7 +89,23 @@
 									<td><label for="color_scheme_dropdown">Color scheme:</label></td>
 									<td><select class="form-control" id="color_scheme_dropdown"></select></td>
 								</tr>
+								<tr>
+									<td>Minimum variant size: </td>
+									<td><input id="min_variant_size" type="number"></td>
+								</tr>
+								<tr>
+									<td>Minimum split reads:</td>
+									<td><input id="min_split_reads" type="number"></td>
+								</tr>
 							</table>
+
+			
+							<hr>
+							<label>Filter variants:</label>
+							<table id="variant_table"></table>
+							<hr>
+							<label>Variant details:</label>
+							<div id="variant_detail_text">Click on a variant to show detail</div>
 
 						<!-- </div>
 					Explore panel: Send to UCSC or Ribbon
@@ -196,6 +200,7 @@
 <script src="js/lib/bootstrap.min.js"></script>
 <script src="js/lib/priority-queue.min.js"></script>
 
+<script src="js/d3-superTable.js"></script>
 <script src="js/d3-livesearch.js"></script>
 
 <script src="js/SplitThreader.js"></script>

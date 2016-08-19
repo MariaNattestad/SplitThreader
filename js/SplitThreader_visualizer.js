@@ -45,8 +45,8 @@ _settings.show_local_gene_names = true;
 _settings.color_index = 0;
 _settings.segment_copy_number = false;
 _settings.adaptive_coverage_scaling = true;
-_settings.min_variant_size = 0;
-_settings.min_split_reads = 0;
+_settings.min_variant_size = -1;
+_settings.min_split_reads = -1;
 _settings.annotation_path = "resources/annotation/Human_hg19.genes.csv";
 _settings.ucsc_database = "hg19";
 _settings.coverage_divisor = 1;
@@ -72,6 +72,7 @@ var _Genome_data = [];
 var _Annotation_to_highlight = [];
 var _Coverage_by_chromosome = {}; // we load each chromosome into here as needed
 var _Variant_data = null;
+var _Filtered_variant_data = null;
 var _Annotation_data = null;
 // For lookups and calculations:
 var _SplitThreader_graph = new Graph();
@@ -283,16 +284,20 @@ d3.select("#coverage_divisor").on("change", function() {
 d3.select("#min_variant_size").on("change",function() {
 	_settings.min_variant_size = parseInt(this.value);
 	if (isNaN(_settings.min_variant_size)) {
-		_settings.min_variant_size = 0;
+		_settings.min_variant_size = -1;
 	}
+	apply_variant_filters();
+	draw_histogram();
 	draw_connections();
 	draw_circos_connections();
 });
 d3.select("#min_split_reads").on("change",function() {
 	_settings.min_split_reads = parseInt(this.value);
 	if (isNaN(_settings.min_split_reads)) {
-		_settings.min_split_reads = 0;
+		_settings.min_split_reads = -1;
 	}
+	apply_variant_filters();
+	draw_histogram();
 	draw_connections();
 	draw_circos_connections();
 });
@@ -373,7 +378,7 @@ function wait_then_run_when_all_data_loaded() {
 		draw_everything(); 
 		//////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
 		// for SplitThreader.js graph the variants should be: {"variant_name":"variant1","chrom1":"1","pos1":50100,"strand1":"-","chrom2":"2","pos2":1000,"strand2":"-"},
-		_SplitThreader_graph.from_genomic_variants(_Variant_data,_Genome_data);
+		_SplitThreader_graph.from_genomic_variants(_Filtered_variant_data,_Genome_data);
 		//////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
 
 		user_message("Info","Loading data is complete")
@@ -383,7 +388,17 @@ function wait_then_run_when_all_data_loaded() {
 	}
 }
 
-
+function apply_variant_filters() {
+	_Filtered_variant_data = [];
+	for (var i in _Variant_data) {
+		var d = _Variant_data[i];
+		var variant_size = Math.abs(d.pos2-d.pos1);
+		if ((_Chromosome_start_positions[d.chrom1] != undefined && _Chromosome_start_positions[d.chrom2] != undefined) && d.split >= _settings.min_split_reads && (variant_size >= _settings.min_variant_size || d.chrom1 != d.chrom2)) {
+			_Filtered_variant_data.push(d);
+			// ?????????????????????
+		}
+	}
+}
 
 function read_genome_file() {
 		d3.csv(_input_file_prefix + ".genome.csv", function(error,genome_input) {
@@ -476,7 +491,7 @@ function read_spansplit_file() {
 			// spansplit_input[i].span2 = +spansplit_input[i].span2
 		}
 		_Variant_data = spansplit_input;
-
+		apply_variant_filters();
 		_data_ready.spansplit = true;
 		make_variant_table();
 		populate_ribbon_link();
@@ -641,13 +656,9 @@ function draw_circos_connections() {
 
 
 	_circos_canvas.selectAll("path.circos_connection")
-		.data(_Variant_data)
+		.data(_Filtered_variant_data)
 		.enter()
 		.append("path")
-		.filter(function(d){
-			var variant_size = Math.abs(d.pos2-d.pos1);
-			return (_Chromosome_start_positions[d.chrom1] != undefined && _Chromosome_start_positions[d.chrom2] != undefined) && d.split > _settings.min_split_reads && (variant_size > _settings.min_variant_size || d.chrom1 != d.chrom2);
-		})
 			.attr("class","circos_connection")
 			.style("stroke-width",1)
 			.style("stroke",function(d){return _scales.chromosome_colors(d.chrom1);})
@@ -768,7 +779,7 @@ function draw_zoom_plot(top_or_bottom) {
 		// 	return;
 		// } else {
 			// console.log("mouse");
-			_axis_labels.top.x.call(_axes[top_or_bottom].x);
+			_axis_labels[top_or_bottom].x.call(_axes[top_or_bottom].x);
 			var zoom_scale_factor = d3.event.scale;
 			_bins_per_bar[top_or_bottom] = Math.ceil(num_genomic_bins_per_pixel/zoom_scale_factor);
 			update_coverage(top_or_bottom);
@@ -1025,9 +1036,9 @@ function draw_connections() {
 		categorized_variant_data.top_to_other = [];
 		categorized_variant_data.bottom_to_other = [];
 
-		for (var i = 0;i < _Variant_data.length; i++) {
-			var d = _Variant_data[i];
-			if (_settings.show_variant_types[_Variant_data[i].variant_type] == false) {
+		for (var i = 0;i < _Filtered_variant_data.length; i++) {
+			var d = _Filtered_variant_data[i];
+			if (_settings.show_variant_types[_Filtered_variant_data[i].variant_type] == false) {
 				continue;
 			}
 
@@ -1038,101 +1049,98 @@ function draw_connections() {
 
 			var variant_size = Math.abs(d.pos2-d.pos1);
 			if (d.chrom1 == _chosen_chromosomes["top"] || d.chrom2 == _chosen_chromosomes["top"] || d.chrom1 == _chosen_chromosomes["bottom"] || d.chrom2 == _chosen_chromosomes["bottom"]) {
-				if (d.split > _settings.min_split_reads && (variant_size > _settings.min_variant_size || d.chrom1 != d.chrom2)) {
+				var scaled_position_1_top = scale_position_by_chromosome(d.chrom1,d.pos1,"top");
+				var scaled_position_1_bottom = scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 
-					var scaled_position_1_top = scale_position_by_chromosome(d.chrom1,d.pos1,"top");
-					var scaled_position_1_bottom = scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
+				var scaled_position_2_top = scale_position_by_chromosome(d.chrom2,d.pos2,"top");
+				var scaled_position_2_bottom = scale_position_by_chromosome(d.chrom2,d.pos2,"bottom");
 
-					var scaled_position_2_top = scale_position_by_chromosome(d.chrom2,d.pos2,"top");
-					var scaled_position_2_bottom = scale_position_by_chromosome(d.chrom2,d.pos2,"bottom");
+				if (scaled_position_1_top > 0 && scaled_position_1_top < _layout.zoom_plot.width)  {
+					within_view_1_top = true;
+				}
+				if (scaled_position_1_bottom > 0 && scaled_position_1_bottom < _layout.zoom_plot.width){
+					within_view_1_bottom = true;
+				}
+				if (scaled_position_2_top > 0 && scaled_position_2_top < _layout.zoom_plot.width) {
+					within_view_2_top = true;
+				}
+				if (scaled_position_2_bottom > 0 && scaled_position_2_bottom < _layout.zoom_plot.width) {
+					within_view_2_bottom = true;
+				}
 
-					if (scaled_position_1_top > 0 && scaled_position_1_top < _layout.zoom_plot.width)  {
-						within_view_1_top = true;
+
+				//  1. Both within view looping on top chromosome
+				//  2. Both within view looping on bottom chromosome
+				//  3. Both within view as connection
+				//  4. Both within view as reverse connection
+				//  5. Others
+
+
+				if ( (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["top"]) && (within_view_1_top && within_view_2_top) ){
+					categorized_variant_data.within_top.push(d)
+				} else if ( (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["bottom"]) && (within_view_1_top && within_view_2_bottom) ){
+					categorized_variant_data.top_to_bottom.push(d) // save as a connection
+				} else if ( (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["top"]) && (within_view_1_bottom && within_view_2_top) ){
+					categorized_variant_data.top_to_bottom.push(reverse_chrom1_and_chrom2(d)) // save as a connection
+				} else if ( (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["bottom"]) && (within_view_1_bottom && within_view_2_bottom)) {
+					categorized_variant_data.within_bottom.push(d)
+				} else {
+					// Within top chromosome  
+					if (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["top"]) {
+						if (within_view_1_top && within_view_2_top) { ///////////////
+								categorized_variant_data.within_top.push(d) /////////////////////
+							} else if (within_view_1_top) {
+								categorized_variant_data.top_to_other.push(d) // save 1 as top stub
+							} else if (within_view_2_top) {
+								categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+							} // else: don't save it anywhere since it won't be shown even as a stub 
+					// Between the top and bottom plots
+					} else if (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["bottom"]) {
+							if (within_view_1_top && within_view_2_bottom) { ///////////////////
+								categorized_variant_data.top_to_bottom.push(d) // save as a connection ///////////////
+							} else if (within_view_1_top) {
+								categorized_variant_data.top_to_other.push(d) // save 1 as top stub
+							} else if (within_view_2_bottom) {
+								categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+							} // else: don't save it anywhere since it won't be shown even as a stub 
+					// Within bottom chromosome
+					} else if (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["bottom"]) {
+						if (within_view_1_bottom && within_view_2_bottom) { //////////////////
+								categorized_variant_data.within_bottom.push(d) //////////////////
+							} else if (within_view_1_bottom) {
+								categorized_variant_data.bottom_to_other.push(d) // save 1 as top stub
+							} else if (within_view_2_bottom) {
+								categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
+							} // else: don't save it anywhere since it won't be shown even as a stub 
+					
+					} else if (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["top"]) {
+							if (within_view_1_bottom && within_view_2_top) { ///////////////////
+								categorized_variant_data.top_to_bottom.push(reverse_chrom1_and_chrom2(d)) // save as a connection ////////////////////
+							} else if (within_view_2_top) { // 2 is top this time
+								categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as top stub 
+							} else if (within_view_1_bottom) { // 1 is bottom this time
+								categorized_variant_data.bottom_to_other.push(d) // save as bottom stub, 1 is already bottom, so no need to flip
+							} // else: don't save it anywhere since it won't be shown even as a stub 
+					// Top chromosome to another chromosome
+					} else if (d.chrom1 == _chosen_chromosomes["top"] && within_view_1_top) {
+						categorized_variant_data.top_to_other.push(d)
+						// console.log("top to other")
+						// console.log(d)
+					} else if (d.chrom2 == _chosen_chromosomes["top"] && within_view_2_top) {
+						categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d))
+						// console.log("top to other reversed")
+						// console.log(reverse_chrom1_and_chrom2(d))
+					// Bottom chromosome to another chromosome
+					} else if (d.chrom1 == _chosen_chromosomes["bottom"] && within_view_1_bottom) {
+						categorized_variant_data.bottom_to_other.push(d)
+						// console.log("bottom to other")
+						// console.log(d)
+					} else if (d.chrom2 == _chosen_chromosomes["bottom"] && within_view_2_bottom) {
+						categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d))
+						// console.log("bottom to other reversed")
+						// console.log(reverse_chrom1_and_chrom2(d))
 					}
-					if (scaled_position_1_bottom > 0 && scaled_position_1_bottom < _layout.zoom_plot.width){
-						within_view_1_bottom = true;
-					}
-					if (scaled_position_2_top > 0 && scaled_position_2_top < _layout.zoom_plot.width) {
-						within_view_2_top = true;
-					}
-					if (scaled_position_2_bottom > 0 && scaled_position_2_bottom < _layout.zoom_plot.width) {
-						within_view_2_bottom = true;
-					}
-
-
-					//  1. Both within view looping on top chromosome
-					//  2. Both within view looping on bottom chromosome
-					//  3. Both within view as connection
-					//  4. Both within view as reverse connection
-					//  5. Others
-
-
-					if ( (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["top"]) && (within_view_1_top && within_view_2_top) ){
-						categorized_variant_data.within_top.push(d)
-					} else if ( (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["bottom"]) && (within_view_1_top && within_view_2_bottom) ){
-						categorized_variant_data.top_to_bottom.push(d) // save as a connection
-					} else if ( (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["top"]) && (within_view_1_bottom && within_view_2_top) ){
-						categorized_variant_data.top_to_bottom.push(reverse_chrom1_and_chrom2(d)) // save as a connection
-					} else if ( (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["bottom"]) && (within_view_1_bottom && within_view_2_bottom)) {
-						categorized_variant_data.within_bottom.push(d)
-					} else {
-						// Within top chromosome  
-						if (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["top"]) {
-							if (within_view_1_top && within_view_2_top) { ///////////////
-									categorized_variant_data.within_top.push(d) /////////////////////
-								} else if (within_view_1_top) {
-									categorized_variant_data.top_to_other.push(d) // save 1 as top stub
-								} else if (within_view_2_top) {
-									categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-								} // else: don't save it anywhere since it won't be shown even as a stub 
-						// Between the top and bottom plots
-						} else if (d.chrom1 == _chosen_chromosomes["top"] && d.chrom2 == _chosen_chromosomes["bottom"]) {
-								if (within_view_1_top && within_view_2_bottom) { ///////////////////
-									categorized_variant_data.top_to_bottom.push(d) // save as a connection ///////////////
-								} else if (within_view_1_top) {
-									categorized_variant_data.top_to_other.push(d) // save 1 as top stub
-								} else if (within_view_2_bottom) {
-									categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-								} // else: don't save it anywhere since it won't be shown even as a stub 
-						// Within bottom chromosome
-						} else if (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["bottom"]) {
-							if (within_view_1_bottom && within_view_2_bottom) { //////////////////
-									categorized_variant_data.within_bottom.push(d) //////////////////
-								} else if (within_view_1_bottom) {
-									categorized_variant_data.bottom_to_other.push(d) // save 1 as top stub
-								} else if (within_view_2_bottom) {
-									categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as bottom stub
-								} // else: don't save it anywhere since it won't be shown even as a stub 
-						
-						} else if (d.chrom1 == _chosen_chromosomes["bottom"] && d.chrom2 == _chosen_chromosomes["top"]) {
-								if (within_view_1_bottom && within_view_2_top) { ///////////////////
-									categorized_variant_data.top_to_bottom.push(reverse_chrom1_and_chrom2(d)) // save as a connection ////////////////////
-								} else if (within_view_2_top) { // 2 is top this time
-									categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d)) // save 2 as top stub 
-								} else if (within_view_1_bottom) { // 1 is bottom this time
-									categorized_variant_data.bottom_to_other.push(d) // save as bottom stub, 1 is already bottom, so no need to flip
-								} // else: don't save it anywhere since it won't be shown even as a stub 
-						// Top chromosome to another chromosome
-						} else if (d.chrom1 == _chosen_chromosomes["top"] && within_view_1_top) {
-							categorized_variant_data.top_to_other.push(d)
-							// console.log("top to other")
-							// console.log(d)
-						} else if (d.chrom2 == _chosen_chromosomes["top"] && within_view_2_top) {
-							categorized_variant_data.top_to_other.push(reverse_chrom1_and_chrom2(d))
-							// console.log("top to other reversed")
-							// console.log(reverse_chrom1_and_chrom2(d))
-						// Bottom chromosome to another chromosome
-						} else if (d.chrom1 == _chosen_chromosomes["bottom"] && within_view_1_bottom) {
-							categorized_variant_data.bottom_to_other.push(d)
-							// console.log("bottom to other")
-							// console.log(d)
-						} else if (d.chrom2 == _chosen_chromosomes["bottom"] && within_view_2_bottom) {
-							categorized_variant_data.bottom_to_other.push(reverse_chrom1_and_chrom2(d))
-							// console.log("bottom to other reversed")
-							// console.log(reverse_chrom1_and_chrom2(d))
-						}
-					}
-				} // end check for _settings.min_variant_size and _settings.min_split_reads
+				}
 			} // end check that one of chromosomes is visible for this variant
 		}
 
@@ -1544,8 +1552,18 @@ function highlight_gene_fusion(d) {
 
 	update_genes();
 
-	for (var i in _Variant_data) {
-		_Variant_data[i].highlight = (d.variant_names.indexOf(_Variant_data[i].variant_name) != -1);
+	var match_variant_names = {};
+	for (var i in d.variant_names) {
+		match_variant_names[d.variant_names[i]] = true;
+	}
+	for (var i in _Filtered_variant_data) {
+		if (match_variant_names[_Filtered_variant_data[i].variant_name] != undefined) {
+			_Filtered_variant_data[i].highlight = true;
+			console.log("highlight variant");
+		} else {
+			_Filtered_variant_data[i].highlight = false;
+		}
+		// _Filtered_variant_data[i].highlight = (.indexOf(_Filtered_variant_data[i].variant_name) != -1);
 	}
 
 	draw_connections();
@@ -1616,15 +1634,16 @@ function variant_type_checkbox(d) {
 	draw_connections();
 }
 
-function make_variant_table() {
+function make_variant_type_filter_table() {
+
 	var type_counts = {};
 	_settings.show_variant_types = {};
-	for (var i in _Variant_data) {
-		if (type_counts[_Variant_data[i].variant_type] == undefined) {
-			type_counts[_Variant_data[i].variant_type] = 1;
-			_settings.show_variant_types[_Variant_data[i].variant_type] = true;
+	for (var i in _Filtered_variant_data) {
+		if (type_counts[_Filtered_variant_data[i].variant_type] == undefined) {
+			type_counts[_Filtered_variant_data[i].variant_type] = 1;
+			_settings.show_variant_types[_Filtered_variant_data[i].variant_type] = true;
 		} else {
-			type_counts[_Variant_data[i].variant_type]++;
+			type_counts[_Filtered_variant_data[i].variant_type]++;
 		}
 	}
 	var header = ["type","count","show"];
@@ -1634,12 +1653,42 @@ function make_variant_table() {
 	rows.append("td").html(function(d) {return d});;
 	rows.append("td").html(function(d) {return type_counts[d]});
 	rows.append("td").append("input").property("type","checkbox").property("checked",true).on("change",variant_type_checkbox);
+
+}
+
+function choose_row(d) {
+	console.log(d);
+
+	for (var i in _Filtered_variant_data) {
+		if (_Filtered_variant_data[i].variant_name == d.variant_name) {
+			_Filtered_variant_data[i].highlight = true;
+			console.log("highlight variant");
+		} else {
+			_Filtered_variant_data[i].highlight = false;
+		}
+	}
+
+	draw_connections();
+
+}
+function make_variant_table() {
+	d3.select("#variant_table_landing").call(
+		d3.superTable()
+			.table_data(_Filtered_variant_data)
+			.table_header(["variant_name","variant_type","chrom1","pos1","chrom2","pos2","split"])
+			.num_rows_to_show(10)
+			.show_advanced_filters(true)
+			.click_function(choose_row)
+	);
+
+	make_variant_type_filter_table();
+	
 }
 
 function populate_ribbon_link() {
 	// console.log(JSON.stringify(d));
 	d3.select("#data_to_send_ribbon").html("");
-	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Variant_data));
+	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Filtered_variant_data));
 }
 
 function prep_fusion_for_Ribbon(results) {
@@ -1651,9 +1700,9 @@ function prep_fusion_for_Ribbon(results) {
 
 
 	var variants_for_Ribbon = [];
-	for (var i in _Variant_data) {
-		if (results.variant_names.indexOf(_Variant_data[i].variant_name) != -1) {
-			variants_for_Ribbon.push(_Variant_data[i]);
+	for (var i in _Filtered_variant_data) {
+		if (results.variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
+			variants_for_Ribbon.push(_Filtered_variant_data[i]);
 		}
 	}
 	d3.select("#fusion_data_to_send_ribbon").html("");
@@ -1663,20 +1712,22 @@ function prep_fusion_for_Ribbon(results) {
 
 function draw_histogram() {
 
-	if (_Variant_data == null) {
+	var variant_data_to_use = _Filtered_variant_data;
+
+	if (variant_data_to_use == null) {
 		return;
 	}
 
 	var num_bins = 50;
-	var data_max = Math.ceil(d3.max(_Variant_data,function(d) {return d.size}));
+	var data_max = Math.ceil(d3.max(variant_data_to_use,function(d) {return d.size}));
 	var bin_size = data_max/num_bins;
 	// console.log(bin_size);
 
 
 	var hist_data = new Array(num_bins).fill(0);
 
-	for (var i in _Variant_data) {
-		var bin = Math.floor(_Variant_data[i].size / bin_size);
+	for (var i in variant_data_to_use) {
+		var bin = Math.floor(variant_data_to_use[i].size / bin_size);
 		if (hist_data[bin] != undefined) {
 			hist_data[bin]++;
 		} //else {
@@ -1684,7 +1735,8 @@ function draw_histogram() {
 		// }
 	}
 
-	var plot_container = _svg.append("g");
+	_svg.select("#histogram").remove();
+	var plot_container = _svg.append("g").attr("id","histogram");
 
 	plot_container.attr("transform","translate(" + _layout.hist.x + "," + _layout.hist.y + ")")
 		.append("rect")
@@ -1696,7 +1748,7 @@ function draw_histogram() {
 
 	// console.log(Math.max.apply(null, hist_data));
 	_scales.hist.x.domain([0, data_max]).range([0, 0 + _layout.hist.width]);
-	_scales.hist.y.domain([0, Math.max.apply(null, hist_data)]).range([0, 0+_layout.hist.height]);
+	_scales.hist.y.domain([0,Math.max.apply(null, hist_data)]).range([0+_layout.hist.height,0]);
 
 	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
 	var x_axis_label = plot_container.append("g")
@@ -1722,15 +1774,13 @@ function draw_histogram() {
 
 	var plot_canvas = plot_container.append("g");
 
-	console.log("bin size:", bin_size);
-
 	plot_canvas.selectAll("rect.bar").data(hist_data).enter()
 		.append("rect")
 			.attr("class","bar")
 			.attr("x",function(d,i){return _scales.hist.x(i)*bin_size})
-			.attr("y",function(d,i){return (_layout.hist.height - _scales.hist.y(d))})
+			.attr("y",function(d,i){return _scales.hist.y(d)})
 			.attr("width",_layout.hist.width/num_bins)
-			.attr("height", function(d,i) {return _scales.hist.y(d)})
+			.attr("height", function(d,i) {return (_layout.hist.height - _scales.hist.y(d))})
 			.style("fill","black");
 }
 
