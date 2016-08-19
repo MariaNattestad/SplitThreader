@@ -1867,7 +1867,11 @@ function read_gene_fusion_file(raw_input) {
 
 	var failed_gene_names = [];
 	for (var i = 0; i < input_text.length; i++) {
-		var columns = input_text[i].split(/\s+|,/);
+		if (input_text[i][0] == "#") {
+			continue;
+		}
+
+		var columns = input_text[i].split(/\s+|,|--/);
 
 		var gene1 = columns[0];
 		var gene2 = columns[1];
@@ -1943,12 +1947,6 @@ function submit_fusion() {
 
 		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2]);
 
-		// _Gene_fusions.push(results);
-		// var rows = d3.select("#gene_fusion_table_results").selectAll("tr").data(_Gene_fusions).enter().append("tr").attr("class","record");
-		// rows.append
-
-		// ????? to be continued -- replace with SuperTable plugin
-
 		var new_row = d3.select("#gene_fusion_table_results").append("tr").attr("class","record")
 			new_row.on("click", function() {
 				highlight_gene_fusion(results); 
@@ -1956,7 +1954,6 @@ function submit_fusion() {
 			});
 			new_row.append("td").html(_current_fusion_genes[1].name).property("width","20%");
 			new_row.append("td").html(_current_fusion_genes[2].name).property("width","20%");
-			console.log(results);
 			new_row.append("td").html(results.variant_names.length + " variants, " + results.distance + "bp").property("width","60%");
 		user_message("Instructions","Click on table to highlight the gene fusion path found through the SplitThreader graph.");
 		
