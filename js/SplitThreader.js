@@ -435,6 +435,7 @@ Graph.prototype.details_from_path = function(results) {
 	var output = results;
 	output.edges = [];
 	output.variant_names = [];
+	output.path_chromosomes = [];
 	for (var i = 1; i < output.path.length; i++) {
 		// console.log(i);
 		// console.log(output.path[i]);
@@ -447,6 +448,10 @@ Graph.prototype.details_from_path = function(results) {
 				output.edges.push(item.edge);
 				if (item.edge.variant_name != null) {
 					output.variant_names.push(item.edge.variant_name);
+				}
+				var this_chrom = item.port.node.genomic_coordinates.chrom;
+				if (output.path_chromosomes.indexOf(this_chrom) == -1) {
+					output.path_chromosomes.push(this_chrom);	
 				}
 			}
 		}
@@ -491,6 +496,7 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	details.chrom2 = gene2.chromosome;
 	details.annotation1 = gene1;
 	details.annotation2 = gene2;
+	details.num_variants = details.variant_names.length;
 	
 	return details;
 }

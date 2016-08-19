@@ -281,16 +281,24 @@ d3.select("#coverage_divisor").on("change", function() {
 	update_coverage("bottom");
 });
 
+function update_variants() {
+
+	make_variant_table();
+	draw_histogram();
+	draw_connections();
+	draw_circos_connections();
+
+	_SplitThreader_graph = new Graph();
+	_SplitThreader_graph.from_genomic_variants(_Filtered_variant_data,_Genome_data);
+}
 d3.select("#min_variant_size").on("change",function() {
 	_settings.min_variant_size = parseInt(this.value);
 	if (isNaN(_settings.min_variant_size)) {
 		_settings.min_variant_size = -1;
 	}
 	apply_variant_filters();
-	make_variant_table();
-	draw_histogram();
-	draw_connections();
-	draw_circos_connections();
+	update_variants();
+	
 });
 d3.select("#min_split_reads").on("change",function() {
 	_settings.min_split_reads = parseInt(this.value);
@@ -298,10 +306,7 @@ d3.select("#min_split_reads").on("change",function() {
 		_settings.min_split_reads = -1;
 	}
 	apply_variant_filters();
-	make_variant_table();
-	draw_histogram();
-	draw_connections();
-	draw_circos_connections();
+	update_variants();
 });
 
 d3.select("#submit_fusion").on("click",submit_fusion);
@@ -1517,6 +1522,10 @@ function wait_then_draw_bottom() {
 	}
 }
 
+function hide_all_genes() {
+	_Annotation_to_highlight.forEach(function(d) {d.show = false});
+}
+
 function update_genes() {
 
 	draw_genes("top");
@@ -1547,6 +1556,7 @@ function highlight_gene_fusion(d) {
 	select_chrom_for_zoom_top(d.chrom1);
 	select_chrom_for_zoom_bottom(d.chrom2);  
 
+	hide_all_genes();
 	highlight_gene(d.annotation1);
 	highlight_gene(d.annotation2);
 
@@ -1561,7 +1571,6 @@ function highlight_gene_fusion(d) {
 	for (var i in _Filtered_variant_data) {
 		if (match_variant_names[_Filtered_variant_data[i].variant_name] != undefined) {
 			_Filtered_variant_data[i].highlight = true;
-			console.log("highlight variant");
 		} else {
 			_Filtered_variant_data[i].highlight = false;
 		}
@@ -1611,7 +1620,7 @@ function search_select_fusion1(d) {
 	if (d != undefined) {
 		// console.log("selected gene " + d.gene + " as fusion gene 1");
 		_current_fusion_genes[1] = d;
-		d3.select("#gene_fusion_table").select("#gene" + 1).html(d.gene);
+		d3.select("#gene_fusion_input").select("#gene" + 1).html(d.gene);
 		highlight_gene(d);
 	}
 }
@@ -1619,7 +1628,7 @@ function search_select_fusion2(d) {
 	if (d != undefined) {
 		// console.log("selected gene " + d.gene + " as fusion gene 2");
 		_current_fusion_genes[2] = d;
-		d3.select("#gene_fusion_table").select("#gene" + 2).html(d.gene);
+		d3.select("#gene_fusion_input").select("#gene" + 2).html(d.gene);
 		highlight_gene(d);
 	}
 }
@@ -1694,7 +1703,6 @@ function populate_ribbon_link() {
 }
 
 function prep_fusion_for_Ribbon(results) {
-	console.log(results);
 	d3.select("#send_fusion_to_ribbon_form").style("display","block");
 
 	d3.select("#variant_names_for_Ribbon").selectAll("li").remove();
@@ -1945,14 +1953,18 @@ function read_gene_fusion_file(raw_input) {
 			if (gene1_annotation != undefined && gene2_annotation != undefined) {
 				_current_fusion_genes[1] = gene1_annotation;
 				_current_fusion_genes[2] = gene2_annotation;
-				submit_fusion();
+				search_graph_for_fusion();
 			} else {
 				if (gene1_annotation == undefined) {
 					failed_gene_names.push(gene1);
+					gene1 = gene1 + " is not in the annotation";
 				}
 				if (gene2_annotation == undefined) {
 					failed_gene_names.push(gene2);
+					gene2 = gene2+ " is not in the annotation";
 				}
+
+				_Gene_fusions.push({"gene1":gene1, "gene2":gene2});
 			}
 		}
 	}
@@ -1962,6 +1974,8 @@ function read_gene_fusion_file(raw_input) {
 	} else {
 		user_message("The following genes were not found in the annotation: " + failed_gene_names.join(","));
 	}
+
+	update_fusion_table();
 }
 
 
@@ -1988,25 +2002,15 @@ d3.select("#gene_fusion_file_icon").on("click", function() {
 });
 
 
-
-
-function submit_fusion() {
+function search_graph_for_fusion() {
 	if (_current_fusion_genes[1] != undefined && _current_fusion_genes[2] != undefined) {
-		// console.log("Ask SplitThreader graph whether this is a fusion");
 
 		_current_fusion_genes[1].name = _current_fusion_genes[1].gene;
 		_current_fusion_genes[2].name = _current_fusion_genes[2].gene;
 
 		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2]);
 
-		var new_row = d3.select("#gene_fusion_table_results").append("tr").attr("class","record")
-			new_row.on("click", function() {
-				highlight_gene_fusion(results); 
-				prep_fusion_for_Ribbon(results);
-			});
-			new_row.append("td").html(_current_fusion_genes[1].name).property("width","20%");
-			new_row.append("td").html(_current_fusion_genes[2].name).property("width","20%");
-			new_row.append("td").html(results.variant_names.length + " variants, " + results.distance + "bp").property("width","60%");
+		_Gene_fusions.push(results);
 		user_message("Instructions","Click on table to highlight the gene fusion path found through the SplitThreader graph.");
 		
 	} else {
@@ -2014,6 +2018,20 @@ function submit_fusion() {
 	}
 }
 
+function update_fusion_table() {
+	d3.select("#gene_fusion_table_landing").call(
+		d3.superTable()
+			.table_data(_Gene_fusions)
+			.table_header(["gene1","gene2","distance","num_variants","path_chromosomes"])
+			.show_advanced_filters(true)
+			.click_function(highlight_gene_fusion)
+	);
+}
+
+function submit_fusion() {
+	search_graph_for_fusion();
+	update_fusion_table();
+}
 
 function Mb_format(x) {
 	return Math.round(x/1000000,2) + " Mb";

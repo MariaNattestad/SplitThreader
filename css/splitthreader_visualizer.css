@@ -244,6 +244,6 @@ h1#title {
   border: 0; /*.2px solid blue;*/
 }
 
-#variant_table_landing {
+#variant_table_landing, #gene_fusion_table_landing {
   overflow: scroll;
 }

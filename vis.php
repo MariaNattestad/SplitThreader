@@ -37,6 +37,7 @@
 					<div class="tab-content">
 					<!-- Variant settings -->
 						<div id="variant_settings" class="tab-pane fade in active">
+							Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
 							<div id="variant_table_landing">
 
 							</div>
@@ -70,6 +71,65 @@
 							<div class="checkbox">
 								<label><input id="hide_local_gene_names" type="checkbox">Hide gene names for types selected in table above</label>
 							</div>
+						</div>
+
+					<!-- Gene fusions -->
+
+						<div id="gene_fusions" class="tab-pane fade">
+								<div id="gene_fusion_input">
+									<div class="gene_search_box">
+										Gene 1
+										<div id="fusion_gene1_livesearch"></div>
+									</div>
+									<div class="gene_search_box">
+										Gene 2
+										<div id="fusion_gene2_livesearch"></div>
+									</div>
+									<div class="row">
+										<div class="gene_search_box">
+										Selected: <span id="gene1">(none)</span>
+										</div>
+
+										<div class="gene_search_box">
+										Selected: <span id="gene2">(none)</span>
+										</div>
+										<button id="submit_fusion">Submit</button>
+									</div>
+								</div>
+									
+								<!-- <table id="gene_fusion_table">
+									<tr id="input_row">
+										<td width="20%" id="gene1">search gene above</td>
+										<td width="20%" id="gene2">search gene above</td>
+										<td width="60%"> <button id="submit_fusion">Submit</button></td>
+									</tr>
+								</table> -->
+								<div id="gene_fusion_table_landing">
+
+								</div>
+
+								<!-- <table id="gene_fusion_table_results">
+									
+								</table> -->
+								Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click its row in the table to see the fusion, list the variant names, and even be able to send the variant to Ribbon to look at the alignments at those breakpoints in the BAM file.
+								<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
+										<div>Variants for the selected fusion:
+											<ul id="variant_names_for_Ribbon">
+
+											</ul>
+										</div>
+										<div id="fusion_data_to_send_ribbon">
+											<!-- Hidden fields go here -->
+										</div>
+										<input type="submit" value="Send fusion variants to Ribbon">	
+									</form>
+								<hr>
+								<div>
+									<p>or upload a list of gene fusions</p>
+									<input type="file" id="gene_fusion_file" />
+									<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
+									</span>
+								</div>
 						</div>
 
 					<!-- Settings -->
@@ -107,10 +167,8 @@
 							<label>Variant details:</label>
 							<div id="variant_detail_text">Click on a variant to show detail</div>
 
-						<!-- </div>
-					Explore panel: Send to UCSC or Ribbon
-						<div id="explore_panel" class="tab-pane fade"> -->
 							<hr>
+
 							<p><label>Send to UCSC genome browser</label></p>
 							<p>Database: <span id="ucsc_database">hg19 </span></p>
 							<p><a id="ucsc_go_top" target="_blank"  >Top: <span id="top_position"></span></a></p>
@@ -129,59 +187,6 @@
 										<label>Ribbon path: <input id='ribbon_path'></label>
 										<input type="submit" value="Send all variants to Ribbon">	
 									</form>
-								</div>
-						</div>
-
-						<div id="gene_fusions" class="tab-pane fade">
-								<div id="gene_fusion_table">
-									<div class="gene_search_box">
-										Gene 1
-										<div id="fusion_gene1_livesearch"></div>
-									</div>
-									<div class="gene_search_box">
-										Gene 2
-										<div id="fusion_gene2_livesearch"></div>
-									</div>
-									<div class="row">
-										<div class="gene_search_box">
-										Selected: <span id="gene1">(none)</span>
-										</div>
-
-										<div class="gene_search_box">
-										Selected: <span id="gene2">(none)</span>
-										</div>
-										<button id="submit_fusion">Submit</button>
-									</div>
-								</div>
-									
-								<!-- <table id="gene_fusion_table">
-									<tr id="input_row">
-										<td width="20%" id="gene1">search gene above</td>
-										<td width="20%" id="gene2">search gene above</td>
-										<td width="60%"> <button id="submit_fusion">Submit</button></td>
-									</tr>
-								</table> -->
-								<table id="gene_fusion_table_results">
-									
-								</table>
-								Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click its row in the table to see the fusion, list the variant names, and even be able to send the variant to Ribbon to look at the alignments at those breakpoints in the BAM file.
-								<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
-										<div>Variants for the selected fusion:
-											<ul id="variant_names_for_Ribbon">
-
-											</ul>
-										</div>
-										<div id="fusion_data_to_send_ribbon">
-											<!-- Hidden fields go here -->
-										</div>
-										<input type="submit" value="Send fusion variants to Ribbon">	
-									</form>
-								<hr>
-								<div>
-									<p>or upload a list of gene fusions</p>
-									<input type="file" id="gene_fusion_file" />
-									<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
-									</span>
 								</div>
 						</div>
 					</div>
