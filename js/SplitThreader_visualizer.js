@@ -287,6 +287,7 @@ d3.select("#min_variant_size").on("change",function() {
 		_settings.min_variant_size = -1;
 	}
 	apply_variant_filters();
+	make_variant_table();
 	draw_histogram();
 	draw_connections();
 	draw_circos_connections();
@@ -297,6 +298,7 @@ d3.select("#min_split_reads").on("change",function() {
 		_settings.min_split_reads = -1;
 	}
 	apply_variant_filters();
+	make_variant_table();
 	draw_histogram();
 	draw_connections();
 	draw_circos_connections();
