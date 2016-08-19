@@ -34,7 +34,7 @@
 
     // Run the job:
 
-    // echo shell_exec("./bin/web_pipeline $filename.variants $filename.copynumber user_data/$code/$nickname $annotation $email $url &> user_data/$code/run_algorithm_errors.log &"); 
+    echo shell_exec("./bin/web_pipeline $filename.variants $filename.copynumber user_data/$code/$nickname $annotation $email $url &> user_data/$code/run_algorithm_errors.log &"); 
 
 
     // Add cookie:
@@ -91,7 +91,7 @@
 
 
     // Go to the results page to see progress:
-    // header('Location: '.$url);
+    header('Location: '.$url);
 ?>
     </body>
 </html>
