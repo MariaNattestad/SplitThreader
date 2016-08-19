@@ -39,11 +39,11 @@
 								<table class="invisible_table">
 									<tr>
 										<td>Minimum variant size: </td>
-										<td><input id="min_variant_size" type="text"></td>
+										<td><input id="min_variant_size" type="number"></td>
 									</tr>
 									<tr>
 										<td>Minimum split reads:</td>
-										<td><input id="min_split_reads" type="text"></td>
+										<td><input id="min_split_reads" type="number"></td>
 									</tr>
 								</table>
 								<hr>
@@ -86,16 +86,27 @@
 
 					<!-- Settings -->
 						<div id="settings" class="tab-pane fade">
-							<div class="checkbox">
-								<label><input id="show_segmented_coverage" type="checkbox">Show segmented coverage</label>
-							</div>
-							<!-- <div class="checkbox"> -->
-								<!-- <label><input id="adaptive_coverage_scaling" type="checkbox" checked>Adaptive coverage scaling</label> -->
-							<!-- </div> -->
-							<label>Divide coverage by: </label><input id="coverage_divisor" type="number" value="1">
+							<table class="settings_table">
+								<col width="50%">
+								<col width="50%">
+								<tr>
+									<td>Show segmented coverage:</td>
+									<td><input id="show_segmented_coverage" type="checkbox"></td>
+								</tr>
+								<tr>
+									<td>Divide coverage by:</td>
+									<td><input id="coverage_divisor" type="number" value="1"></td>
+								</tr>
+								<tr>
+									<td><label for="color_scheme_dropdown">Color scheme:</label></td>
+									<td><select class="form-control" id="color_scheme_dropdown"></select></td>
+								</tr>
+							</table>
+
 						<!-- </div>
 					Explore panel: Send to UCSC or Ribbon
 						<div id="explore_panel" class="tab-pane fade"> -->
+							<hr>
 							<p><label>Send to UCSC genome browser</label></p>
 							<p>Database: <span id="ucsc_database">hg19 </span></p>
 							<p><a id="ucsc_go_top" target="_blank"  >Top: <span id="top_position"></span></a></p>

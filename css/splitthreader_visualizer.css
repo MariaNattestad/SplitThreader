@@ -234,3 +234,12 @@ h1#title {
 #send_fusion_to_ribbon_form {
   display: none;
 }
+.settings_table {
+  width: 100%;
+  table-layout: fixed;
+}
+.settings_table table, .settings_table th, .settings_table td {
+  /* top right bottom left */
+  padding: 0.2vmin  0.2vmin 0.2vmin 0.2vmin;
+  border: 0; /*.2px solid blue;*/
+}

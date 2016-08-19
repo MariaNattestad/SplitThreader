@@ -24,17 +24,25 @@ var _padding = {};
 
 var _static = {};
 _static.color_collections = [["#ff9896", "#c5b0d5", "#8c564b", "#e377c2", "#bcbd22", "#9edae5", "#c7c7c7", "#d62728", "#ffbb78", "#98df8a", "#ff7f0e", "#f7b6d2", "#c49c94", "#dbdb8d", "#aec7e8", "#17becf", "#2ca02c", "#7f7f7f", "#1f77b4", "#9467bd"],["#ffff00","#ad0000","#bdadc6", "#00ffff", "#e75200","#de1052","#ffa5a5","#7b7b00","#7bffff","#008c00","#00adff","#ff00ff","#ff0000","#ff527b","#84d6a5","#e76b52","#8400ff","#6b4242","#52ff52","#0029ff","#ffcc66","#ff94ff","#004200","gray","black"],['#E41A1C', '#A73C52', '#6B5F88', '#3780B3', '#3F918C', '#47A266','#53A651', '#6D8470', '#87638F', '#A5548D', '#C96555', '#ED761C','#FF9508', '#FFC11A', '#FFEE2C', '#EBDA30', '#CC9F2C', '#AD6428','#BB614F', '#D77083', '#F37FB8', '#DA88B3', '#B990A6', '#999999']];
+_static.color_schemes = [
+	{"name":"Color scheme 1", "colors": 0},
+	{"name":"Color scheme 2", "colors": 1},
+	{"name":"Color scheme 3", "colors": 2},
+];
+
 _static.fraction_y_scale_height = 1.4;
 _static.spansplit_bar_length = 10;
 _static.foot_spacing_from_axis = 5;
 _static.foot_length = 15;
 _static.annotations_available = [{"name":"Human hg19 Gencode","ucsc":"hg19", "path":"resources/annotation/Human_hg19.genes.csv"}, {"name":"Human GRCh38 Gencode","ucsc":"hg38", "path":"resources/annotation/Human_GRCh38.genes.csv"}];
 
+
+
 var _settings = {};
 _settings.show_gene_types = {};
 _settings.show_variant_types = {};
 _settings.show_local_gene_names = true;
-_settings.color_index = 1;
+_settings.color_index = 0;
 _settings.segment_copy_number = false;
 _settings.adaptive_coverage_scaling = true;
 _settings.min_variant_size = 0;
@@ -245,7 +253,22 @@ d3.select("select#annotation_dropdown").on("change",function(d) {
 	}
 });
 
-d3.select("#coverage_divisor").on("keyup", function() {
+d3.select("select#color_scheme_dropdown").selectAll("option").data(_static.color_schemes).enter()
+	.append("option")
+		.text(function(d){return d.name})
+		.property("value",function(d){return d.colors});
+
+
+d3.select("select#color_scheme_dropdown").on("change",function(d) {
+	_settings.color_index = this.options[this.selectedIndex].value;
+	_scales.chromosome_colors.range(_static.color_collections[_settings.color_index]);
+	responsive_sizing(); 
+	draw_everything();
+});
+
+
+
+d3.select("#coverage_divisor").on("change", function() {
 	_settings.coverage_divisor = parseInt(this.value);
 	if (isNaN(_settings.coverage_divisor)) {
 		_settings.coverage_divisor = 1;
@@ -257,7 +280,7 @@ d3.select("#coverage_divisor").on("keyup", function() {
 	update_coverage("bottom");
 });
 
-d3.select("#min_variant_size").on("keyup",function() {
+d3.select("#min_variant_size").on("change",function() {
 	_settings.min_variant_size = parseInt(this.value);
 	if (isNaN(_settings.min_variant_size)) {
 		_settings.min_variant_size = 0;
@@ -265,7 +288,7 @@ d3.select("#min_variant_size").on("keyup",function() {
 	draw_connections();
 	draw_circos_connections();
 });
-d3.select("#min_split_reads").on("keyup",function() {
+d3.select("#min_split_reads").on("change",function() {
 	_settings.min_split_reads = parseInt(this.value);
 	if (isNaN(_settings.min_split_reads)) {
 		_settings.min_split_reads = 0;
