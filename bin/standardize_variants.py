@@ -364,7 +364,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                         elif special_inversion_flag == "INV5":
                             strand1 = strand2 = "-"
                     else:
-                        print line
+                        print "WARNING: No strand info for record. Variant will be ignoed by visualizer: " + line.strip()
+                        print 'You can specify strands among the other tags in the vcf file's info field, for example: "STRANDS=+-:5;" where 5 is the number of split reads'
 
             if overwrite_ID_names:
                 ID_field = ID_counter
