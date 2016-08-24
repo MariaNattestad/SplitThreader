@@ -222,6 +222,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     variant_type_list = set()
     ID_counter = 1
+    strand_fail_list = []
     for line in f:
         if line[0] == "#":
             continue
@@ -365,17 +366,24 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                         elif special_inversion_flag == "INV5":
                             strand1 = strand2 = "-"
                     else:
-                        print "WARNING: No strand info for record. Variant will be ignoed by visualizer: " + line.strip()
-                        print "You can specify strands among the other tags in the vcf file's info field, for example: STRANDS=+-:5; where 5 is the number of split reads"
-
+                        strand_fail_list.append(line.strip())
+                        
             if overwrite_ID_names:
                 ID_field = ID_counter
             fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,numreads]
             ID_counter += 1
             fout.write(",".join(map(str,fields_to_output)) + "\n")
 
-    print "All variant types:", ",".join(variant_type_list)
+    if len(strand_fail_list) > 0:
+        print "WARNING: No strand info for records. Variants will be ignored by visualizer:"
+        for i in xrange(min(5,len(strand_fail_list))):
+            print strand_fail_list[i]
+        print "Total variants affected:", len(strand_fail_list), " out of " , ID_counter , " total variants"
+        print "You can specify strands among the other tags in the vcf file's info field, for example: STRANDS=+-:5; where 5 is the number of split reads"
+        print "Visualizer will ignore these variants where it could not guess the strands from the variant types"
 
+
+    print "All variant types:", ",".join(variant_type_list)
 
 def main():
     parser=argparse.ArgumentParser(description="Standardize variant bedpe file to fit for SplitThreader input")
