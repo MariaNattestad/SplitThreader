@@ -357,7 +357,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                         strand1 = "-"
                         strand2 = "+"
                     elif variant_type == "INS":
-                        strand1 = strand2 = "+"
+                        strand1 = "+"
+                        strand2 = "-"
                     elif variant_type == "INV" and special_inversion_flag != None:
                         if special_inversion_flag == "INV3":
                             strand1 = strand2 = "+"
