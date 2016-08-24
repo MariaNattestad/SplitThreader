@@ -481,7 +481,7 @@ function read_spansplit_file() {
 	d3.csv(_input_file_prefix + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
 		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
-
+		_Variant_data = [];
 		for (var i=0;i<spansplit_input.length;i++) {
 			spansplit_input[i].start1 = +spansplit_input[i].start1 
 			spansplit_input[i].start2 = +spansplit_input[i].start2
@@ -494,10 +494,14 @@ function read_spansplit_file() {
 			if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
 				spansplit_input[i].size = -1;
 			}
-			// spansplit_input[i].span1 = +spansplit_input[i].span1
-			// spansplit_input[i].span2 = +spansplit_input[i].span2
+			if (spansplit_input[i].strand1 != "" && spansplit_input[i].strand2 != "") {
+				_Variant_data.push(spansplit_input[i]);
+			} else {
+				console.log("Ignoring variant in input file because strands are not set");
+				user_message("Warning","Ignoring variant in input file because strands are not set");
+			}
 		}
-		_Variant_data = spansplit_input;
+		
 		apply_variant_filters();
 		_data_ready.spansplit = true;
 		make_variant_table();
