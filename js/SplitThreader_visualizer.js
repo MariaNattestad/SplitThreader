@@ -1706,24 +1706,6 @@ function populate_ribbon_link() {
 	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Filtered_variant_data));
 }
 
-function prep_fusion_for_Ribbon(results) {
-	d3.select("#send_fusion_to_ribbon_form").style("display","block");
-
-	d3.select("#variant_names_for_Ribbon").selectAll("li").remove();
-	d3.select("#variant_names_for_Ribbon").selectAll("li").data(results.variant_names).enter().append("li").html(function(d) {return d});
-
-
-	var variants_for_Ribbon = [];
-	for (var i in _Filtered_variant_data) {
-		if (results.variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
-			variants_for_Ribbon.push(_Filtered_variant_data[i]);
-		}
-	}
-	d3.select("#fusion_data_to_send_ribbon").html("");
-	d3.select("#fusion_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(variants_for_Ribbon));
-}
-
-
 function draw_histogram() {
 
 	var variant_data_to_use = _Filtered_variant_data;
@@ -1988,10 +1970,8 @@ function read_gene_fusion_file(raw_input) {
 	}
 
 	update_fusion_table();
+
 }
-
-
-		
 
 
 function open_gene_fusion_file(event) {
@@ -1999,6 +1979,11 @@ function open_gene_fusion_file(event) {
 		
 	var raw_data;
 	var reader = new FileReader();
+
+	if (this.files[0].size > 100000) {
+		user_message("Error","This file is larger than 100kb. Please choose a smaller file. This should only be a small list of gene fusions with the names of the genes in the first two columns.");
+		return;
+	}
 
 	reader.readAsText(this.files[0]);
 	reader.onload = function(event) {
@@ -2030,6 +2015,23 @@ function search_graph_for_fusion() {
 	}
 }
 
+function update_fusions_for_Ribbon() {
+	d3.select("#send_fusion_to_ribbon_form").style("display","block");
+	console.log(_Gene_fusions);
+	var variants_for_Ribbon = [];
+	for (var j in _Gene_fusions) {
+		for (var i in _Filtered_variant_data) {
+			if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
+				var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
+				fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
+				console.log(_Filtered_variant_data[i]);
+				variants_for_Ribbon.push(fusion_variant);
+			}
+		}
+	}
+	d3.select("#fusion_data_to_send_ribbon").html("");
+	d3.select("#fusion_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(variants_for_Ribbon));
+}
 function update_fusion_table() {
 	d3.select("#gene_fusion_table_landing").call(
 		d3.superTable()
@@ -2038,6 +2040,9 @@ function update_fusion_table() {
 			.show_advanced_filters(true)
 			.click_function(highlight_gene_fusion)
 	);
+
+	update_fusions_for_Ribbon();
+
 }
 
 function submit_fusion() {

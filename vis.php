@@ -112,13 +112,8 @@
 											<!-- <table id="gene_fusion_table_results">
 												
 											</table> -->
-											Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click its row in the table to see the fusion, list the variant names, and even be able to send the variant to Ribbon to look at the alignments at those breakpoints in the BAM file.
+											Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click a row in the table to jump to that gene fusion.
 											<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
-													<div>Variants for the selected fusion:
-														<ul id="variant_names_for_Ribbon">
-
-														</ul>
-													</div>
 													<div id="fusion_data_to_send_ribbon">
 														<!-- Hidden fields go here -->
 													</div>
