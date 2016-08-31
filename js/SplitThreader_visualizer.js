@@ -1237,7 +1237,7 @@ function draw_connections() {
 				.attr("d",connection_path_generator)
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, interchromosomal";
+					var text = variant_tooltip_text(d);
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1260,7 +1260,7 @@ function draw_connections() {
 				.attr("d",function(d){return loop_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
+					var text = variant_tooltip_text(d);
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1272,14 +1272,14 @@ function draw_connections() {
 			.data(categorized_variant_data.within_bottom)
 			.enter()
 			.append("path")
-				.attr("class","spansplit_loop_bottom  variant")
+				.attr("class","spansplit_loop_bottom variant")
 				.style("stroke-width",thickness_of_connections)
 				.style("stroke",color_connections)
 				.attr("fill","none")
 				.attr("d",function(d){return loop_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
+					var text = variant_tooltip_text(d);
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1299,10 +1299,7 @@ function draw_connections() {
 				.attr("d",function(d){return stub_path_generator(d,"top")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
-					if (d.size == -1) {
-						text = d.split + " reads, interchromosomal";
-					}
+					var text = variant_tooltip_text(d);
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"top");
 					var y = y_coordinate_for_connection("top") - _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -1321,10 +1318,7 @@ function draw_connections() {
 				.attr("d",function(d){ return stub_path_generator(d,"bottom")})
 				.on('click',variant_click)
 				.on('mouseover', function(d) {
-					var text = d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;
-					if (d.size == -1) {
-						text = d.split + " reads, interchromosomal";
-					}
+					var text = variant_tooltip_text(d);
 					var x = _layout.zoom_plot.x+scale_position_by_chromosome(d.chrom1,d.pos1,"bottom");
 					var y = y_coordinate_for_connection("bottom") + _padding.tooltip;
 					show_tooltip(text,x,y,_svg);
@@ -2039,8 +2033,23 @@ function submit_fusion() {
 	update_fusion_table();
 }
 
+function variant_tooltip_text(d) {
+	if (d.chrom1 == d.chrom2) {
+		return d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;	
+	} else {
+		return d.split + " reads, interchromosomal";
+	}
+}
+
 function Mb_format(x) {
-	return Math.round(x/1000000,2) + " Mb";
+	if (x > 1000000) {
+		return Math.round(x/1000000,2) + " Mbp";	
+	} else if (x > 1000) {
+		return Math.round(x/1000,2) + " kbp";
+	} else {
+		return x + " bp";
+	}
+	
 }
 function show_positions() {
 	var options = ["top","bottom"];
