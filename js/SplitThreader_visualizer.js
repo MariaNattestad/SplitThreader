@@ -106,7 +106,7 @@ var _plot_canvas = {"top": null, "bottom": null};
 
 function responsive_sizing() {
 	var panel_width_fraction = 0.30;
-	var top_banner_size = 90;
+	var top_banner_size = 120;
 
 	var w = window,
 		d = document,

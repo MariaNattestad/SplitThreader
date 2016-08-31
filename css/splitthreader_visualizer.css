@@ -222,6 +222,8 @@ text {
 }
 
 h1#title {
+  margin-top: 1vh;
+  margin-bottom: 1vh;
   font-size: 1.6vw;
   text-align: center;
 
@@ -246,4 +248,8 @@ h1#title {
 
 #variant_table_landing, #gene_fusion_table_landing {
   overflow: scroll;
+}
+
+#main_body_container {
+  padding-left: 0.5vw;
 }
