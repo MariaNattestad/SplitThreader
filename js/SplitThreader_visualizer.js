@@ -490,7 +490,7 @@ function read_spansplit_file() {
 			spansplit_input[i].pos1 = Math.floor(spansplit_input[i].start1+spansplit_input[i].stop1)/2
 			spansplit_input[i].pos2 = Math.floor(spansplit_input[i].start2+spansplit_input[i].stop2)/2
 			spansplit_input[i].split = +spansplit_input[i].split
-			spansplit_input[i].size = Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2);
+			spansplit_input[i].size = parseInt(Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2));
 			if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
 				spansplit_input[i].size = -1;
 			}
@@ -1690,7 +1690,7 @@ function make_variant_table() {
 	d3.select("#variant_table_landing").call(
 		d3.superTable()
 			.table_data(_Filtered_variant_data)
-			.table_header(["variant_name","variant_type","chrom1","pos1","chrom2","pos2","split"])
+			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size"])
 			.num_rows_to_show(10)
 			.show_advanced_filters(true)
 			.click_function(choose_row)
