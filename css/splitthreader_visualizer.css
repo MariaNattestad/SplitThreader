@@ -247,7 +247,7 @@ h1#title {
 }
 
 #variant_table_landing, #gene_fusion_table_landing {
-  overflow: scroll;
+  overflow: auto;
 }
 
 #main_body_container {
