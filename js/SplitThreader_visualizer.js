@@ -1582,12 +1582,6 @@ function highlight_gene_fusion(d) {
 	}
 
 	draw_connections();
-
-	// ??????????
-	// highlight rows in table 
-	// console.log(this);
-	// d3.select()
-
 }
 
 
@@ -1672,12 +1666,12 @@ function make_variant_type_filter_table() {
 }
 
 function choose_row(d) {
-	console.log(d);
-
 	for (var i in _Filtered_variant_data) {
 		if (_Filtered_variant_data[i].variant_name == d.variant_name) {
 			_Filtered_variant_data[i].highlight = true;
-			console.log("highlight variant");
+			jump_to_location(_Filtered_variant_data[i].chrom1,_Filtered_variant_data[i].pos1,"top");
+			jump_to_location(_Filtered_variant_data[i].chrom2,_Filtered_variant_data[i].pos2,"bottom");
+			$('.nav-tabs a[href="#visualizer_tab"]').tab('show');
 		} else {
 			_Filtered_variant_data[i].highlight = false;
 		}
@@ -1855,6 +1849,14 @@ function thickness_of_connections(d) {
 		} else {
 				return 2;
 		}
+}
+
+function jump_to_location(chrom, pos, top_or_bottom) {
+	if (top_or_bottom == "top") {
+		select_chrom_for_zoom_top(chrom);
+	} else {
+		select_chrom_for_zoom_bottom(chrom);
+	}
 }
 
 function jump_to_gene(annotation_for_new_gene) {
