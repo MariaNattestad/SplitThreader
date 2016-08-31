@@ -1,11 +1,13 @@
 ./bin/web_pipeline
-user_uploads/yeJ952WEDwWJF24guPwy.variants
-user_uploads/yeJ952WEDwWJF24guPwy.copynumber
-user_data/yeJ952WEDwWJF24guPwy/Sniffles_on_PacBio_data
-resources/annotation/Human_hg19.genes.csv
-maria.nattestad@gmail.com
-analysis.php?code=yeJ952WEDwWJF24guPwy
-Email: maria.nattestad@gmail.com
+user_uploads/aeOGxciISh37xEtxnBLe.variants
+user_uploads/aeOGxciISh37xEtxnBLe.copynumber
+user_data/aeOGxciISh37xEtxnBLe/SK_BR_3_breast_cancer_cell_line____PacBio_sequencing
+none
+default
+analysis.php?code=aeOGxciISh37xEtxnBLe
+
+./bin/web_pipeline: line 48: python_env/bin/activate: No such file or directory
+Email: default
   chromosome start   end coverage
 1          1     0 10000   0.0126
 2          1 10000 20000  73.2209
@@ -46,4 +48,4 @@ Email: maria.nattestad@gmail.com
 [1] "22"
 [1] "X"
 [1] "Y"
-SENDING EMAIL
+./bin/web_pipeline: line 86: SplitThreader.py: command not found
