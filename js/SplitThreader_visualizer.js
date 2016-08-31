@@ -339,12 +339,24 @@ function genome_to_circos_y(chromosome,position) {
 var _tooltip = {};
 function show_tooltip(text,x,y,parent_object) {
 	parent_object.selectAll("g.tip").remove();
-	_tooltip.g = parent_object.append("g").attr("class","tip");
-	_tooltip.g.attr("transform","translate(" + x + "," + y +  ")").style("visibility","visible");
-	
+
 	_tooltip.width = (text.length + 4) * (_layout.svg.width/150);
 	_tooltip.height = (_layout.svg.height/30);
 
+	if (x -_tooltip.width/2 < 0) {
+		x = _tooltip.width/2;
+	} else if (x + _tooltip.width/2 > parent_object.attr("width")) {
+		x = parent_object.attr("width") - _tooltip.width/2;
+	}
+	if (y - _tooltip.height/2 < 0) {
+		y = _tooltip.height/2;
+	} else if (y + _tooltip.height/2 > parent_object.attr("height")) {
+		y = parent_object.attr("height") - _tooltip.height/2;
+	}
+
+	_tooltip.g = parent_object.append("g").attr("class","tip");
+	_tooltip.g.attr("transform","translate(" + x + "," + y +  ")").style("visibility","visible");
+	
 	_tooltip.rect = _tooltip.g.append("rect")
 			.attr("width",_tooltip.width)
 			.attr("x",(-_tooltip.width/2))
