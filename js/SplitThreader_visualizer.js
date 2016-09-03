@@ -895,8 +895,12 @@ function update_coverage (top_or_bottom) {
 	var new_coverage = [];
 	var num_bins = _Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_bar;
 	for (var i=0;i<_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]].length-genomic_bins_per_bar;i=i+genomic_bins_per_bar) {
-		if (_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i].start >= xlim_start && _Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end <= xlim_end) {
-			new_coverage.push({"start":_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i].start,"end":_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end,"coverage":(d3.mean(_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})/_settings.coverage_divisor) });
+		var start = _Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i].start;
+		var end = _Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][i+genomic_bins_per_bar-1].end;
+
+		// if (start >= xlim_start && end <= xlim_end) {
+		if (start >= xlim_start && start <= xlim_end || end >= xlim_start && end <= xlim_end) {
+			new_coverage.push({"start":start,"end":end,"coverage":(d3.mean(_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]].slice(i,i+genomic_bins_per_bar),function(d){return d.coverage})/_settings.coverage_divisor) });
 		}
 	}
 
@@ -956,12 +960,32 @@ function update_coverage (top_or_bottom) {
 	var coverage_rects = _plot_canvas[top_or_bottom].selectAll("coverage_rect")
 		.data(new_coverage).enter()
 		.append("rect")
-		.filter(function(d){return _scales.zoom_plots[top_or_bottom].x(d.start) > 0 && _scales.zoom_plots[top_or_bottom].x(d.end) < _layout.zoom_plot.width})
-		.attr("class","coverage_rect")
-		.attr("x",function(d){return _scales.zoom_plots[top_or_bottom].x(d.start)})
-		.attr("width",function(d){return Math.ceil(_scales.zoom_plots[top_or_bottom].x(d.end)-_scales.zoom_plots[top_or_bottom].x(d.start))})
-		.style("fill",function(d){return _scales.chromosome_colors(_chosen_chromosomes[top_or_bottom])})
-		.style("stroke",function(d){return _scales.chromosome_colors(_chosen_chromosomes[top_or_bottom])});
+			.attr("class","coverage_rect")
+			.attr("x",function(d){
+				var start_pos = _scales.zoom_plots[top_or_bottom].x(d.start);
+				if (start_pos < 0) {
+					start_pos = 0;
+				}
+				return start_pos;
+			})
+			.attr("width",function(d){
+				var width = Math.ceil(_scales.zoom_plots[top_or_bottom].x(d.end)-_scales.zoom_plots[top_or_bottom].x(d.start));
+				var start_pos = _scales.zoom_plots[top_or_bottom].x(d.start);
+				if (start_pos < 0) {
+					start_pos = 0;
+				}
+				var max_width = _layout.zoom_plot.width - start_pos;
+				if (width > max_width) {
+					return max_width;
+				} else {
+					return width;	
+				}
+			})
+			.style("fill",function(d){return _scales.chromosome_colors(_chosen_chromosomes[top_or_bottom])})
+			.style("stroke",function(d){return _scales.chromosome_colors(_chosen_chromosomes[top_or_bottom])});
+
+// .filter(function(d){return _scales.zoom_plots[top_or_bottom].x(d.start) > 0 || _scales.zoom_plots[top_or_bottom].x(d.end) < _layout.zoom_plot.width})
+
 	if (top_or_bottom == "top"){
 		coverage_rects
 			.attr("y",function(d){return _scales.zoom_plots[top_or_bottom].y(d.coverage)})
