@@ -80,10 +80,10 @@ filtered.data$coverage <- round(filtered.data$coverage)
 write.table(filtered.data,paste(substr(filename,1,nchar(filename)-4),".segmented.csv",sep=""),row.names=FALSE,quote=FALSE,sep=',')
 
 
-# for (chrom in unique(filtered.data$chromosome)) {
-#     print(chrom)
-#     write.table(filtered.data[filtered.data$chromosome==chrom,],paste(substr(filename,1,nchar(filename)-4),".segmented.", chrom,".csv",sep=""),row.names=FALSE,quote=FALSE,sep=',')
-# }
+for (chrom in unique(filtered.data$chromosome)) {
+    print(chrom)
+    write.table(filtered.data[filtered.data$chromosome==chrom,],paste(substr(filename,1,nchar(filename)-4),".segmented.", chrom,".csv",sep=""),row.names=FALSE,quote=FALSE,sep=',')
+}
 
 
 

@@ -53,7 +53,7 @@ then
         Rscript ./bin/segment_copy_number.R $OUTPUT_PREFIX.copynumber.csv 
         if [ -e $OUTPUT_PREFIX.copynumber.segmented.csv ];
         then            
-            
+            ./bin/call_CNVs.py -csv $OUTPUT_PREFIX.copynumber.segmented.csv -out $OUTPUT_PREFIX.copynumber.segmented.consolidated.csv
         
             echo "done" >> $LOG_FILE
         else
