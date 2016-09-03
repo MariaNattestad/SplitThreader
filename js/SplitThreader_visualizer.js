@@ -2017,14 +2017,12 @@ function search_graph_for_fusion() {
 
 function update_fusions_for_Ribbon() {
 	d3.select("#send_fusion_to_ribbon_form").style("display","block");
-	console.log(_Gene_fusions);
 	var variants_for_Ribbon = [];
 	for (var j in _Gene_fusions) {
 		for (var i in _Filtered_variant_data) {
 			if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
 				var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
 				fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
-				console.log(_Filtered_variant_data[i]);
 				variants_for_Ribbon.push(fusion_variant);
 			}
 		}
