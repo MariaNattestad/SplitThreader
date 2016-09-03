@@ -144,7 +144,7 @@
 											<col width="50%">
 											<tr>
 												<td>Show segmented coverage:</td>
-												<td><input id="show_segmented_coverage" type="checkbox"></td>
+												<td><input id="show_segmented_coverage" type="checkbox" checked></td>
 											</tr>
 											<tr>
 												<td>Divide coverage by:</td>
