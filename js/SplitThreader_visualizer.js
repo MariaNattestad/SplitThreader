@@ -50,6 +50,7 @@ _settings.min_split_reads = -1;
 _settings.annotation_path = "resources/annotation/Human_hg19.genes.csv";
 _settings.ucsc_database = "hg19";
 _settings.coverage_divisor = 1;
+_settings.cov_diff_for_CNV = 1;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -131,7 +132,7 @@ function responsive_sizing() {
 	_padding.left = _layout.svg.width*0.02; 
 	_padding.right = _layout.svg.width*0.02; 
 	_padding.tooltip = _layout.svg.height*0.05;
-	_padding.between_circos_and_zoom_plots = _layout.svg.width*0.02; 
+	_padding.between_circos_and_zoom_plots = _layout.svg.width*0.05; 
 	_padding.gene_offset = _layout.svg.height*0.05;
 
 	_layout.circos.size = _layout.svg.width*0.30; //Math.min(_layout.svg.width,_layout.svg.height)*0.50;
@@ -416,6 +417,10 @@ function wait_then_run_when_all_data_loaded() {
 		_SplitThreader_graph.from_genomic_variants(_Filtered_variant_data,_Genome_data);
 		//////////////////////////    Using the SplitThreader.js library   ////////////////////////////////
 
+
+		analyze_variants();
+		make_variant_table();
+
 		user_message("Info","Loading data is complete")
 	} else {
 		console.log("waiting for data to load")
@@ -430,7 +435,6 @@ function apply_variant_filters() {
 		var variant_size = Math.abs(d.pos2-d.pos1);
 		if ((_Chromosome_start_positions[d.chrom1] != undefined && _Chromosome_start_positions[d.chrom2] != undefined) && d.split >= _settings.min_split_reads && (variant_size >= _settings.min_variant_size || d.chrom1 != d.chrom2)) {
 			_Filtered_variant_data.push(d);
-			// ?????????????????????
 		}
 	}
 }
@@ -545,7 +549,6 @@ function read_spansplit_file() {
 		
 		apply_variant_filters();
 		_data_ready.spansplit = true;
-		make_variant_table();
 		populate_ribbon_link();
 	});
 }
@@ -1700,7 +1703,7 @@ function make_variant_table() {
 	d3.select("#variant_table_landing").call(
 		d3.superTable()
 			.table_data(_Filtered_variant_data)
-			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size"])
+			.table_header(["chrom1","pos1","strand1","CNV_distance1","CNV_diff1","chrom2","pos2","strand2","CNV_distance2","CNV_diff2","variant_name","variant_type","split","size"])
 			.num_rows_to_show(10)
 			.show_advanced_filters(true)
 			.click_function(choose_row)
@@ -2082,6 +2085,56 @@ function show_positions() {
 		d3.select("#" + top_or_bottom + "_position").html(_chosen_chromosomes[top_or_bottom] + ":   " + Mb_format(pos[0]) + "-" + Mb_format(pos[1]));
 		d3.select("#ucsc_go_" + top_or_bottom).property("href",'https://genome.ucsc.edu/cgi-bin/hgTracks?db=' + _settings.ucsc_database + '&position=chr' + _chosen_chromosomes["top"] + '%3A' + Math.floor(pos[0]) + '-' + Math.floor(pos[1]));
 	}
+}
+
+function binary_search_closest(search_list,b,e,pos) {
+	var mid = Math.floor((b+e)/2);
+	// console.log("b:",b, " e:", e);
+	// console.log(mid);
+	// console.log(search_list[mid]);
+	if (pos == search_list[mid].start) {
+		// console.log("equals");
+		return {"diff": search_list[mid].coverage - search_list[mid-1].coverage, "distance":  Math.abs(search_list[mid].start-pos)};
+	} else if (e-b <= 1) {
+		// console.log("e-b <= 1");
+		if (Math.abs(search_list[b].start-pos) <= Math.abs(search_list[e].start-pos)) {
+			return {"diff": search_list[b].coverage - search_list[b-1].coverage, "distance":  Math.floor(Math.abs(search_list[b].start-pos))};
+		} else {
+			return {"diff": search_list[e].coverage - search_list[e-1].coverage, "distance":  Math.floor(Math.abs(search_list[e].start-pos))};
+		}
+	} else if (pos < search_list[mid].start) {
+		// console.log("<");
+		return binary_search_closest(search_list, b, mid, pos);
+	} else if (pos > search_list[mid].start) {
+		// console.log(">");
+		return binary_search_closest(search_list, mid, e, pos);
+	} else {
+		console.log("ELSE");
+	}
+}
+
+function analyze_variants() {
+	// Calculate distance to nearest CNV
+	// where CNV is defined as a change in segmented coverage of at least _settings.cov_diff_for_CNV
+	for (var i in _Variant_data) {
+		if (_Coverage_by_chromosome["segmented"][_Variant_data[i].chrom1] == undefined) {
+			_Variant_data[i].CNV_distance1 = "no coverage for chromosome";
+		} else {
+			var closest_CNV_1 = binary_search_closest(_Coverage_by_chromosome["segmented"][_Variant_data[i].chrom1], 1, _Coverage_by_chromosome["segmented"][_Variant_data[i].chrom1].length, _Variant_data[i].pos1);
+			_Variant_data[i].CNV_distance1 = closest_CNV_1.distance;
+			_Variant_data[i].CNV_diff1 = closest_CNV_1.diff;
+		}
+
+		if (_Coverage_by_chromosome["segmented"][_Variant_data[i].chrom2] == undefined) {
+			_Variant_data[i].CNV_distance2 = "no coverage for chromosome";
+		} else {
+			var closest_CNV_2 = binary_search_closest(_Coverage_by_chromosome["segmented"][_Variant_data[i].chrom2], 1, _Coverage_by_chromosome["segmented"][_Variant_data[i].chrom2].length, _Variant_data[i].pos2);
+			_Variant_data[i].CNV_distance2 = closest_CNV_2.distance;
+			_Variant_data[i].CNV_diff2 = closest_CNV_2.diff;
+		}
+	}
+
+	// ????????????????????????????
 }
 
 
