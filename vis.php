@@ -154,6 +154,7 @@
 												<td><label for="color_scheme_dropdown">Color scheme:</label></td>
 												<td><select class="form-control" id="color_scheme_dropdown"></select></td>
 											</tr>
+											<tr><td colspan="2"><hr><label>Filter variants:</label></td></tr>
 											<tr>
 												<td>Minimum variant size: </td>
 												<td><input id="min_variant_size" type="number"></td>
@@ -198,10 +199,19 @@
 		
 
 		<div id="variant_analysis_tab" class="tab-pane fade">
-		Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
-		<div id="variant_table_landing">
-
-		</div>
+			Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
+			<div id="variant_table_landing"></div>
+			<div class="row">
+	          	<div class="col-md-7">
+					<svg id="histogram_landing"></svg>
+				</div>
+				<div class="col-md-5">
+					<div id="statistics_landing">
+						<p><label>Average copy number: </label><span id="mean_copynumber"></span></p>
+						<p><label>Total number of variants: </label><span id="number_of_variants"></span></p>
+					</div>
+				</div>
+			</div> <!-- end of row -->
 		</div> <!-- end variant analysis tab -->
 
 	</div> <!-- end tab content class -->
