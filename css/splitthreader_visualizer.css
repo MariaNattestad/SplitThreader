@@ -253,6 +253,22 @@ h1#title {
   padding-left: 0.5vw;
 }
 
-#statistics_landing {
+#statistics_landing, #variant_category_tables_landing {
   padding: 2vmin 2vmin 2vmin 2vmin;
+}
+.col_names, .col_title {
+  text-align: center;
+}
+.row_title {
+  text-align: center;
+}
+
+/*.col_names, .row_names {
+  background-color: #eeeeee;
+}*/
+.col_title, .row_title {
+  background-color: #eeeeee;
+}
+.no_border {
+  border: 0px;
 }

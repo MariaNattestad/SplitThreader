@@ -2381,32 +2381,52 @@ function analyze_variants() {
 
 }
 
-function summarize_variants(keys) {
-	d3.select("#variant_category_tables_landing").html("");
-
-	// for (var k in keys) {
-	// 	key = keys[k];
-
-	// 	var type_counts = {};
-
-	// 	for (var i in _Filtered_variant_data) {
-	// 		if (type_counts[_Filtered_variant_data[i][key]] == undefined) {
-	// 			type_counts[_Filtered_variant_data[i][key]] = 1;
-	// 		} else {
-	// 			type_counts[_Filtered_variant_data[i][key]]++;
-	// 		}
-	// 	}
-
-	// 	var header = [key,"count"]; 
-	// 	var this_table = d3.select("#variant_category_tables_landing").append("table");
-	// 	this_table.append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
-		
-	// 	var rows = this_table.selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
-	// 	rows.append("td").html(function(d) {return d});;
-	// 	rows.append("td").html(function(d) {return type_counts[d]});
-	// }
-
+function summarize_variants() {
 	
+	var column_key = "category";
+	var row_key = "CNV_category";
+	var my_list = _Filtered_variant_data;
+	var column_title = "Neighborhood of other variants";
+	var row_title = "Matching copy number changes";
+
+	var row_names = {};
+	var column_names = {};
+
+	var type_counts = {};
+	for (var i in my_list) {
+		if (type_counts[my_list[i][row_key]] == undefined) {
+			type_counts[my_list[i][row_key]] = {};
+		}
+		if (type_counts[my_list[i][row_key]][my_list[i][column_key]] == undefined) {
+			type_counts[my_list[i][row_key]][my_list[i][column_key]] = 0;
+		}
+		row_names[my_list[i][row_key]] = true;
+		column_names[my_list[i][column_key]] = true;
+		type_counts[my_list[i][row_key]][my_list[i][column_key]]++;
+	}
+	
+	// console.log(type_counts);
+	
+	var column_names = d3.keys(column_names);
+	var row_names = d3.keys(row_names);
+
+	var table = d3.select("#variant_category_tables_landing").html("").append("table"); // set up table
+	var title_row = table.append("tr");
+	title_row.append("th").attr("class","no_border");
+	title_row.append("th").attr("class","no_border");
+	title_row.append("th").attr("colspan", column_names.length).attr("class","col_title").html(column_title);
+
+	var header = table.append("tr");
+	header.append("th").attr("class","no_border");
+	header.append("th").attr("class","no_border");
+	header.selectAll("th.col_names").data(column_names).enter().append("th").attr("class","col_names").html(function(d) {return d}); // add column names
+	table.append("tr").append("th").attr("rowspan",row_names.length+1).attr("class","row_title").html(row_title);
+	
+	var rows = table.selectAll("tr.data").data(row_names).enter().append("tr").attr("class","data"); // set up rows
+	rows.append("th").attr("class","row_names").html(function(row_name) {return row_name}); // add row names
+	rows.selectAll("td").data(column_names).enter().append("td").html(function(column_name) {var a = type_counts[d3.select(this.parentNode).datum()][column_name]; if (a === undefined) {return 0} else {return a}}); // data in each row
+
+
 
 
 	// Draw bar charts:
