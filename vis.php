@@ -131,7 +131,7 @@
 								<!-- Variants -->
 								<div id="variant_settings" class="tab-pane fade">
 									<label>Filter variants:</label>
-									<table id="variant_table"></table>
+									<table id="variant_type_table"></table>
 									<hr>
 									<label>Variant details:</label>
 									<div id="variant_detail_text">Click on a variant to show detail</div>
@@ -199,19 +199,30 @@
 		
 
 		<div id="variant_analysis_tab" class="tab-pane fade">
-			Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
-			<div id="variant_table_landing"></div>
 			<div class="row">
-	          	<div class="col-md-7">
+	          	<div class="col-md-5">
 					<svg id="histogram_landing"></svg>
 				</div>
-				<div class="col-md-5">
+				<div class="col-md-2">
 					<div id="statistics_landing">
 						<p><label>Average copy number: </label><span id="mean_copynumber"></span></p>
 						<p><label>Total number of variants: </label><span id="number_of_variants"></span></p>
 					</div>
 				</div>
+				<!-- <div class="col-md-4">
+					<div id="barchart_landing">
+
+					</div>
+				</div> -->
+				<div class="col-md-5">
+					<div id="variant_category_tables_landing">
+						<!-- <table id="variant_category_table"></table> -->
+					</div>
+				</div>
 			</div> <!-- end of row -->
+			Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
+			<div id="variant_table_landing"></div>
+			
 		</div> <!-- end variant analysis tab -->
 
 	</div> <!-- end tab content class -->

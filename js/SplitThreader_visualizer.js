@@ -201,9 +201,21 @@ function responsive_sizing() {
 	_layout.hist.height = _layout.hist.svg_height - _layout.hist.x_axis_space - _layout.hist.top_padding;
 
 	d3.select("#histogram_landing")
-		.attr("width", _layout.svg.width)
-		.attr("height", _layout.svg.height)
+		.attr("width", _layout.hist.svg_width)
+		.attr("height", _layout.hist.svg_height);
 
+	// _layout.barchart = {};
+	// _layout.barchart.svg_height = 300;
+	// _layout.barchart.svg_width = 400;
+	// _layout.barchart.y_axis_space = _layout.barchart.svg_width*0.20;
+	// _layout.barchart.x_axis_space = _layout.barchart.svg_height*0.20;
+	// _layout.barchart.left_padding = _layout.barchart.svg_width*0.05;
+	// _layout.barchart.top_padding = _layout.barchart.svg_height*0.05;
+	// _layout.barchart.x = _layout.barchart.y_axis_space;
+	// _layout.barchart.width = _layout.barchart.svg_width - _layout.barchart.y_axis_space - _layout.barchart.left_padding;
+
+	// _layout.barchart.y =  _layout.barchart.top_padding;
+	// _layout.barchart.height = _layout.barchart.svg_height - _layout.barchart.x_axis_space - _layout.barchart.top_padding;
 }
 
 responsive_sizing();
@@ -1393,9 +1405,8 @@ function variant_click(d) {
 	rows.append("span").html(function(d) {return d + ": ";});
 	rows.append("span").html(function(d) {return data[d];});
 
-	// var rows = d3.select("#variant_detail_text").append("table").selectAll("tr").data(header).enter().append("tr");
-	// rows.append("th").html(function(d) {return d;});
-	// rows.append("td").html(function(d) {return data[d];});
+	// ??????????????????????????
+
 }
 
 function arrow_path_generator(d, top_or_bottom) {
@@ -1688,13 +1699,12 @@ function make_variant_type_filter_table() {
 		}
 	}
 	var header = ["type","count","show"];
-	d3.select("#variant_table").html("");
-	d3.select("#variant_table").append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
-	var rows = d3.select("#variant_table").selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
+	d3.select("#variant_type_table").html("");
+	d3.select("#variant_type_table").append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
+	var rows = d3.select("#variant_type_table").selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
 	rows.append("td").html(function(d) {return d});;
 	rows.append("td").html(function(d) {return type_counts[d]});
 	rows.append("td").append("input").property("type","checkbox").property("checked",true).on("change",variant_type_checkbox);
-
 }
 
 function choose_row(d) {
@@ -1716,7 +1726,8 @@ function make_variant_table() {
 	d3.select("#variant_table_landing").call(
 		d3.superTable()
 			.table_data(_Filtered_variant_data)
-			.table_header(["chrom1","pos1","strand1","CNV_distance1","CNV_diff1","chrom2","pos2","strand2","CNV_distance2","CNV_diff2","variant_name","variant_type","split","size"])
+			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category"]) // , "paired","neighborhood","simple"])
+			// .table_header(["chrom1","pos1","strand1","CNV_distance1","CNV_diff1","chrom2","pos2","strand2","CNV_distance2","CNV_diff2","variant_name","variant_type","split","size", "CNV_category", "category"]) // , "paired","neighborhood","simple"])
 			.num_rows_to_show(10)
 			.show_advanced_filters(true)
 			.click_function(choose_row)
@@ -1731,6 +1742,15 @@ function populate_ribbon_link() {
 	d3.select("#data_to_send_ribbon").html("");
 	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Filtered_variant_data));
 }
+
+// function draw_barchart(svg_to_fill, mylist, mykey) {
+// 	svg_to_fill.append("rect")
+// 		.attr("x",0)
+// 		.attr("y",0)
+// 		.attr("width",_layout.barchart.width)
+// 		.attr("height",_layout.barchart.height)
+// 		.style("fill","#eeeeee");
+// }
 
 function draw_histogram() {
 
@@ -1779,7 +1799,7 @@ function draw_histogram() {
 	_scales.hist.x.domain([0, data_max]).range([0, 0 + _layout.hist.width]);
 	_scales.hist.y.domain([0,Math.max.apply(null, hist_data)]).range([0+_layout.hist.height,0]);
 
-	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
+	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(3).tickSize(5,0,0).tickFormat(d3.format("s"));
 	var x_axis_label = plot_container.append("g")
 		.attr("class","axis")
 		.attr("transform","translate(" + 0 + "," + (0 + _layout.hist.height) + ")")
@@ -2171,6 +2191,12 @@ function analyze_copynumber() {
 	_Statistics.mean_copynumber = weighted_total_copynumber/total_bases;
 }
 
+function dict_length(dictionary) {
+	var num = 0;
+	for (var k in dictionary) {num++;}
+	return num;
+}
+
 function analyze_variants() {
 
 	_Statistics.number_of_variants = _Filtered_variant_data.length;
@@ -2201,9 +2227,193 @@ function analyze_variants() {
 		}
 	}
 
+	var margin = 100000; // distance within which variants can create or cancel out each other's CNVs
+
+	for (var i in _Filtered_variant_data) {
+		// CNV nearby
+		if (_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) {
+			if (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0) {
+				_Filtered_variant_data[i].CNV_category = "good";
+			} else if (_Filtered_variant_data[i].CNV_diff1 < 0 && _Filtered_variant_data[i].CNV_diff2 < 0) {
+				_Filtered_variant_data[i].CNV_category = "opposite";
+			} else {
+				_Filtered_variant_data[i].CNV_category = "inconsistent";
+			}
+		} else { // No CNV nearby
+			_Filtered_variant_data[i].CNV_category = "none";
+		}
+	}
+
+
 	// ????????????????????????????
+
+	// Categorize variants by whether other variants are nearby
+
+	// Especially identify paired variants (like reciprocal translocations)
+
+	// Identify all variants within a 100kb distance of each variant
+
+	// 1. Add all individual breakpoints to a list, mark each with its original index in _Filtered_variant_data
+	
+	var break_list_by_chrom = [];
+
+	for (var i in _Filtered_variant_data) {
+		_Filtered_variant_data[i].nearby_variants = {}; // set as object so we can add side1/side2 to it later
+		_Filtered_variant_data[i].simple = false;
+
+		if (break_list_by_chrom[_Filtered_variant_data[i].chrom1] == undefined) {
+			break_list_by_chrom[_Filtered_variant_data[i].chrom1] = [];
+		}
+		if (break_list_by_chrom[_Filtered_variant_data[i].chrom2] == undefined) {
+			break_list_by_chrom[_Filtered_variant_data[i].chrom2] = [];
+		}
+		break_list_by_chrom[_Filtered_variant_data[i].chrom1].push({"idx":i, "pos":_Filtered_variant_data[i].pos1, "side":1});
+		break_list_by_chrom[_Filtered_variant_data[i].chrom2].push({"idx":i, "pos":_Filtered_variant_data[i].pos2, "side":2});
+	}
+
+	// 2. For each variant in the list, walk to the left and to the right 100kb, recording other variants
+	// 3. Do this for both breakpoints
+	for (var chrom in break_list_by_chrom) {
+		break_list_by_chrom[chrom].sort(function(a,b) {return a.pos-b.pos});
+		var list_length = break_list_by_chrom[chrom].length;
+		for (var current = 0; current < list_length; current++) {
+			
+			var walker = current - 1;
+			var variants_within_margin = {};
+			// Walk left
+			while ((walker >= 0) && (break_list_by_chrom[chrom][walker].pos >= (break_list_by_chrom[chrom][current].pos - margin))) {
+				// Check variant is not other side of self
+				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
+					variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;	
+				} else if (Math.abs(walker - current) == 1) {
+					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
+				}
+				walker -= 1;
+			}
+			walker = current + 1;
+			// Walk right
+			while ((walker < list_length) && (break_list_by_chrom[chrom][walker].pos <= (break_list_by_chrom[chrom][current].pos + margin))) {
+				// Check variant is not other side of self
+				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
+					variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;
+				} else if (Math.abs(walker - current) == 1) {
+					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
+				}
+				walker += 1;
+			}
+			_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].nearby_variants[break_list_by_chrom[chrom][current].side] = variants_within_margin;
+		}
+	}
+
+	// Look for putative reciprocals, that is variants where both breakpoints share a variant
+	// For relatively small variants, it may be that both breakpoints are close to the same side of the other variant, so we check for this
+	// We also check for whether the strands are the exact opposite
+
+	var margin_for_paired = 10000;
+
+	for (var i in _Filtered_variant_data) {
+		_Filtered_variant_data[i].paired = "none";
+		if (_Filtered_variant_data[i].size != -1 && _Filtered_variant_data[i].size < margin_for_paired) {
+			_Filtered_variant_data[i].paired = "small";
+		} else {
+			for (var var_index_1 in _Filtered_variant_data[i].nearby_variants[1]) {
+				if (_Filtered_variant_data[i].nearby_variants[2][var_index_1] != undefined && _Filtered_variant_data[i].nearby_variants[2][var_index_1] != _Filtered_variant_data[i].nearby_variants[1][var_index_1]) {
+					// Check for stricter margin than neighborhood variant counting:
+					// _Filtered_variant_data[i].nearby_variants[1][var_index_1] means side 1/2 of other variant (var_index_1) that matches with side 1 of this variant (i)
+					if ((Math.abs(_Filtered_variant_data[var_index_1]["pos" + _Filtered_variant_data[i].nearby_variants[1][var_index_1]] - _Filtered_variant_data[i].pos1) < margin_for_paired) && (Math.abs(_Filtered_variant_data[var_index_1]["pos" + _Filtered_variant_data[i].nearby_variants[2][var_index_1]] - _Filtered_variant_data[i].pos2) < margin_for_paired)) {
+						// if (_Filtered_variant_data[i].paired == "none") {
+							// _Filtered_variant_data[i].paired = "nonreciprocal strands";
+						// }
+						if ((_Filtered_variant_data[var_index_1]["strand" + _Filtered_variant_data[i].nearby_variants[1][var_index_1]] != _Filtered_variant_data[i].strand1) && (_Filtered_variant_data[var_index_1]["strand" + _Filtered_variant_data[i].nearby_variants[2][var_index_1]] != _Filtered_variant_data[i].strand2)) {
+							// Both are opposite strands
+							_Filtered_variant_data[i].paired = "reciprocal";
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for (var i in _Filtered_variant_data) {
+		var unique_nearby_variants = {};
+		for (var side in  _Filtered_variant_data[i].nearby_variants) {
+			for (var j in _Filtered_variant_data[i].nearby_variants[side]) {
+				unique_nearby_variants[j] = true;
+			}
+		}
+		_Filtered_variant_data[i].nearby_variant_count = dict_length(unique_nearby_variants);
+		if (_Filtered_variant_data[i].nearby_variant_count == 0) {
+			_Filtered_variant_data[i].neighborhood = "alone";
+		} else if (_Filtered_variant_data[i].nearby_variant_count == 1) {
+			_Filtered_variant_data[i].neighborhood = "1";
+		} else if (_Filtered_variant_data[i].nearby_variant_count < 5) {
+			_Filtered_variant_data[i].neighborhood = "under_5";
+		} else {
+			_Filtered_variant_data[i].neighborhood = "at_least_5";
+		}
+	}
+
+
+	for (var i in _Filtered_variant_data) {
+		if (_Filtered_variant_data[i].paired === "reciprocal") {
+			_Filtered_variant_data[i].category = "reciprocal";
+		} else if (_Filtered_variant_data[i].simple === true) {
+			_Filtered_variant_data[i].category = "simple";
+		} else if (_Filtered_variant_data[i].neighborhood === "alone") {
+			_Filtered_variant_data[i].category = "alone";
+		} else {
+			_Filtered_variant_data[i].category = "other";
+		}
+		
+		// ADD MORE COMPLEX CATEGORIES HERE, just testing the table with paired for now
+	}
+	
+	summarize_variants(["category","paired","neighborhood","simple"]);
+
+	// Breakpoint environment1,2: singular, complex
+	// Variant category: double singular, 
+	// .nearby_variants: singular, paired, complex
+
+	// nearby_variant_count1: int
+	// nearby_variant_count2: int
+	// Paired: None, Reciprocal (opposite strands), Non-reciprocal
+	// Simple (nonoverlapping): true/false (ignore any paired variant)
+
 }
 
+function summarize_variants(keys) {
+	d3.select("#variant_category_tables_landing").html("");
+
+	// for (var k in keys) {
+	// 	key = keys[k];
+
+	// 	var type_counts = {};
+
+	// 	for (var i in _Filtered_variant_data) {
+	// 		if (type_counts[_Filtered_variant_data[i][key]] == undefined) {
+	// 			type_counts[_Filtered_variant_data[i][key]] = 1;
+	// 		} else {
+	// 			type_counts[_Filtered_variant_data[i][key]]++;
+	// 		}
+	// 	}
+
+	// 	var header = [key,"count"]; 
+	// 	var this_table = d3.select("#variant_category_tables_landing").append("table");
+	// 	this_table.append("tr").selectAll("th").data(header).enter().append("th").html(function(d) {return d});
+		
+	// 	var rows = this_table.selectAll("tr.data").data(d3.keys(type_counts)).enter().append("tr").attr("class","data");
+	// 	rows.append("td").html(function(d) {return d});;
+	// 	rows.append("td").html(function(d) {return type_counts[d]});
+	// }
+
+	
+
+
+	// Draw bar charts:
+	// var barchart_svg = d3.select("#barchart_landing").append("svg").attr("width", _layout.barchart.svg_width).attr("height", _layout.barchart.svg_height);
+
+	// draw_barchart(barchart_svg, _Filtered_variant_data, "category");
+}
 
 // Resize SVG and sidebar when window size changes
 window.onresize = resizeWindow;

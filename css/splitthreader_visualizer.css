@@ -252,3 +252,7 @@ h1#title {
 #main_body_container {
   padding-left: 0.5vw;
 }
+
+#statistics_landing {
+  padding: 2vmin 2vmin 2vmin 2vmin;
+}
