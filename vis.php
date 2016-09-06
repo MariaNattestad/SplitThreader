@@ -206,7 +206,8 @@
 				<div class="col-md-2">
 					<div id="statistics_landing">
 						<p><label>Average copy number: </label><span id="mean_copynumber"></span></p>
-						<p><label>Total number of variants: </label><span id="number_of_variants"></span></p>
+						<p><label>Total number of variants: </label><span class="number_of_variants"></span></p>
+						<p><label>Number of variants after filtering in table below: </label><span class="filtered_number_of_variants"></span></p>
 					</div>
 				</div>
 				<!-- <div class="col-md-4">
@@ -220,9 +221,10 @@
 					</div>
 				</div>
 			</div> <!-- end of row -->
-			Showing 10 variants. Filter in text boxes by =,>, or <, and click column names to sort.
+			<p>Showing <span id="table_row_count"></span> variants out of <span class="filtered_number_of_variants"></span>. Unfiltered, there are <span class="number_of_variants"></span> variants</p>
+			<p>Filter in text boxes by =,>, or <, and click column names to sort. Click on a row in the table to see that variant in the visualizer</p>
 			<div id="variant_table_landing"></div>
-			
+
 		</div> <!-- end variant analysis tab -->
 
 	</div> <!-- end tab content class -->
@@ -236,7 +238,7 @@
 <script src="js/lib/bootstrap.min.js"></script>
 <script src="js/lib/priority-queue.min.js"></script>
 
-<script src="js/d3-superTable.js"></script>
+<script src="js/d3-superTable.js?version=1"></script>
 <script src="js/d3-livesearch.js"></script>
 
 <script src="js/SplitThreader.js"></script>

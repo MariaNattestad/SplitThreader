@@ -75,6 +75,9 @@ var _Coverage_by_chromosome = {"segmented":{},"unsegmented":{}}; // we load each
 var _Variant_data = null;
 var _Filtered_variant_data = null;
 var _Annotation_data = null;
+
+
+var _variant_superTable = null;
 // For lookups and calculations:
 var _SplitThreader_graph = new Graph();
 var _Chromosome_start_positions = {};
@@ -320,7 +323,7 @@ d3.select("#coverage_divisor").on("change", function() {
 function update_variants() {
 
 	make_variant_table();
-	draw_histogram();
+	draw_histogram(_Filtered_variant_data);
 	draw_connections();
 	draw_circos_connections();
 	if (_Filtered_variant_data.length > 5000) {
@@ -427,7 +430,7 @@ function draw_everything() {
 		draw_zoom_plot("bottom");
 		draw_connections();  
 		draw_circos_connections();
-		draw_histogram();
+		draw_histogram(_Filtered_variant_data);
 }
 
 
@@ -1722,15 +1725,23 @@ function choose_row(d) {
 	draw_connections();
 
 }
+function count_filtered_data(dataset) {
+	d3.selectAll(".filtered_number_of_variants").html(dataset.length);
+	d3.select("#table_row_count").html(function() {if (dataset.length < 15) {return dataset.length} else {return 15}});
+
+	draw_histogram(dataset);
+}
+
 function make_variant_table() {
 	d3.select("#variant_table_landing").call(
-		d3.superTable()
+		_variant_superTable = d3.superTable()
 			.table_data(_Filtered_variant_data)
-			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category"]) // , "paired","neighborhood","simple"])
+			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category","nearby_variant_count"]) // , "paired","neighborhood","simple"])
 			// .table_header(["chrom1","pos1","strand1","CNV_distance1","CNV_diff1","chrom2","pos2","strand2","CNV_distance2","CNV_diff2","variant_name","variant_type","split","size", "CNV_category", "category"]) // , "paired","neighborhood","simple"])
-			.num_rows_to_show(10)
+			.num_rows_to_show(15)
 			.show_advanced_filters(true)
 			.click_function(choose_row)
+			.run_on_filtered_data_function(count_filtered_data)
 	);
 
 	make_variant_type_filter_table();
@@ -1752,15 +1763,7 @@ function populate_ribbon_link() {
 // 		.style("fill","#eeeeee");
 // }
 
-function draw_histogram() {
-
-	if (_Filtered_variant_data.length > 5000) {
-		return;
-	} else {
-		user_message("");
-	}
-
-	var variant_data_to_use = _Filtered_variant_data;
+function draw_histogram(variant_data_to_use) {
 
 	if (variant_data_to_use == null) {
 		return;
@@ -1771,6 +1774,9 @@ function draw_histogram() {
 	var bin_size = data_max/num_bins;
 	// console.log(bin_size);
 
+	if (isNaN(bin_size)) {
+		return;
+	}
 
 	var hist_data = new Array(num_bins).fill(0);
 
@@ -1822,7 +1828,6 @@ function draw_histogram() {
 
 
 	var plot_canvas = plot_container.append("g");
-
 	plot_canvas.selectAll("rect.bar").data(hist_data).enter()
 		.append("rect")
 			.attr("class","bar")
@@ -2149,15 +2154,13 @@ function binary_search_closest(search_list,b,e,pos) {
 	} else if (pos > search_list[mid].start) {
 		// console.log(">");
 		return binary_search_closest(search_list, mid, e, pos);
-	} else {
-		console.log("ELSE");
 	}
 }
 
 function show_statistics() {
 
 	d3.select("#mean_copynumber").html(" " + Math.round(_Statistics.mean_copynumber,2) + "X");
-	d3.select("#number_of_variants").html(" " + _Statistics.number_of_variants);
+	d3.selectAll(".number_of_variants").html(" " + _Statistics.number_of_variants);
 
 	// d3.select("#statistics_landing").selectAll("p").data(d3.keys(_Statistics)).enter().append("p").html(function(d) {return d + ": " + Math.round(_Statistics[d])});
 }
@@ -2342,15 +2345,15 @@ function analyze_variants() {
 			}
 		}
 		_Filtered_variant_data[i].nearby_variant_count = dict_length(unique_nearby_variants);
-		if (_Filtered_variant_data[i].nearby_variant_count == 0) {
-			_Filtered_variant_data[i].neighborhood = "alone";
-		} else if (_Filtered_variant_data[i].nearby_variant_count == 1) {
-			_Filtered_variant_data[i].neighborhood = "1";
-		} else if (_Filtered_variant_data[i].nearby_variant_count < 5) {
-			_Filtered_variant_data[i].neighborhood = "under_5";
-		} else {
-			_Filtered_variant_data[i].neighborhood = "at_least_5";
-		}
+		// if (_Filtered_variant_data[i].nearby_variant_count == 0) {
+		// 	_Filtered_variant_data[i].neighborhood = "alone";
+		// } else if (_Filtered_variant_data[i].nearby_variant_count == 1) {
+		// 	_Filtered_variant_data[i].neighborhood = "1";
+		// } else if (_Filtered_variant_data[i].nearby_variant_count < 5) {
+		// 	_Filtered_variant_data[i].neighborhood = "under_5";
+		// } else {
+		// 	_Filtered_variant_data[i].neighborhood = "at_least_5";
+		// }
 	}
 
 
@@ -2359,7 +2362,7 @@ function analyze_variants() {
 			_Filtered_variant_data[i].category = "reciprocal";
 		} else if (_Filtered_variant_data[i].simple === true) {
 			_Filtered_variant_data[i].category = "simple";
-		} else if (_Filtered_variant_data[i].neighborhood === "alone") {
+		} else if (_Filtered_variant_data[i].nearby_variant_count === 1) {
 			_Filtered_variant_data[i].category = "alone";
 		} else {
 			_Filtered_variant_data[i].category = "other";
@@ -2368,8 +2371,8 @@ function analyze_variants() {
 		// ADD MORE COMPLEX CATEGORIES HERE, just testing the table with paired for now
 	}
 	
-	summarize_variants(["category","paired","neighborhood","simple"]);
-
+	summarize_variants();
+	
 	// Breakpoint environment1,2: singular, complex
 	// Variant category: double singular, 
 	// .nearby_variants: singular, paired, complex
@@ -2379,6 +2382,14 @@ function analyze_variants() {
 	// Paired: None, Reciprocal (opposite strands), Non-reciprocal
 	// Simple (nonoverlapping): true/false (ignore any paired variant)
 
+}
+
+function click_category_table(row,column) {
+	var column_key = "category";
+	var row_key = "CNV_category";
+
+	d3.selectAll('.d3-superTable-filter-row').selectAll('input[column_name = "' + column_key + '"]').property("value", "=" + column).each(function(d) {_variant_superTable.filter_rows(d,"=" + column)});
+	d3.selectAll('.d3-superTable-filter-row').selectAll('input[column_name = "' + row_key + '"]').property("value", "=" + row).each(function(d) {_variant_superTable.filter_rows(d,"=" + row)});
 }
 
 function summarize_variants() {
@@ -2424,7 +2435,19 @@ function summarize_variants() {
 	
 	var rows = table.selectAll("tr.data").data(row_names).enter().append("tr").attr("class","data"); // set up rows
 	rows.append("th").attr("class","row_names").html(function(row_name) {return row_name}); // add row names
-	rows.selectAll("td").data(column_names).enter().append("td").html(function(column_name) {var a = type_counts[d3.select(this.parentNode).datum()][column_name]; if (a === undefined) {return 0} else {return a}}); // data in each row
+	// data in each row:
+	rows.selectAll("td").data(column_names).enter() 
+		.append("td")
+		.html(function(column_name) {
+			var a = type_counts[d3.select(this.parentNode).datum()][column_name]; 
+			if (a === undefined) {
+				return 0
+			} else {
+				return a
+			}
+		})
+		.on("click", function(column_name) { click_category_table(d3.select(this.parentNode).datum(), column_name)})
+		.style("cursor","pointer");
 
 
 
