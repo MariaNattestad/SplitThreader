@@ -101,9 +101,9 @@ d3.superTable = function() {
 			if (typeof(click_function) === "function") {
 				rows.on("click", function (d) {
 					if (typeof(check_ready_function) != "function" || check_ready_function() == true) {
-						element.selectAll("tr").attr("class","unselected");
+						element.selectAll("tr.selected").attr("class","unselected");
 						d3.select(this).attr("class", "selected");
-						click_function(d);    
+						click_function(d);
 					}
 				}).style("cursor","pointer");
 			}

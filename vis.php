@@ -22,7 +22,7 @@
 	<ul class="nav nav-tabs">
 		<li class="active"><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
-		<li><a data-toggle="tab" href="#gene_fusions">Gene fusions</a></li>
+		<li><a data-toggle="tab" href="#gene_fusions_tab">Gene fusions</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -62,14 +62,7 @@
 											   <ul id="genes_labeled" class="gene_list"></ul>
 											</div>
 										</div>
-										<!-- <div>
-											<h4> Top genes:</h4>
-											<ul id="top_local_genes" class="gene_list"></ul>
-										</div>
-										<div>
-											<h4>Bottom genes:</h4>
-											<ul id="bottom_local_genes" class="gene_list"></ul>
-										</div> -->
+										
 										<div id="gene_type_table_box">
 											<table id="gene_type_table"></table>
 										</div>
@@ -85,6 +78,7 @@
 									<hr>
 									<label>Variant details:</label>
 									<div id="variant_detail_text">Click on a variant to show detail</div>
+									<div id="variant_detail_landing"></div>
 
 								</div>
 								<!-- Settings -->
@@ -160,11 +154,7 @@
 						<p><label>Number of variants after filtering in table below: </label><span class="filtered_number_of_variants"></span></p>
 					</div>
 				</div>
-				<!-- <div class="col-md-4">
-					<div id="barchart_landing">
-
-					</div>
-				</div> -->
+				
 				<div class="col-md-5">
 					<div id="variant_category_tables_landing">
 						<!-- <table id="variant_category_table"></table> -->
@@ -179,43 +169,91 @@
 
 		<!-- Gene fusions -->
 
-		<div id="gene_fusions" class="tab-pane fade">
-			<div id="gene_fusion_input">
-				<div class="gene_search_box">
-					Gene 1
-					<div id="fusion_gene1_livesearch"></div>
-				</div>
-				<div class="gene_search_box">
-					Gene 2
-					<div id="fusion_gene2_livesearch"></div>
-				</div>
-				<div class="row">
-					<div class="gene_search_box">
-					Selected: <span id="gene1">(none)</span>
-					</div>
+		<div id="gene_fusions_tab" class="tab-pane fade">
 
-					<div class="gene_search_box">
-					Selected: <span id="gene2">(none)</span>
+			<div class="alert alert-info" role="alert">
+				Enter gene names by hand or upload a list, and SplitThreader will use its rearrangement graph to search for genomic connections between each pair of genes. 
+			</div>
+			<div class="row">
+				<div class="col-md-6">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								Enter gene names
+							</h4>
+						</div>
+						<div class="panel-body">
+							<div id="gene_fusion_input">
+								<div class="gene_search_box">
+									Gene 1
+									<div id="fusion_gene1_livesearch"></div>
+								</div>
+								<div class="gene_search_box">
+									Gene 2
+									<div id="fusion_gene2_livesearch"></div>
+								</div>
+								<div class="row">
+									<div class="gene_search_box">
+									Selected: <span id="gene1">(none)</span>
+									</div>
+
+									<div class="gene_search_box">
+									Selected: <span id="gene2">(none)</span>
+									</div>
+									<button id="submit_fusion">Submit</button>
+								</div>
+							</div>
+							<label>Instructions:</label>
+							<p>
+								Start typing a gene name into the input box and click on the gene you want (or use the arrow genes to walk up and down the list and press enter on the gene you want). Select two genes and then click the Submit button to search the rearrangement graph for a connection between the two genes. 
+							</p>
+						</div>
 					</div>
-					<button id="submit_fusion">Submit</button>
+					
 				</div>
-			</div>
-				
-			<div id="gene_fusion_table_landing">
-			</div>
-			Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click a row in the table to jump to that gene fusion.
-			<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
-					<div id="fusion_data_to_send_ribbon">
-						<!-- Hidden fields go here -->
+				<div class="col-md-6">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								Upload a list
+							</h4>
+						</div>
+						<div class="panel-body">
+							<p>Upload a list of gene fusions</p>
+							<input type="file" id="gene_fusion_file" />
+							<hr>
+							<label>Instructions:</label>
+							<p>
+								The file should have a pair of genes on each line separated by tabs, commas, or spaces, with the gene names in the first two columns matching the annotation.
+							</p>
+						</div>
 					</div>
-					<input type="submit" value="Send fusion variants to Ribbon">	
-				</form>
-			<hr>
-			<div>
-				<p>or upload a list of gene fusions</p>
-				<input type="file" id="gene_fusion_file" />
-				<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
-				</span>
+				</div>
+			</div> <!-- end of row -->
+			<div id="show_when_fusions_submitted">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h4 class="panel-title">
+							Shortest paths found:
+						</h4>
+					</div>
+					<div class="panel-body">
+						
+						<div id="gene_fusion_table_landing"></div>
+						<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
+							<div id="fusion_data_to_send_ribbon">
+								<!-- Hidden fields go here -->
+							</div>
+							<input type="submit" value="Send fusion variants to Ribbon">	
+						</form>
+						<label>Instructions:</label>
+						<p>
+							Click on a row in the table to jump to each gene fusion in the visualizer.
+							"distance" is the number of basepairs in the path between the two genes. "num_variants" indicates the number of variants this path threads through in the graph. "path_chromosomes" shows all the chromosomes found along the path. 
+							If the genes have a direct connection that intersects both genes, the distance will be 0, num_variants will be 1, and path_chromosomes will be only the chromosomes the genes themselves reside on. 
+						</p>
+					</div>
+				</div>
 			</div>
 		</div> <!-- end of gene fusions tab -->
 	</div> <!-- end tab content class -->
