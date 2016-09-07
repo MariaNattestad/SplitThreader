@@ -243,7 +243,7 @@ d3.select("#show_segmented_coverage").on("change",function() {
 			if (_settings.segment_copy_number == "unsegmented") {
 				load_coverage(_chosen_chromosomes[top_or_bottom],top_or_bottom);	
 			}
-			wait_then_draw(top_or_bottom);
+			wait_then_update(top_or_bottom);
 		} else {
 			update_coverage(top_or_bottom);
 		}
@@ -1559,6 +1559,13 @@ function select_chrom_for_zoom_plot(d,top_or_bottom) {
 	}
 }
 
+function wait_then_update(top_or_bottom) {
+	if (_data_ready.coverage[_settings.segment_copy_number][top_or_bottom]) {
+		update_coverage(top_or_bottom);
+	} else {
+		window.setTimeout(function() {wait_then_update(top_or_bottom)} ,300)  ;
+	}
+}
 function wait_then_draw(top_or_bottom) {
 	if (_data_ready.coverage[_settings.segment_copy_number][top_or_bottom]) {
 		draw_zoom_plot(top_or_bottom);
