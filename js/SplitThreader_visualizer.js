@@ -1522,7 +1522,7 @@ function draw_genes(top_or_bottom) {
 			.on('mouseover', function(d) {
 					var text = d.gene + " (" + d.type + ")";
 					var x = _layout.zoom_plot.x + _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2);
-					var y = (top_or_bottom == "top") ? (_padding.top + _padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
+					var y = (top_or_bottom == "top") ? (_padding.top + _padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.bottom_y + _layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
 					show_tooltip(text,x,y,_svg);
 				})
 			.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});		
