@@ -10,11 +10,19 @@
 <link href="css/d3-livesearch.css" rel="stylesheet">
 <link href="css/d3-superTable.css" rel="stylesheet">
 
-<h1 id="title"></h1>
+<div class="row">
+	<div class="col-md-8">
+		<h1 id="title"></h1>
+	</div>
+	<div class="col-md-4">
+		<div id="user_message" class="alert alert-default" role="alert"></div>
+	</div>
+</div>
 <div id="main_body_container">
 	<ul class="nav nav-tabs">
 		<li class="active"><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
+		<li><a data-toggle="tab" href="#gene_fusions">Gene fusions</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -23,9 +31,6 @@
 			<div id="svg_landing"></div>
 
 			<div id="right_panel">
-				
-				<div id="user_message" class="alert alert-default" role="alert"></div>
-
 				<div class="panel-group ">
 					<div class="panel panel-default">
 						<div class="panel-heading">
@@ -37,7 +42,6 @@
 							<div class="panel-body">
 								<ul class="nav nav-tabs">
 									<li class="active"><a data-toggle="tab" href="#gene_settings">Genes</a></li>
-									<li><a data-toggle="tab" href="#gene_fusions">Fusions</a></li>
 									<li><a data-toggle="tab" href="#variant_settings">Variants</a></li>
 									<li><a data-toggle="tab" href="#explore_tab">Explore</a></li>
 									<li><a data-toggle="tab" href="#settings">Settings</a></li>
@@ -72,60 +76,6 @@
 										<div class="checkbox">
 											<label><input id="hide_local_gene_names" type="checkbox">Hide gene names for types selected in table above</label>
 										</div>
-									</div>
-
-								<!-- Gene fusions -->
-
-									<div id="gene_fusions" class="tab-pane fade">
-											<div id="gene_fusion_input">
-												<div class="gene_search_box">
-													Gene 1
-													<div id="fusion_gene1_livesearch"></div>
-												</div>
-												<div class="gene_search_box">
-													Gene 2
-													<div id="fusion_gene2_livesearch"></div>
-												</div>
-												<div class="row">
-													<div class="gene_search_box">
-													Selected: <span id="gene1">(none)</span>
-													</div>
-
-													<div class="gene_search_box">
-													Selected: <span id="gene2">(none)</span>
-													</div>
-													<button id="submit_fusion">Submit</button>
-												</div>
-											</div>
-												
-											<!-- <table id="gene_fusion_table">
-												<tr id="input_row">
-													<td width="20%" id="gene1">search gene above</td>
-													<td width="20%" id="gene2">search gene above</td>
-													<td width="60%"> <button id="submit_fusion">Submit</button></td>
-												</tr>
-											</table> -->
-											<div id="gene_fusion_table_landing">
-
-											</div>
-
-											<!-- <table id="gene_fusion_table_results">
-												
-											</table> -->
-											Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click a row in the table to jump to that gene fusion.
-											<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
-													<div id="fusion_data_to_send_ribbon">
-														<!-- Hidden fields go here -->
-													</div>
-													<input type="submit" value="Send fusion variants to Ribbon">	
-												</form>
-											<hr>
-											<div>
-												<p>or upload a list of gene fusions</p>
-												<input type="file" id="gene_fusion_file" />
-												<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
-												</span>
-											</div>
 									</div>
 
 								<!-- Variants -->
@@ -227,6 +177,47 @@
 
 		</div> <!-- end variant analysis tab -->
 
+		<!-- Gene fusions -->
+
+		<div id="gene_fusions" class="tab-pane fade">
+			<div id="gene_fusion_input">
+				<div class="gene_search_box">
+					Gene 1
+					<div id="fusion_gene1_livesearch"></div>
+				</div>
+				<div class="gene_search_box">
+					Gene 2
+					<div id="fusion_gene2_livesearch"></div>
+				</div>
+				<div class="row">
+					<div class="gene_search_box">
+					Selected: <span id="gene1">(none)</span>
+					</div>
+
+					<div class="gene_search_box">
+					Selected: <span id="gene2">(none)</span>
+					</div>
+					<button id="submit_fusion">Submit</button>
+				</div>
+			</div>
+				
+			<div id="gene_fusion_table_landing">
+			</div>
+			Submit a possible gene fusion to query the SplitThreader graph for the shortest genomic connection between the two gene locations, then click a row in the table to jump to that gene fusion.
+			<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
+					<div id="fusion_data_to_send_ribbon">
+						<!-- Hidden fields go here -->
+					</div>
+					<input type="submit" value="Send fusion variants to Ribbon">	
+				</form>
+			<hr>
+			<div>
+				<p>or upload a list of gene fusions</p>
+				<input type="file" id="gene_fusion_file" />
+				<span id="gene_fusion_file_icon" ><span class="glyphicon glyphicon-info-sign"></span>Instructions
+				</span>
+			</div>
+		</div> <!-- end of gene fusions tab -->
 	</div> <!-- end tab content class -->
 </div> <!-- end of main body container -->
 

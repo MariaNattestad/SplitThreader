@@ -173,6 +173,13 @@ function responsive_sizing() {
 		.attr("transform","translate(" + _layout.zoom_plot.x + "," + _layout.zoom_plot.bottom_y + ")");
 
 
+	_zoom_containers["top"].on("mouseover",function(){
+		_hover_plot = "top";
+	});
+	_zoom_containers["bottom"].on("mouseover",function(){
+		_hover_plot = "bottom";
+	});
+
 	var max_loop = _layout.zoom_plot.bottom_y-_layout.zoom_plot.height-_padding.top;
 	var min_loop = (max_loop)/10;
 	_scales.connection_loops["top"]
@@ -227,13 +234,6 @@ responsive_sizing();
 
 
 //////////////////     Event listeners     //////////////////
-
-_zoom_containers["top"].on("mouseover",function(){
-	_hover_plot = "top";
-});
-_zoom_containers["bottom"].on("mouseover",function(){
-	_hover_plot = "bottom";
-});
 
 d3.select("#send_to_ribbon_form").property("action","http://genomeribbon.com");
 d3.select("#send_fusion_to_ribbon_form").property("action","http://genomeribbon.com");
@@ -454,7 +454,7 @@ function wait_then_run_when_all_data_loaded() {
 			user_message("Info","Loading data is complete")
 		}
 	} else {
-		console.log("waiting for data to load")
+		// console.log("waiting for data to load")
 		window.setTimeout(wait_then_run_when_all_data_loaded,300)  
 	}
 }
@@ -584,9 +584,8 @@ function read_spansplit_file() {
 	});
 }
 
-
 function read_annotation_file() {
-	console.log("looking for annotation file");
+	// console.log("looking for annotation file");
 	if (_settings.annotation_path != "none") {
 		user_message("Info","Loading annotation...");
 
@@ -755,8 +754,7 @@ function draw_circos_connections() {
 ////////////////  Draw the top zoom plot  ////////////////////
 
 function draw_zoom_plot(top_or_bottom) {
-
-	_zoom_containers[top_or_bottom].selectAll("*").remove();
+	_zoom_containers[top_or_bottom].html("");
 	_plot_canvas[top_or_bottom] = _zoom_containers[top_or_bottom].append("g");
 
 	var bp_min = d3.min(_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]],function(d){return d.start});
@@ -2188,8 +2186,6 @@ function show_statistics() {
 }
 
 function analyze_copynumber() {
-	
-	console.log("analyzing copy number");
 
 	var cov = _Coverage_by_chromosome["segmented"];
 

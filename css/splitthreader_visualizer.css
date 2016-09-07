@@ -25,7 +25,7 @@ path.chromosome_arc, .circos_chromosome text {
   cursor: pointer;
 }
 
-#user_message {
+.user_message {
   margin-bottom: 1vmin;
   width: 100%;
   display: inline-block;
