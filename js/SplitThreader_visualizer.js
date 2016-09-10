@@ -769,7 +769,7 @@ function scale_to_new_chrom(top_or_bottom) {
 //////////////// Bin data to at most one bin per pixel ////////////////////////////
 	var bp_per_genomic_bin = _Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][0].end-_Coverage_by_chromosome[_settings.segment_copy_number][_chosen_chromosomes[top_or_bottom]][0].start;
 
-	var num_genomic_bins_per_pixel = 1; //Math.ceil((bp_max-bp_min)/bp_per_genomic_bin/_layout.zoom_plot.width);
+	var num_genomic_bins_per_pixel = 1; Math.ceil((bp_max-bp_min)/bp_per_genomic_bin/_layout.zoom_plot.width);
 	var new_coverage = [];
 	
 	if (_settings.segment_copy_number == "unsegmented") {
@@ -943,7 +943,7 @@ function draw_zoom_plot(top_or_bottom) {
 	_zoom_behaviors[top_or_bottom]
 		.x(_scales.zoom_plots[top_or_bottom].x)
 		// .y(_scales.zoom_plots[top_or_bottom].y)
-		.scaleExtent([1,50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
+		// .scaleExtent([1,50]) // 50 = Max number of pixels a genomic bin can be zoomed to (used to be 1 pixel per bin, this allows greater zooming to see variants even if coverage information doesn't go down below 1 pixel per bin)
 		.duration(200)
 		.on("zoom", zoom_handler)
 		.center([_layout.zoom_plot.width / 2, _layout.zoom_plot.height / 2])
