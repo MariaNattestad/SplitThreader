@@ -98,6 +98,10 @@
 												<td><label for="color_scheme_dropdown">Color scheme:</label></td>
 												<td><select class="form-control" id="color_scheme_dropdown"></select></td>
 											</tr>
+											<tr>
+												<td>Publication style plot</td>
+												<td><input id="publication_style_plot_checkbox" type="checkbox" ></td>
+											</tr>
 											<tr><td colspan="2"><hr><label>Filter variants:</label></td></tr>
 											<tr>
 												<td>Minimum variant size: </td>
