@@ -54,6 +54,7 @@ _settings.cov_diff_for_CNV = 1;
 _settings.publication_style_plot = false;
 _settings.plot_background_color = "#eeeeee";
 _settings.draw_zoom_buttons = true;
+_settings.font_size = 12;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -120,7 +121,6 @@ function responsive_sizing() {
 		e = d.documentElement,
 		g = d.getElementsByTagName('body')[0];
 
-
 	var window_width = (w.innerWidth || e.clientWidth || g.clientWidth);
 	_layout.svg.width = window_width*(1-panel_width_fraction)*0.97;
 	_layout.svg.height = (w.innerHeight || e.clientHeight || g.clientHeight)*0.95 - top_banner_size;
@@ -131,7 +131,7 @@ function responsive_sizing() {
 		.style("height",_layout.svg.height + "px")
 		.style("float","left");
 
-
+	_settings.font_size = _layout.svg.width*0.012;
 
 	_padding.top = _layout.svg.height*0.10;
 	_padding.bottom = _layout.svg.height*0.10; 
@@ -152,8 +152,11 @@ function responsive_sizing() {
 	////////  Create the SVG  ////////
 	_svg = d3.select("#svg_landing")
 		.append("svg:svg")
+		.attr("id","svg")
+		.style("background-color","#ffffff")
+		.style("font-family", 'Arial')
 		.attr("width", _layout.svg.width)
-		.attr("height", _layout.svg.height)
+		.attr("height", _layout.svg.height);
 
 	_layout.zoom_plot.height = (_layout.svg.height-_padding.top-_padding.bottom)/3;
 	_layout.zoom_plot.x = _layout.circos.size + _padding.between_circos_and_zoom_plots;
@@ -265,6 +268,11 @@ d3.select("#publication_style_plot_checkbox").on("change", function() {
 
 	draw_zoom_plot("top");
 	draw_zoom_plot("bottom");
+});
+
+
+d3.select("#take_screenshot").on("click", function() {
+	saveSvgAsPng(document.getElementById("svg"), getUrlVars()["nickname"] + "_SplitThreader", {scale: 4});
 });
 
 d3.select("#adaptive_coverage_scaling").on("change",function() {
@@ -411,7 +419,7 @@ function show_tooltip(text,x,y,parent_object) {
 			.attr("fill","black");
 
 	_tooltip.tip = _tooltip.g.append("text");
-	_tooltip.tip.text(text).attr("fill","white").style('text-anchor',"middle").attr("dominant-baseline","middle");
+	_tooltip.tip.text(text).attr("fill","white").style('text-anchor',"middle").attr("dominant-baseline","middle").style("font-size",_settings.font_size);
 }
 
 
@@ -559,6 +567,7 @@ function load_coverage(chromosome,top_or_bottom) {
 }
 
 function read_spansplit_file() {
+	console.log("reading variant file");
 	d3.csv(_input_file_prefix + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
 		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
@@ -582,9 +591,11 @@ function read_spansplit_file() {
 				user_message("Warning","Ignoring variant in input file because strands are not set");
 			}
 		}
+		
 		apply_variant_filters();
-		_data_ready.spansplit = true;
 		populate_ribbon_link();
+		_data_ready.spansplit = true;
+		console.log("spansplit ready");
 	});
 }
 
@@ -710,11 +721,12 @@ function draw_circos() {
 				d.outerRadius = _layout.circos.radius;
 				return "translate(" + arc.centroid(d) + ")";
 			})
-			 .attr("text-anchor", "middle")
-				.attr("dominant-baseline","middle")
-				.attr("class","chromosome_label")
-				.text(function(d, i) { return d.chromosome; });
-				// .call(drag)
+			.attr("text-anchor", "middle")
+			.attr("dominant-baseline","middle")
+			.style("font-size",_settings.font_size)
+			.attr("class","chromosome_label")
+			.text(function(d, i) { return d.chromosome; });
+			// .call(drag)
 }
 
 ///////////    Add connections to the circos plot   /////////////////////
@@ -824,6 +836,7 @@ function draw_zoom_plot(top_or_bottom) {
 		_axes[top_or_bottom].x = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].x).orient(top_or_bottom).ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"))
 		_axis_labels[top_or_bottom].x = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
+			.style("font-size",_settings.font_size)
 			.attr("transform","translate(" + 0 + "," + 0 + ")")
 			.call(_axes[top_or_bottom].x);
 
@@ -831,6 +844,7 @@ function draw_zoom_plot(top_or_bottom) {
 		_axis_labels[top_or_bottom].y = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			// .attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
+			.style("font-size",_settings.font_size)
 			.call(_axes[top_or_bottom].y)
 
 		_axis_labels[top_or_bottom].x.append("text")
@@ -842,11 +856,13 @@ function draw_zoom_plot(top_or_bottom) {
 		_axis_labels[top_or_bottom].x = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
 			.attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
+			.style("font-size",_settings.font_size)
 			.call(_axes[top_or_bottom].x)
 
 		_axes[top_or_bottom].y = d3.svg.axis().scale(_scales.zoom_plots[top_or_bottom].y).orient("left").ticks(8).tickSize(5,0,1)
 		_axis_labels[top_or_bottom].y = _zoom_containers[top_or_bottom].append("g")
 			.attr("class","axis")
+			.style("font-size",_settings.font_size)
 			// .attr("transform","translate(" + 0 + "," + _layout.zoom_plot.height + ")")
 			.call(_axes[top_or_bottom].y)
 
@@ -922,6 +938,7 @@ function draw_zoom_plot(top_or_bottom) {
 				.attr("x", _layout.zoom_plot.button_size/2)
 				.attr("y", _layout.zoom_plot.button_size/2)
 				.attr("text-anchor", "middle")
+				.style("font-size",_settings.font_size*1.5)
 				.attr("dominant-baseline","middle");
 		}
 
@@ -1551,6 +1568,7 @@ function draw_genes(top_or_bottom) {
 			.text(function(d){return d.gene})
 			.attr("x",function(d){return _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2)})
 			.attr("class","gene_label")
+			.style("font-size",_settings.font_size)
 			.attr("dominant-baseline","middle");
 
 			if (top_or_bottom == "top") {
@@ -1585,6 +1603,7 @@ function draw_genes(top_or_bottom) {
 		.text(function(d){return d.gene})
 		.attr("x",function(d){return _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2)})
 		.attr("class","gene_label")
+		.style("font-size",_settings.font_size)
 		.attr("dominant-baseline","middle");
 
 	if (top_or_bottom == "top") {
@@ -1863,21 +1882,25 @@ function draw_histogram(variant_data_to_use) {
 	var x_axis = d3.svg.axis().scale(_scales.hist.x).orient("bottom").ticks(3).tickSize(5,0,0).tickFormat(d3.format("s"));
 	var x_axis_label = plot_container.append("g")
 		.attr("class","axis")
+		.style("font-size",_settings.font_size)
 		.attr("transform","translate(" + 0 + "," + (0 + _layout.hist.height) + ")")
 		.call(x_axis);
 	x_axis_label.append("text")
 		.text("Variant size")
 		.style('text-anchor',"middle")
+		.style("font-size",_settings.font_size)
 		.attr("transform","translate(" + (0 + _layout.hist.width/2) + "," + 40 + ")")
 
 
 	var y_axis = d3.svg.axis().scale(_scales.hist.y).orient("left").ticks(5).tickSize(5,0,0).tickFormat(d3.format("s"));
 	var y_axis_label = plot_container.append("g")
 		.attr("class","axis")
+		.style("font-size",_settings.font_size)
 		.attr("transform","translate(" + 0 + "," + 0 + ")")
 		.call(y_axis);
 	y_axis_label.append("text")
 		.text("Count")
+		.style("font-size",_settings.font_size)
 		.style('text-anchor',"middle")
 		.attr("transform","translate("+ -40 + "," + (0 + _layout.hist.height/2) + ")rotate(-90)")
 

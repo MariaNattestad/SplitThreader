@@ -102,6 +102,11 @@
 												<td>Publication style plot</td>
 												<td><input id="publication_style_plot_checkbox" type="checkbox" ></td>
 											</tr>
+											<tr>
+												<td>
+													<button id="take_screenshot">Download screenshot</button>
+												</td>
+											</tr>
 											<tr><td colspan="2"><hr><label>Filter variants:</label></td></tr>
 											<tr>
 												<td>Minimum variant size: </td>
@@ -275,6 +280,7 @@
 <script src="js/d3-livesearch.js"></script>
 
 <script src="js/SplitThreader.js"></script>
+<script src="js/saveSvgAsPng.js"></script>
 <script src="js/SplitThreader_visualizer.js"></script>
 
 

@@ -133,16 +133,8 @@ body {
   shape-rendering: crispEdges;
 }
 
-text {
-  font: 1vmax sans-serif;
-}
-.axis {
-   shape-rendering: crispEdges;
-   font: 1vmin sans-serif;
-}
-
 .sample_title {
-  font: 3vmin sans-serif;
+  font: 3vmin "Arial" sans-serif;
 }
 .gene_label {
   text-anchor: middle;
