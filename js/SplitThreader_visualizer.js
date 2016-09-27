@@ -231,10 +231,6 @@ function responsive_sizing() {
 responsive_sizing();
 
 //////////////////     Event listeners     //////////////////
-
-d3.select("#send_to_ribbon_form").property("action","http://genomeribbon.com");
-d3.select("#send_fusion_to_ribbon_form").property("action","http://genomeribbon.com");
-
 d3.select("#hide_local_gene_names").on("change",function() {
 	_settings.show_local_gene_names = !d3.event.target.checked;
 	update_genes();
@@ -328,8 +324,6 @@ d3.select("select#color_scheme_dropdown").on("change",function(d) {
 	draw_everything();
 });
 
-
-
 d3.select("#coverage_divisor").on("change", function() {
 	_settings.coverage_divisor = parseInt(this.value);
 	if (isNaN(_settings.coverage_divisor)) {
@@ -341,6 +335,14 @@ d3.select("#coverage_divisor").on("change", function() {
 	update_coverage("top");
 	update_coverage("bottom");
 });
+
+function set_ribbon_path(path) {
+	d3.select("#send_to_ribbon_form").property("action", path);	
+	d3.select("#send_fusion_to_ribbon_form").property("action", path);	
+	d3.select("#send_filtered_table_to_ribbon_form").property("action",path);
+}
+
+set_ribbon_path("http://genomeribbon.com");
 
 function update_variants() {
 
@@ -377,16 +379,10 @@ d3.select("#min_split_reads").on("change",function() {
 
 d3.select("#submit_fusion").on("click",submit_fusion);
 
-
-
-// Advanced settings:
-
 d3.select("#ribbon_path").property("value","http://genomeribbon.com").
 	on("change",function() {
-	d3.select("#send_to_ribbon_form").property("action",d3.event.target.value);	
-	d3.select("#send_fusion_to_ribbon_form").property("action",d3.event.target.value);	
+		set_ribbon_path(d3.event.target.value);
 });
-
 
 ////////// Calculate polar coordinates ///////////
 
@@ -1861,12 +1857,31 @@ function choose_row(d) {
 	}
 
 	draw_connections();
-
+}
+function dataset_to_csv(dataset, header) {
+	var text = "data:text/csv;charset=utf-8,";
+	
+	text += header[0];
+	for (var j = 1; j < header.length; j++) {
+		text += "," + header[j];
+	}
+	text += "\n";
+	for (var i in dataset) {
+		var row = dataset[i][header[0]];
+		for (var j = 1; j < header.length; j++) {
+			row += "," + dataset[i][header[j]];
+		}
+		text += row + "\n";
+	}
+	return text;
 }
 function count_filtered_data(dataset) {
 	d3.selectAll(".filtered_number_of_variants").html(dataset.length);
 	d3.select("#table_row_count").html(function() {if (dataset.length < 15) {return dataset.length} else {return 15}});
-
+	populate_ribbon_for_filtered_variant_table(dataset);
+	var csv_content = dataset_to_csv(dataset, ["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category","nearby_variant_count"]);
+	var encodedUri = encodeURI(csv_content);
+	d3.select("#export_variant_table_to_csv").attr("href",encodedUri).attr("download","filtered_variants.csv");
 	draw_histogram(dataset);
 }
 
@@ -1892,6 +1907,10 @@ function populate_ribbon_link() {
 	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Filtered_variant_data));
 }
 
+function populate_ribbon_for_filtered_variant_table(data) {
+	d3.select("#filtered_data_to_send_ribbon").html("");
+	d3.select("#filtered_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(data));
+}
 function draw_histogram(variant_data_to_use) {
 
 	if (variant_data_to_use == null) {
@@ -2380,6 +2399,13 @@ function update_fusions_for_Ribbon() {
 	}
 	d3.select("#fusion_data_to_send_ribbon").html("");
 	d3.select("#fusion_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(variants_for_Ribbon));
+	d3.select("#send_fusion_to_ribbon_form").style("display","block");
+
+	// Export to CSV
+	var csv_content = dataset_to_csv(_Gene_fusions, ["gene1","gene2","distance","num_variants","path_chromosomes"]);
+	var encodedUri = encodeURI(csv_content);
+	d3.select("#export_gene_fusions_to_csv").attr("href",encodedUri).attr("download","gene_fusions.csv");
+
 }
 function update_fusion_table() {
 	d3.select("#show_when_fusions_submitted").style("display","block");
@@ -2398,6 +2424,7 @@ function update_fusion_table() {
 function submit_fusion() {
 	search_graph_for_fusion();
 	update_fusion_table();
+
 }
 
 function variant_tooltip_text(d) {

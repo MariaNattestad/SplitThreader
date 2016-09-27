@@ -142,7 +142,7 @@
 													<!-- Hidden fields go here -->
 												</div>
 												<label>Ribbon path: <input id='ribbon_path'></label>
-												<input type="submit" value="Send all variants to Ribbon">	
+												<input class="btn btn-primary" type="submit" value="Send all variants to Ribbon">
 											</form>
 										</div>
 
@@ -178,6 +178,17 @@
 			<p>Showing <span id="table_row_count"></span> variants out of <span class="filtered_number_of_variants"></span>. Unfiltered, there are <span class="number_of_variants"></span> variants</p>
 			<p>Filter in text boxes by =,>, or <, and click column names to sort. Click on a row in the table to see that variant in the visualizer</p>
 			<div class="table_landing" id="variant_table_landing"></div>
+
+			<div id="table_export_buttons">
+				<a class="btn btn-info" id="export_variant_table_to_csv">Export table as csv</a>
+
+				<form id="send_filtered_table_to_ribbon_form" method="post" target="_blank">
+					<div id="filtered_data_to_send_ribbon">
+						<!-- Hidden fields go here -->
+					</div>
+					<input class="btn btn-primary" type="submit" value="Send all variants to Ribbon">	
+				</form>
+			</div>
 
 		</div> <!-- end variant analysis tab -->
 
@@ -254,17 +265,26 @@
 					<div class="panel-body">
 						
 						<div class="table_landing" id="gene_fusion_table_landing"></div>
-						<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
-							<div id="fusion_data_to_send_ribbon">
-								<!-- Hidden fields go here -->
-							</div>
-							<input type="submit" value="Send fusion variants to Ribbon">	
-						</form>
 						<label>Instructions:</label>
 						<p>
 							Click on a row in the table to jump to each gene fusion in the visualizer.
 							"distance" is the number of basepairs in the path between the two genes. "num_variants" indicates the number of variants this path threads through in the graph. "path_chromosomes" shows all the chromosomes found along the path. 
 							If the genes have a direct connection that intersects both genes, the distance will be 0, num_variants will be 1, and path_chromosomes will be only the chromosomes the genes themselves reside on. 
+						</p>
+						<label>Export gene fusions</label>
+						<p>
+							<a class="btn btn-info" id="export_gene_fusions_to_csv">Export table as csv</a>
+						</p>
+						<p>
+							<label>Send to Ribbon to visualize alignments</label>
+						</p>
+						<p>
+							<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
+								<div id="fusion_data_to_send_ribbon">
+									<!-- Hidden fields go here -->
+								</div>
+								<input class="btn btn-primary" type="submit" value="Send fusion variants to Ribbon">	
+							</form>
 						</p>
 					</div>
 				</div>

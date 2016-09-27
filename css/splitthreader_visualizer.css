@@ -222,7 +222,6 @@ h1#title {
 
 #send_fusion_to_ribbon_form {
   display: none;
-  padding: 5vmin;
 }
 .settings_table {
   width: 100%;
@@ -278,4 +277,9 @@ h1#title {
 }
 .only_when_features {
   display: none;
+}
+
+#table_export_buttons .btn {
+  margin: 1vmin;
+  padding: 1vmin;
 }
