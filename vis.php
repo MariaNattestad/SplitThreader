@@ -95,6 +95,10 @@
 												<td>Divide coverage by:</td>
 												<td><input id="coverage_divisor" type="number" value="1"></td>
 											</tr>
+											<tr class="only_when_features">
+												<td>Show features</td>
+												<td><input id="show_features" type="checkbox" checked></td>
+											</tr>
 											<tr>
 												<td><label for="color_scheme_dropdown">Color scheme:</label></td>
 												<td><select class="form-control" id="color_scheme_dropdown"></select></td>

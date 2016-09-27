@@ -276,3 +276,6 @@ h1#title {
 .show_after_graph_search {
   display: none;
 }
+.only_when_features {
+  display: none;
+}

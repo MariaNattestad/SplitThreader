@@ -55,6 +55,8 @@ _settings.publication_style_plot = false;
 _settings.plot_background_color = "#eeeeee";
 _settings.draw_zoom_buttons = true;
 _settings.font_size = 12;
+_settings.search_dataset = {};
+_settings.show_features = true;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -236,6 +238,12 @@ d3.select("#send_fusion_to_ribbon_form").property("action","http://genomeribbon.
 d3.select("#hide_local_gene_names").on("change",function() {
 	_settings.show_local_gene_names = !d3.event.target.checked;
 	update_genes();
+});
+
+d3.select("#show_features").on('change', function() {
+	_settings.show_features = d3.event.target.checked;
+	draw_features("top");
+	draw_features("bottom");
 });
 
 d3.select("#show_segmented_coverage").on("change",function() {
@@ -1101,8 +1109,8 @@ function update_coverage (top_or_bottom) {
 	
 	draw_connections();
 	draw_genes(top_or_bottom);
+	draw_features(top_or_bottom);
 }
-
 
 ////////////   Selects and uses the correct scale for x positions according to the lengths of the chromosomes, choosing between top and bottom plots ////////
 
@@ -1527,14 +1535,47 @@ function arrow_path_generator(d, top_or_bottom) {
 }
 
 
+function draw_features(top_or_bottom) {
+	_plot_canvas[top_or_bottom].selectAll("rect.features").remove();
+
+	if (_settings.show_features) {
+		var local_features = [];
+		for (var i in _Features) {
+			if (_Features[i].chromosome == _chosen_chromosomes[top_or_bottom] && (_scales.zoom_plots[top_or_bottom].x(_Features[i].start) > 0 && _scales.zoom_plots[top_or_bottom].x(_Features[i].end) < _layout.zoom_plot.width)) {
+				local_features.push(_Features[i]);
+			}
+		}
+
+		_plot_canvas[top_or_bottom].selectAll("rect.features").data(local_features).enter()
+			.append("rect")
+				.attr("class","features")
+				.attr("x",function(d) {return _scales.zoom_plots[top_or_bottom].x(d.start)})
+				.attr("y", function(d) {
+					if (top_or_bottom == "top") {
+						return _padding.gene_offset*1.5;
+					} else {
+						return _layout.zoom_plot.height-_padding.gene_offset*1.5;
+					}
+				})
+				.attr("width",function(d) {return _scales.zoom_plots[top_or_bottom].x(d.end) - _scales.zoom_plots[top_or_bottom].x(d.start)})
+				.attr("height",_padding.gene_offset/5)
+				.style("fill",function(d) {if (d.highlighted == true) {return "black"} else {return "gray"}})
+				.on('mouseover', function(d) {
+						var text = d.name + " (" + d.type + ")";
+						var x = _layout.zoom_plot.x + _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2);
+						var y = (top_or_bottom == "top") ? (_padding.top + _padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.bottom_y + _layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
+						show_tooltip(text,x,y,_svg);
+					})
+				.on('mouseout', function(d) {_svg.selectAll("g.tip").remove();});
+	}
+}
+
 function draw_genes(top_or_bottom) {
 
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_chosen_genes").remove();
 	_plot_canvas[top_or_bottom].selectAll("g." + top_or_bottom + "_local_genes").remove();
 
-	
 	/////////////////////    Draw genes in view according to settings    //////////////////////
-
 	var local_annotation = [];
 	for (var i in _Annotation_by_chrom[_chosen_chromosomes[top_or_bottom]]) {
 		var d = _Annotation_by_chrom[_chosen_chromosomes[top_or_bottom]][i];
@@ -1695,6 +1736,16 @@ function highlight_variants(variant_names) {
 	}
 
 	draw_connections();
+}
+
+function highlight_feature(d) {
+	for (var i in _Features) {
+		if (d.name == _Features[i].name) {
+			_Features[i].highlighted = true;
+		} else {
+			_Features[i].highlighted = false;
+		}
+	}
 }
 
 function highlight_gene_fusion(d) {
@@ -2117,6 +2168,7 @@ d3.select("#gene_fusion_file").on("change",open_gene_fusion_file);
 function switch_search_type(to_or_from) {
 	var value = d3.select("input[name=search_" + to_or_from + "]:checked").node().value;
 	console.log(to_or_from, ":", value);
+	_settings.search_dataset[to_or_from] = value;
 	update_search_input_table(to_or_from, value);
 }
 
@@ -2190,6 +2242,7 @@ function read_bed_file(raw_data) {
 	}
 
 	user_message("Info","Loaded " + _Features.length + " features from bed file");
+	d3.selectAll(".only_when_features").style("display","table-row");
 }
 
 
@@ -2222,12 +2275,15 @@ function run_graph_search() {
 		for (var i in _Starting_intervals_for_search) {
 			var result = _SplitThreader_graph.search([_Starting_intervals_for_search[i]], _Ending_intervals_for_search);
 			if (result != null) {
+				result.source = _Starting_intervals_for_search[result.source_id];
+				result.target = _Ending_intervals_for_search[result.target_id];
+				
 				result.from = _Starting_intervals_for_search[result.source_id].gene;
 				if (result.from == undefined) {
 					result.from = _Starting_intervals_for_search[result.source_id].name;
 				}
 				result.from_type = _Starting_intervals_for_search[result.source_id].type;
-				
+
 				result.to = _Ending_intervals_for_search[result.target_id].gene;
 				if (result.to == undefined) {
 					result.to = _Ending_intervals_for_search[result.target_id].name;
@@ -2252,19 +2308,27 @@ function run_graph_search() {
 
 function highlight_graph_search_result(d) {
 
-	// ???????????????????????
-	
 	$('.nav-tabs a[href="#visualizer_tab"]').tab('show');
 
-	// hide_all_genes();
-	// highlight_gene(d.annotation1);
-	// highlight_gene(d.annotation2);
-	// jump_to_gene(d.annotation1,"top");
-	// jump_to_gene(d.annotation2,"bottom");
+	hide_all_genes();
+	if (_settings.search_dataset["from"] == "genes") {
+		highlight_gene(d.source);
+	} else {
+		highlight_feature(d.source);
+	}
 
-	// user_message("Info", "Highlighting graph search result: " + d.name1 + " - " + d.name2)
+	if (_settings.search_dataset["to"] == "genes") {
+		highlight_gene(d.target);
+	} else {
+		highlight_feature(d.target);
+	}
 
-	// update_genes();
+	jump_to_location(d.source.chromosome, (d.source.start+d.source.end)/2,"top");
+	jump_to_location(d.target.chromosome, (d.target.start+d.target.end)/2,"bottom");
+
+	user_message("Info", "Highlighting graph search result: " + d.from + " - " + d.to)
+
+	update_genes();
 
 	highlight_variants(d.variant_names);
 }
