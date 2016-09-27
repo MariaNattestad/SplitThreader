@@ -207,15 +207,31 @@ Graph.prototype.unvisit_all = function() {
 		this.nodes[node_name].end.visited = false;
 	}
 }
+
+Graph.prototype.untarget_all = function() {
+	for (var node_name in this.nodes) {
+		this.nodes[node_name].start.targets = [];
+		this.nodes[node_name].end.targets = [];
+	}
+}
+Graph.prototype.mark_targets = function(list_of_target_ports) {
+	for (var i in list_of_target_ports) {
+		list_of_target_ports[i][1].targets.push(list_of_target_ports[i]);
+	}
+}
+
 Graph.prototype.bfs = function(list1,list2) {
 	arbitrary_depth_limit = 100000;
+
+	this.untarget_all();
+	this.mark_targets(list2); 
 
 	this.unvisit_all();
 
 	// Enqueue the distance to the start port:
 	var priority_queue = new PriorityQueue({ comparator: function(a, b) { return a.distance - b.distance; }});
 	for (var i = 0; i < list1.length; i++) {
-		priority_queue.queue({"distance":list1[i][0],"next_port":list1[i][1],"path":[list1[i][1]]});	
+		priority_queue.queue({"distance":list1[i][0],"next_port":list1[i][1],"path":[list1[i][1]], "source_id":list1[i][2]});	
 		// console.log("PUSH:");
 		// console.log({"distance":list1[i][0],"next_port":list1[i][1],"path":[list1[i][1]]});
 		list1[i][1].visited = true;
@@ -233,26 +249,23 @@ Graph.prototype.bfs = function(list1,list2) {
 		var next_port = next.next_port;
 		if (next_port instanceof Port) {
 			for (var i = 0; i < next_port.edges.length; i++) {
-				// console.log("EDGES: ", i);
-				for (var k=0; k < list2.length; k++) {
-					// console.log("k = ", k);
-					if (next_port.edges[i].port == list2[k][1]) {
+				if (next_port.edges[i].port.targets != undefined) {
+					for (var k in next_port.edges[i].port.targets) {
 						var new_path = next.path.slice();
 						new_path.push(next_port.edges[i].port.glide);
-						priority_queue.queue({"distance":list2[k][0]+distance, "next_port":0, "path": new_path});
-						// console.log("push:");
-						// console.log({"distance":list2[k][0]+distance, "next_port":0, "path": new_path});
+						priority_queue.queue({"distance":next_port.edges[i].port.targets[k][0]+distance,"source_id":next.source_id, "next_port":0, "path": new_path, "target_id":next_port.edges[i].port.targets[k][2]});
 					}
 				}
 				if (next_port.edges[i].port.glide.visited != true) {
 					var new_path = next.path.slice();
 					new_path.push(next_port.edges[i].port.glide);
-					priority_queue.queue({"distance":next_port.edges[i].port.node.length+distance,"next_port":next_port.edges[i].port.glide,"path":new_path});
+					priority_queue.queue({"distance":next_port.edges[i].port.node.length+distance,"source_id":next.source_id,"next_port":next_port.edges[i].port.glide,"path":new_path});
 					next_port.edges[i].port.glide.visited = true;
 				}
 			}
 		} else {
-			return {"distance":distance,"path":next.path};
+			// Found a target
+			return {"distance":distance,"path":next.path, "source_id":next.source_id,"target_id":next.target_id};
 		}
 	}
 	return null;
@@ -369,7 +382,7 @@ Graph.prototype.point_by_genomic_location = function(chrom,pos) {
 	
 	// using a dictionary by chromosome containing sorted lists of the breakpoint locations for binary searching
 	if (this.genomic_sorted_positions.hasOwnProperty(chrom)) {
-		var index = this.binary_search(chrom, pos, 0, this.genomic_sorted_positions[chrom].length);
+		var index = this.binary_search(chrom, pos, 0, this.genomic_sorted_positions[chrom].length-1);
 		var nearest_breakpoint = this.genomic_sorted_positions[chrom][index];
 		
 		var relative_position = -1;
@@ -395,32 +408,30 @@ Graph.prototype.port_list_by_interval = function(interval) {
 	}
 
 	if (this.genomic_sorted_positions.hasOwnProperty(interval.chromosome)) {
-		var index1 = this.binary_search(interval.chromosome, interval.start, 0, this.genomic_sorted_positions[interval.chromosome].length);
-		var index2 = this.binary_search(interval.chromosome, interval.end, 0, this.genomic_sorted_positions[interval.chromosome].length);
+		var index1 = this.binary_search(interval.chromosome, interval.start, 0, this.genomic_sorted_positions[interval.chromosome].length-1);
+		var index2 = this.binary_search(interval.chromosome, interval.end, 0, this.genomic_sorted_positions[interval.chromosome].length-1);
 		
-
-
 		var nearest_breakpoint1 = this.genomic_sorted_positions[interval.chromosome][index1];
 		var output1 = this.nearby_port(interval.chromosome,interval.start,nearest_breakpoint1);
 
 		var nearest_breakpoint2 = this.genomic_sorted_positions[interval.chromosome][index2];
 		var output2 = this.nearby_port(interval.chromosome,interval.end,nearest_breakpoint2);
-		
+
 		var point1 = new Point(this.nodes[output1.node_name], output1.node_position);
 		var point2 = new Point(this.nodes[output2.node_name], output2.node_position);
 
 
 		var list = [
-			[point1.distance["s"],point1.node.ports["s"]],
-			[point2.distance["e"],point2.node.ports["e"]],
+			[point1.distance["s"], point1.node.ports["s"], interval.id],
+			[point2.distance["e"], point2.node.ports["e"], interval.id]
 		];
 		var used_breakpoints = [this.nodes[output1.node_name].genomic_coordinates.start,  this.nodes[output2.node_name].genomic_coordinates.end];
 		
 		var breakpoints = this.genomic_sorted_positions[interval.chromosome].slice(index1,index2+1);
 		for (var i = 0; i < breakpoints.length; i++) {
 			if (breakpoints[i] != used_breakpoints[0] && breakpoints[i] != used_breakpoints[1]) {
-				list.push([0,this.nodes[this.genomic_node_lookup[[interval.chromosome,breakpoints[i],"s"]]].ports["s"]]);
-				list.push([0,this.nodes[this.genomic_node_lookup[[interval.chromosome,breakpoints[i],"e"]]].ports["e"]]);
+				list.push([0,this.nodes[this.genomic_node_lookup[[interval.chromosome,breakpoints[i],"s"]]].ports["s"],interval.id]);
+				list.push([0,this.nodes[this.genomic_node_lookup[[interval.chromosome,breakpoints[i],"e"]]].ports["e"],interval.id]);
 			}
 		}
 		return list;
@@ -436,6 +447,7 @@ Graph.prototype.details_from_path = function(results) {
 	output.edges = [];
 	output.variant_names = [];
 	output.path_chromosomes = [];
+	output.path_chromosomes.push(current_port.node.genomic_coordinates.chrom);
 	for (var i = 1; i < output.path.length; i++) {
 		// console.log(i);
 		// console.log(output.path[i]);
@@ -486,7 +498,7 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	var list2 = this.port_list_by_interval(gene2);
 
 	var results = this.bfs(list1,list2);
-	
+	console.log(results);
 	var details = this.details_from_path(results);
 
 	details.gene1 = gene1.name;
@@ -501,6 +513,42 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	return details;
 }
 
+Graph.prototype.port_list_from_interval_list = function(interval_list) {
+	var list1 = [];
 
+	for (var i in interval_list) {
+		var port_list = this.port_list_by_interval(interval_list[i]);
+		if (port_list != null) {
+			for (var j in port_list) {
+				list1.push(port_list[j]);
+			}
+		}
+	}
+	return list1;
+}
+Graph.prototype.search = function(interval_list_1, interval_list_2) {
+	var list1 = this.port_list_from_interval_list(interval_list_1);
+	var list2 = this.port_list_from_interval_list(interval_list_2);
+
+	if (list1.length == 0 || list2.length == 0) {
+		// if (list1.length == 0) {
+		// 	console.log("No valid intervals in group 1");
+		// }
+		// if (list2.length == 0) {
+		// 	console.log("No valid intervals in group 2");
+		// }
+		return null;
+	} else { 
+		var results = this.bfs(list1,list2);
+		if (results != null) {
+			var details = this.details_from_path(results);
+			details.num_variants = details.variant_names.length;
+			return details;
+		} else {
+			return results;
+		}
+	}
+	
+}
 
 

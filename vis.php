@@ -23,6 +23,7 @@
 		<li class="active"><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
 		<li><a data-toggle="tab" href="#gene_fusions_tab">Gene fusions</a></li>
+		<li><a data-toggle="tab" href="#feature_search_tab">Feature search</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -160,7 +161,7 @@
 					<div id="statistics_landing">
 						<p><label>Average copy number: </label><span id="mean_copynumber"></span></p>
 						<p><label>Total number of variants: </label><span class="number_of_variants"></span></p>
-						<p><label>Number of variants after filtering in table below: </label><span class="filtered_number_of_variants"></span></p>
+						<p><label>Number of variants after filtering in table below: </label> <span class="filtered_number_of_variants"></span></p>
 					</div>
 				</div>
 				
@@ -172,7 +173,7 @@
 			</div> <!-- end of row -->
 			<p>Showing <span id="table_row_count"></span> variants out of <span class="filtered_number_of_variants"></span>. Unfiltered, there are <span class="number_of_variants"></span> variants</p>
 			<p>Filter in text boxes by =,>, or <, and click column names to sort. Click on a row in the table to see that variant in the visualizer</p>
-			<div id="variant_table_landing"></div>
+			<div class="table_landing" id="variant_table_landing"></div>
 
 		</div> <!-- end variant analysis tab -->
 
@@ -248,7 +249,7 @@
 					</div>
 					<div class="panel-body">
 						
-						<div id="gene_fusion_table_landing"></div>
+						<div class="table_landing" id="gene_fusion_table_landing"></div>
 						<form id="send_fusion_to_ribbon_form" method="post" target="_blank">
 							<div id="fusion_data_to_send_ribbon">
 								<!-- Hidden fields go here -->
@@ -265,6 +266,93 @@
 				</div>
 			</div>
 		</div> <!-- end of gene fusions tab -->
+		<div id="feature_search_tab" class="tab-pane fade">
+			<div class="row">
+	          	<div class="col-md-6">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								From
+							</h4>
+						</div>
+						<div class="panel-body">
+							<label class="radio-inline">
+								<input type="radio" name="search_from" value="genes">Genes
+							</label>
+							<label class="radio-inline">
+								<input type="radio" name="search_from" value="features">Features
+							</label>
+							<div class="table_landing" id="search_from_table_landing">
+
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-6">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								To
+							</h4>
+						</div>
+						<div class="panel-body">
+							<label class="radio-inline">
+								<input type="radio" name="search_to" value="genes">Genes
+							</label>
+							<label class="radio-inline">
+								<input type="radio" name="search_to" value="features">Features
+							</label>
+							<div class="table_landing" id="search_to_table_landing">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
+	          	<div class="col-md-6">
+					<div class="panel panel-default">
+						<div class="panel-heading">
+							<h4 class="panel-title">
+								Calculate distances across the graph
+							</h4>
+						</div>
+						<div class="panel-body">
+							<button id="graph_search_button">Calculate</button>
+							<hr>
+							<label>Instructions:</label>
+							<p>
+								Use the tables in the "From" and "To" panels above to filter down to the intervals you want to search between. Then click "Calculate" to get a result for each interval in "From", finding its closest interval among all the possible intervals in the "To" table.
+							</p>
+							<div class="show_after_graph_search">
+								<p>
+									Click on one of the results in the table to show the path in the visualizer. 
+								</p>
+								<p>
+									Found results for <span id="froms_matched_count">X</span> out of <span id="total_froms_count">N</span> total intervals in the "From" table. Showing at most 30, but filter and sort works on the whole set (as with all tables in SplitThreader). 
+								</p>
+							</div>
+							<div class="table_landing" id="feature_search_table_landing"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Upload features
+					</h4>
+				</div>
+				<div class="panel-body">
+					<p>Upload a bed file of features</p>
+					<input type="file" id="feature_bed_file" />
+					<p>
+					<label>Instructions: </label>
+						Upload a bed file containing features to calculate distances between any sets of features and genes. 
+					</p>
+				</div>
+			</div>
+		</div> <!-- end of feature search tab -->
 	</div> <!-- end tab content class -->
 </div> <!-- end of main body container -->
 

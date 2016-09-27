@@ -79,6 +79,10 @@ var _Coverage_by_chromosome = {"segmented":{},"unsegmented":{}}; // we load each
 var _Variant_data = null;
 var _Filtered_variant_data = null;
 var _Annotation_data = null;
+var _Features = [];
+var _Feature_search_results = [];
+var _Starting_intervals_for_search = [];
+var _Ending_intervals_for_search = [];
 
 
 var _variant_superTable = null;
@@ -686,7 +690,6 @@ function draw_circos() {
 						})
 
 				// Put the chromosome onto the plot it was dropped on (top or bottom)
-				console.log(_hover_plot);
 				if (_hover_plot == "top" || _hover_plot == "bottom") {
 					select_chrom_for_zoom_plot(_dragging_chromosome,_hover_plot);	
 				}
@@ -1678,10 +1681,24 @@ function arraysEqual(arr1, arr2) {
 		return true;
 }
 
+function highlight_variants(variant_names) {
+	var match_variant_names = {};
+	for (var i in variant_names) {
+		match_variant_names[variant_names[i]] = true;
+	}
+	for (var i in _Filtered_variant_data) {
+		if (match_variant_names[_Filtered_variant_data[i].variant_name] != undefined) {
+			_Filtered_variant_data[i].highlight = true;
+		} else {
+			_Filtered_variant_data[i].highlight = false;
+		}
+	}
+
+	draw_connections();
+}
 
 function highlight_gene_fusion(d) {
 	$('.nav-tabs a[href="#visualizer_tab"]').tab('show');
-
 
 	hide_all_genes();
 	highlight_gene(d.annotation1);
@@ -1696,20 +1713,7 @@ function highlight_gene_fusion(d) {
 
 	update_genes();
 
-	var match_variant_names = {};
-	for (var i in d.variant_names) {
-		match_variant_names[d.variant_names[i]] = true;
-	}
-	for (var i in _Filtered_variant_data) {
-		if (match_variant_names[_Filtered_variant_data[i].variant_name] != undefined) {
-			_Filtered_variant_data[i].highlight = true;
-		} else {
-			_Filtered_variant_data[i].highlight = false;
-		}
-		// _Filtered_variant_data[i].highlight = (.indexOf(_Filtered_variant_data[i].variant_name) != -1);
-	}
-
-	draw_connections();
+	highlight_variants(d.variant_names);
 }
 
 
@@ -2109,6 +2113,174 @@ function open_gene_fusion_file(event) {
 }
 
 d3.select("#gene_fusion_file").on("change",open_gene_fusion_file);
+
+function switch_search_type(to_or_from) {
+	var value = d3.select("input[name=search_" + to_or_from + "]:checked").node().value;
+	console.log(to_or_from, ":", value);
+	update_search_input_table(to_or_from, value);
+}
+
+var set_search_intervals = {};
+set_search_intervals["from"] = function(data) {
+	_Starting_intervals_for_search = data;
+	for (var i=0; i < _Starting_intervals_for_search.length; i++) {
+		_Starting_intervals_for_search[i].id = i;
+	}
+}
+set_search_intervals["to"] = function(data) {
+	_Ending_intervals_for_search = data;
+	for (var i=0; i < _Ending_intervals_for_search.length; i++) {
+		_Ending_intervals_for_search[i].id = i;
+	}
+}
+
+function update_search_input_table(to_or_from, data_type) {
+	if (data_type== "genes") {
+		d3.select("#search_" + to_or_from + "_table_landing").call(
+			d3.superTable()
+				.table_data(_Annotation_data)
+				.num_rows_to_show(15)
+				.show_advanced_filters(true)
+				.run_on_filtered_data_function(set_search_intervals[to_or_from])
+		);
+		d3.select(".d3-superTable-table").selectAll("input").on("focus",function() {
+			user_message("Instructions","Filter table on each column by typing for instance =17 to get all rows where that column is 17, you can also do >9000 or <9000. You can also apply multiple filters in the same column, just separate them with spaces.");
+		});
+	} else if (data_type == "features") {
+
+		if (_Features.length == 0) {
+			d3.select("#search_" + to_or_from + "_table_landing").html("Add features by going to the 'Upload features' panel below, then click this features button again to refresh");
+		} else {
+			d3.select("#search_" + to_or_from + "_table_landing").call(
+				d3.superTable()
+					.table_data(_Features)
+					.num_rows_to_show(15)
+					.show_advanced_filters(true)
+					.run_on_filtered_data_function(set_search_intervals[to_or_from])
+			);
+		}
+		d3.select(".d3-superTable-table").selectAll("input").on("focus",function() {
+			user_message("Instructions","Filter table on each column by typing for instance =17 to get all rows where that column is 17, you can also do >9000 or <9000. You can also apply multiple filters in the same column, just separate them with spaces.");
+		});
+	}
+}
+
+$("input[name=search_from]").click(function(){ switch_search_type("from")});
+$("input[name=search_to]").click(function(){ switch_search_type("to")});
+
+function read_bed_file(raw_data) {
+	var input_text = raw_data.split("\n");
+	
+	_Features = [];
+	for (var i in input_text) {
+		var columns = input_text[i].split(/\s+/);
+		if (columns.length>2) {
+			var start = parseInt(columns[1]);
+			var end = parseInt(columns[2]);
+			var score = parseFloat(columns[4]);
+			if (isNaN(score)) {
+				score = 0;
+			}
+			if (isNaN(start) || isNaN(end)) {
+				user_message("Error","Bed file must contain numbers in columns 2 and 3. Found: <pre>" + columns[1] + " and " + columns[2] + "</pre>.");
+				return;
+			}
+			_Features.push({"chromosome":columns[0],"start":start, "end":end, "size": end - start, "name":columns[3] || "", "score":score ,"strand":columns[5],"type":columns[6] || ""});
+		}
+	}
+
+	user_message("Info","Loaded " + _Features.length + " features from bed file");
+}
+
+
+function open_bed_file(event) {
+	console.log("in open_bed_file");
+		
+	var raw_data;
+	var reader = new FileReader();
+
+	if (this.files[0].size > 1000000) {
+		user_message("Error","This file is larger than 1 MB. Please choose a smaller file. ");
+		return;
+	}
+
+	reader.readAsText(this.files[0]);
+	reader.onload = function(event) {
+		raw_data = event.target.result;
+		read_bed_file(raw_data);
+	}
+}
+
+d3.select("#feature_bed_file").on("change",open_bed_file);
+
+function run_graph_search() {
+	console.log("Running graph search");
+	_Feature_search_results = [];
+
+	var run_starts_individually = true;
+	if (run_starts_individually) {
+		for (var i in _Starting_intervals_for_search) {
+			var result = _SplitThreader_graph.search([_Starting_intervals_for_search[i]], _Ending_intervals_for_search);
+			if (result != null) {
+				result.from = _Starting_intervals_for_search[result.source_id].gene;
+				if (result.from == undefined) {
+					result.from = _Starting_intervals_for_search[result.source_id].name;
+				}
+				result.from_type = _Starting_intervals_for_search[result.source_id].type;
+				
+				result.to = _Ending_intervals_for_search[result.target_id].gene;
+				if (result.to == undefined) {
+					result.to = _Ending_intervals_for_search[result.target_id].name;
+				}
+				result.to_type = _Ending_intervals_for_search[result.target_id].type;
+				_Feature_search_results.push(result);
+			}
+		}
+	} else {
+		var result = _SplitThreader_graph.search(_Starting_intervals_for_search, _Ending_intervals_for_search);
+		if (result != null) {
+			_Feature_search_results.push(result);
+		}
+	}
+	d3.selectAll(".show_after_graph_search").style("display","inline");
+	d3.select("#froms_matched_count").html(_Feature_search_results.length);
+	d3.select("#total_froms_count").html(_Starting_intervals_for_search.length);
+
+	
+	update_search_results_table();
+}
+
+function highlight_graph_search_result(d) {
+
+	// ???????????????????????
+	
+	$('.nav-tabs a[href="#visualizer_tab"]').tab('show');
+
+	// hide_all_genes();
+	// highlight_gene(d.annotation1);
+	// highlight_gene(d.annotation2);
+	// jump_to_gene(d.annotation1,"top");
+	// jump_to_gene(d.annotation2,"bottom");
+
+	// user_message("Info", "Highlighting graph search result: " + d.name1 + " - " + d.name2)
+
+	// update_genes();
+
+	highlight_variants(d.variant_names);
+}
+
+function update_search_results_table() {
+	d3.select("#feature_search_table_landing").call(
+		d3.superTable()
+			.table_data(_Feature_search_results)
+			.table_header(["from","from_type","to","to_type","distance","num_variants","path_chromosomes"])
+			.show_advanced_filters(true)
+			.num_rows_to_show(30)
+			.click_function(highlight_graph_search_result)
+	);
+}
+
+d3.select("#graph_search_button").on("click", run_graph_search);
 
 function search_graph_for_fusion() {
 	if (_current_fusion_genes[1] != undefined && _current_fusion_genes[2] != undefined) {
