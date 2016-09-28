@@ -220,13 +220,16 @@ Graph.prototype.mark_targets = function(list_of_target_ports) {
 	}
 }
 
-Graph.prototype.bfs = function(list1,list2) {
-	arbitrary_depth_limit = 100000;
+Graph.prototype.bfs = function(list1, list2, search_limits) {
+	arbitrary_depth_limit = 100000000;
 
 	this.untarget_all();
-	this.mark_targets(list2); 
+	this.mark_targets(list2);
 
 	this.unvisit_all();
+
+
+	var answers = [];
 
 	// Enqueue the distance to the start port:
 	var priority_queue = new PriorityQueue({ comparator: function(a, b) { return a.distance - b.distance; }});
@@ -242,11 +245,12 @@ Graph.prototype.bfs = function(list1,list2) {
 		if (priority_queue.length == 0) {
 			break;
 		}
-		var next = priority_queue.dequeue();
-		// console.log("POP:");
-		// console.log(next);
+		var next = priority_queue.dequeue(); // pop
 		var distance = next.distance;
 		var next_port = next.next_port;
+		if (search_limits != undefined && distance > search_limits.distance) {
+			return answers;
+		}
 		if (next_port instanceof Port) {
 			for (var i = 0; i < next_port.edges.length; i++) {
 				if (next_port.edges[i].port.targets != undefined) {
@@ -265,10 +269,19 @@ Graph.prototype.bfs = function(list1,list2) {
 			}
 		} else {
 			// Found a target
-			return {"distance":distance,"path":next.path, "source_id":next.source_id,"target_id":next.target_id};
+			if (search_limits == undefined) {
+				return {"distance":distance,"path":next.path, "source_id":next.source_id,"target_id":next.target_id};
+			} else {
+				answers.push({"distance":distance,"path":next.path, "source_id":next.source_id,"target_id":next.target_id});
+			}
 		}
 	}
-	return null;
+	if (answers.length == 0) {
+		return null;
+	} else {
+		return answers;	
+	}
+	
 };
 
 
@@ -469,11 +482,10 @@ Graph.prototype.details_from_path = function(results) {
 		}
 		current_port = output.path[i];
 	}
-
 	return output;
 }
 
-Graph.prototype.gene_fusion = function(gene1,gene2) {
+Graph.prototype.gene_fusion = function(gene1,gene2, max_distance) {
 	// var gene1 = {"name":"test1","chromosome":"1","start":50080,"end":50370};
 	// var gene2 = {"name":"test2","chromosome":"2","start":1340, "end":1010};
 
@@ -497,20 +509,43 @@ Graph.prototype.gene_fusion = function(gene1,gene2) {
 	var list1 = this.port_list_by_interval(gene1);
 	var list2 = this.port_list_by_interval(gene2);
 
-	var results = this.bfs(list1,list2);
-	console.log(results);
-	var details = this.details_from_path(results);
+	var results = this.bfs(list1,list2,{"distance":max_distance});
+	if (results == null || results.length == 0) {
+		return null;
+	}
+	var result_list = [];
+	for (var i in results) {
+		var details = this.details_from_path(results[i]);
 
-	details.gene1 = gene1.name;
-	details.gene2 = gene2.name;
+		details.gene1 = gene1.name;
+		details.gene2 = gene2.name;
 
-	details.chrom1 = gene1.chromosome;
-	details.chrom2 = gene2.chromosome;
-	details.annotation1 = gene1;
-	details.annotation2 = gene2;
-	details.num_variants = details.variant_names.length;
-	
-	return details;
+		details.chrom1 = gene1.chromosome;
+		details.chrom2 = gene2.chromosome;
+		details.annotation1 = gene1;
+		details.annotation2 = gene2;
+		details.num_variants = details.variant_names.length;
+
+		result_list.push(details);
+	}
+
+	// The smallest distances are already listed first, so we report that best result as well as:
+	// 		1. paths with the same distance
+	// 		2. paths with fewer variants (best distance for each number of variants)
+
+	var best_results = [];
+	best_results.push(result_list[0]);
+	var smallest_num_variants = result_list[0].num_variants;
+	for (var i = 1; i < result_list.length; i++) {
+		if (result_list[i].distance == result_list[0].distance) {
+			best_results.push(result_list[i]);
+		} else if (result_list[i].num_variants > 0 && result_list[i].num_variants < smallest_num_variants) {
+			smallest_num_variants = result_list[i].num_variants;
+			best_results.push(result_list[i]);
+		}
+	}
+
+	return best_results;
 }
 
 Graph.prototype.port_list_from_interval_list = function(interval_list) {

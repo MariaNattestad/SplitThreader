@@ -23,7 +23,7 @@
 		<li class="active"><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
 		<li><a data-toggle="tab" href="#gene_fusions_tab">Gene fusions</a></li>
-		<li><a data-toggle="tab" href="#feature_search_tab">Feature search</a></li>
+		<li><a data-toggle="tab" href="#feature_search_tab">Graph search</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -355,7 +355,16 @@
 								<p>
 									Found results for <span id="froms_matched_count">X</span> out of <span id="total_froms_count">N</span> total intervals in the "From" table. Showing at most 30, but filter and sort works on the whole set (as with all tables in SplitThreader). 
 								</p>
+
+								<!-- Export options -->
+								<label>Export gene fusions</label>
+								<p>
+									<a class="btn btn-info" id="export_search_results_to_csv">Export table as csv</a>
+								</p>
+								<!-- end of export options -->
+
 							</div>
+
 							<div class="table_landing" id="feature_search_table_landing"></div>
 						</div>
 					</div>

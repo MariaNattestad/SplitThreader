@@ -206,11 +206,11 @@ QUnit.test ( "gene fusion detection from genomic variants test", function( asser
 		assert.ok(c[i][1]!=undefined, "list contains Ports");
 	}
 	
-	var fusion_output = g.gene_fusion(gene1,gene2);
-	assert.equal(fusion_output.distance, 0);
-	assert.equal(fusion_output.path.length, 2, "path has length 2");
-	assert.equal(fusion_output.variant_names.length, 1, "Correct number of variants");
-	assert.equal(fusion_output.variant_names[0],"variant2", "Correct variant name");
+	var fusion_output = g.gene_fusion(gene1,gene2,10000000);
+	assert.equal(fusion_output[0].distance, 0);
+	assert.equal(fusion_output[0].path.length, 2, "path has length 2");
+	assert.equal(fusion_output[0].variant_names.length, 1, "Correct number of variants");
+	assert.equal(fusion_output[0].variant_names[0],"variant2", "Correct variant name");
 });
 
 QUnit.test ( "feature search", function(assert) {
@@ -218,7 +218,6 @@ QUnit.test ( "feature search", function(assert) {
 	g.from_genomic_variants(test_gf_1,test_gf_1_genome);
 
 	var fusion_output = g.search([gene1],[gene2]);
-	console.log(fusion_output);
 	assert.equal(fusion_output.distance, 0);
 	assert.equal(fusion_output.path.length, 2, "path has length 2");
 	assert.equal(fusion_output.variant_names.length, 1, "Correct number of variants");

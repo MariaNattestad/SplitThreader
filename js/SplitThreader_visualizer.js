@@ -57,6 +57,7 @@ _settings.draw_zoom_buttons = true;
 _settings.font_size = 12;
 _settings.search_dataset = {};
 _settings.show_features = true;
+_settings.max_fusion_distance = 1000000;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -1869,7 +1870,11 @@ function dataset_to_csv(dataset, header) {
 	for (var i in dataset) {
 		var row = dataset[i][header[0]];
 		for (var j = 1; j < header.length; j++) {
-			row += "," + dataset[i][header[j]];
+			var addition = dataset[i][header[j]];
+			if (typeof(addition) === "object") {
+				addition = addition.join("|");
+			}
+			row += "," + addition;
 		}
 		text += row + "\n";
 	}
@@ -1878,10 +1883,7 @@ function dataset_to_csv(dataset, header) {
 function count_filtered_data(dataset) {
 	d3.selectAll(".filtered_number_of_variants").html(dataset.length);
 	d3.select("#table_row_count").html(function() {if (dataset.length < 15) {return dataset.length} else {return 15}});
-	populate_ribbon_for_filtered_variant_table(dataset);
-	var csv_content = dataset_to_csv(dataset, ["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category","nearby_variant_count"]);
-	var encodedUri = encodeURI(csv_content);
-	d3.select("#export_variant_table_to_csv").attr("href",encodedUri).attr("download","filtered_variants.csv");
+	update_filtered_variants_for_Ribbon_and_CSV(dataset);
 	draw_histogram(dataset);
 }
 
@@ -1907,10 +1909,45 @@ function populate_ribbon_link() {
 	d3.select("#data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(_Filtered_variant_data));
 }
 
-function populate_ribbon_for_filtered_variant_table(data) {
+
+
+function update_fusions_for_Ribbon_and_CSV() {
+	var variants_for_Ribbon = [];
+	for (var j in _Gene_fusions) {
+		for (var i in _Filtered_variant_data) {
+			if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
+				var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
+				fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
+				variants_for_Ribbon.push(fusion_variant);
+			}
+		}
+	}
+	d3.select("#fusion_data_to_send_ribbon").html("");
+	d3.select("#fusion_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(variants_for_Ribbon));
+	d3.select("#send_fusion_to_ribbon_form").style("display","block");
+
+	// Export to CSV
+	var csv_content = dataset_to_csv(_Gene_fusions, ["gene1","gene2","distance","num_variants","path_chromosomes"]);
+	var encodedUri = encodeURI(csv_content);
+	d3.select("#export_gene_fusions_to_csv").attr("href",encodedUri).attr("download","gene_fusions.csv");
+
+}
+
+function update_filtered_variants_for_Ribbon_and_CSV(data) {
 	d3.select("#filtered_data_to_send_ribbon").html("");
 	d3.select("#filtered_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(data));
+
+	var csv_content = dataset_to_csv(data, ["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category","nearby_variant_count"]);
+	var encodedUri = encodeURI(csv_content);
+	d3.select("#export_variant_table_to_csv").attr("href",encodedUri).attr("download","filtered_variants.csv");
 }
+
+function update_graph_search_results_for_CSV(data) {
+	var csv_content = dataset_to_csv(data, ["from","from_type","to","to_type","distance","num_variants","path_chromosomes"]);
+	var encodedUri = encodeURI(csv_content);
+	d3.select("#export_search_results_to_csv").attr("href",encodedUri).attr("download","graph_search_results.csv");	
+}
+
 function draw_histogram(variant_data_to_use) {
 
 	if (variant_data_to_use == null) {
@@ -2287,6 +2324,20 @@ d3.select("#feature_bed_file").on("change",open_bed_file);
 
 function run_graph_search() {
 	console.log("Running graph search");
+	console.log(_Starting_intervals_for_search);
+	if (_Starting_intervals_for_search.length == 0) {
+		user_message("Error", 'Select a dataset in the "From" column');
+		return;
+	}
+
+	console.log(_Ending_intervals_for_search);
+	if (_Ending_intervals_for_search.length == 0) {
+		user_message("Error", 'Select a dataset in the "To" column');
+		return;
+	} 
+
+	user_message("Info", "Running graph search");
+
 	_Feature_search_results = [];
 
 	var run_starts_individually = true;
@@ -2320,7 +2371,6 @@ function run_graph_search() {
 	d3.selectAll(".show_after_graph_search").style("display","inline");
 	d3.select("#froms_matched_count").html(_Feature_search_results.length);
 	d3.select("#total_froms_count").html(_Starting_intervals_for_search.length);
-
 	
 	update_search_results_table();
 }
@@ -2360,6 +2410,7 @@ function update_search_results_table() {
 			.show_advanced_filters(true)
 			.num_rows_to_show(30)
 			.click_function(highlight_graph_search_result)
+			.run_on_filtered_data_function(update_graph_search_results_for_CSV)
 	);
 }
 
@@ -2376,9 +2427,11 @@ function search_graph_for_fusion() {
 		} else {
 			user_message("");
 		}
-		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2]);
-
-		_Gene_fusions.push(results);
+		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2],_settings.max_fusion_distance);
+		for (var i in results) {
+			_Gene_fusions.push(results[i]);	
+		}
+		
 		user_message("Instructions","Click on table to highlight the gene fusion path found through the SplitThreader graph.");
 		
 	} else {
@@ -2386,27 +2439,7 @@ function search_graph_for_fusion() {
 	}
 }
 
-function update_fusions_for_Ribbon() {
-	var variants_for_Ribbon = [];
-	for (var j in _Gene_fusions) {
-		for (var i in _Filtered_variant_data) {
-			if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
-				var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
-				fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
-				variants_for_Ribbon.push(fusion_variant);
-			}
-		}
-	}
-	d3.select("#fusion_data_to_send_ribbon").html("");
-	d3.select("#fusion_data_to_send_ribbon").append("input").attr("type","hidden").attr("name","splitthreader").property("value", JSON.stringify(variants_for_Ribbon));
-	d3.select("#send_fusion_to_ribbon_form").style("display","block");
 
-	// Export to CSV
-	var csv_content = dataset_to_csv(_Gene_fusions, ["gene1","gene2","distance","num_variants","path_chromosomes"]);
-	var encodedUri = encodeURI(csv_content);
-	d3.select("#export_gene_fusions_to_csv").attr("href",encodedUri).attr("download","gene_fusions.csv");
-
-}
 function update_fusion_table() {
 	d3.select("#show_when_fusions_submitted").style("display","block");
 
@@ -2418,7 +2451,7 @@ function update_fusion_table() {
 			.click_function(highlight_gene_fusion)
 	);
 
-	update_fusions_for_Ribbon();
+	update_fusions_for_Ribbon_and_CSV();
 }
 
 function submit_fusion() {
