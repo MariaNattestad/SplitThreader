@@ -58,6 +58,7 @@ _settings.font_size = 12;
 _settings.search_dataset = {};
 _settings.show_features = true;
 _settings.max_fusion_distance = 1000000;
+_settings.circos_padding_in_bp = 10000000;
 
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
@@ -501,6 +502,7 @@ function read_genome_file() {
 			sum_genome_size += genome_input[i].size;
 			// console.log(genome_input[i].chromosome);
 		}
+		_settings.circos_padding_in_bp = sum_genome_size/400;
 
 		_Genome_data = [];  // set global variable for accessing this elsewhere
 		var cumulative_genome_size = 0;
@@ -509,7 +511,7 @@ function read_genome_file() {
 			if (genome_input[i].size > sum_genome_size*0.01){ //only include chromosomes accounting for at least 1% of the total genome sequence
 				_Genome_data.push({"chromosome":genome_input[i].chromosome, "size":genome_input[i].size, "cum_pos":cumulative_genome_size});
 				_Chromosome_start_positions[genome_input[i].chromosome] = cumulative_genome_size;
-				cumulative_genome_size += genome_input[i].size;
+				cumulative_genome_size += genome_input[i].size + _settings.circos_padding_in_bp;
 			}
 		}
 		_Chromosome_start_positions["total"] = cumulative_genome_size;
@@ -701,8 +703,6 @@ function draw_circos() {
 				_dragging_chromosome = null;
 			})
 
-		//////////////////  Load connections and plot them on circos ////////////////////////////
-
 		var chromosome_labels = _circos_canvas.selectAll("g.circos_chromosome")
 			.data(_Genome_data)
 			.enter()
@@ -721,7 +721,6 @@ function draw_circos() {
 				.attr("fill", function(d) { return _scales.chromosome_colors(d.chromosome); } ) //set the color for each slice to be chosen from the color function defined above
 				.attr("d", arc)
 				.attr("class","chromosome_arc");
-				// .call(drag)
 
 		chromosome_labels.append("text")
 			.attr("transform",function(d) {
@@ -734,7 +733,6 @@ function draw_circos() {
 			.style("font-size",_settings.font_size)
 			.attr("class","chromosome_label")
 			.text(function(d, i) { return d.chromosome; });
-			// .call(drag)
 }
 
 ///////////    Add connections to the circos plot   /////////////////////
