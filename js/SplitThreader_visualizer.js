@@ -2348,33 +2348,59 @@ function run_graph_search() {
 
 	_Feature_search_results = [];
 	var run_starts_individually = true;
-	if (run_starts_individually) {
-		for (var i in _Starting_intervals_for_search) {
-			var result = _SplitThreader_graph.search([_Starting_intervals_for_search[i]], _Ending_intervals_for_search);
-			if (result != null) {
-				result.source = _Starting_intervals_for_search[result.source_id];
-				result.target = _Ending_intervals_for_search[result.target_id];
-				
-				result.from = _Starting_intervals_for_search[result.source_id].gene;
-				if (result.from == undefined) {
-					result.from = _Starting_intervals_for_search[result.source_id].name;
-				}
-				result.from_type = _Starting_intervals_for_search[result.source_id].type;
 
-				result.to = _Ending_intervals_for_search[result.target_id].gene;
-				if (result.to == undefined) {
-					result.to = _Ending_intervals_for_search[result.target_id].name;
-				}
-				result.to_type = _Ending_intervals_for_search[result.target_id].type;
-				_Feature_search_results.push(result);
-			}
-		}
-	} else {
-		var result = _SplitThreader_graph.search(_Starting_intervals_for_search, _Ending_intervals_for_search);
+
+	var results = _SplitThreader_graph.search(_Starting_intervals_for_search, _Ending_intervals_for_search, run_starts_individually);
+	for (var i in results) {
+		var result = results[i];
 		if (result != null) {
+			result.source = _Starting_intervals_for_search[result.source_id];
+			result.target = _Ending_intervals_for_search[result.target_id];
+			
+			result.from = _Starting_intervals_for_search[result.source_id].gene;
+			if (result.from == undefined) {
+				result.from = _Starting_intervals_for_search[result.source_id].name;
+			}
+			result.from_type = _Starting_intervals_for_search[result.source_id].type;
+
+			result.to = _Ending_intervals_for_search[result.target_id].gene;
+			if (result.to == undefined) {
+				result.to = _Ending_intervals_for_search[result.target_id].name;
+			}
+			result.to_type = _Ending_intervals_for_search[result.target_id].type;
 			_Feature_search_results.push(result);
 		}
 	}
+
+
+
+	// if (run_starts_individually) {
+	// 	for (var i in _Starting_intervals_for_search) {
+	// 		var result = _SplitThreader_graph.search([_Starting_intervals_for_search[i]], _Ending_intervals_for_search);
+	// 		if (result != null) {
+	// 			result.source = _Starting_intervals_for_search[result.source_id];
+	// 			result.target = _Ending_intervals_for_search[result.target_id];
+				
+	// 			result.from = _Starting_intervals_for_search[result.source_id].gene;
+	// 			if (result.from == undefined) {
+	// 				result.from = _Starting_intervals_for_search[result.source_id].name;
+	// 			}
+	// 			result.from_type = _Starting_intervals_for_search[result.source_id].type;
+
+	// 			result.to = _Ending_intervals_for_search[result.target_id].gene;
+	// 			if (result.to == undefined) {
+	// 				result.to = _Ending_intervals_for_search[result.target_id].name;
+	// 			}
+	// 			result.to_type = _Ending_intervals_for_search[result.target_id].type;
+	// 			_Feature_search_results.push(result);
+	// 		}
+	// 	}
+	// } else {
+	// 	var result = _SplitThreader_graph.search(_Starting_intervals_for_search, _Ending_intervals_for_search);
+	// 	if (result != null) {
+	// 		_Feature_search_results.push(result);
+	// 	}
+	// }
 	d3.selectAll(".show_after_graph_search").style("display","inline");
 	d3.select("#froms_matched_count").html(_Feature_search_results.length);
 	d3.select("#total_froms_count").html(_Starting_intervals_for_search.length);
@@ -2444,7 +2470,6 @@ function search_graph_for_fusion() {
 		}
 		
 		user_message("Instructions","Click on table to highlight the gene fusion path found through the SplitThreader graph.");
-		
 	} else {
 		user_message("Instructions","Select genes first using the Gene 1 and Gene 2 input fields");
 	}

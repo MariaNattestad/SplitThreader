@@ -197,8 +197,9 @@ Graph.prototype.distance_between_2_points = function(point1,point2) {
 	//  create lists of [distance,Port]
 	var list1 = [[point1.distance["e"],point1.node.ports["e"]],[point1.distance["s"],point1.node.ports["s"]]];
 	var list2 = [[point2.distance["e"],point2.node.ports["e"]],[point2.distance["s"],point2.node.ports["s"]]];
-
-	return this.bfs(list1,list2);
+	this.untarget_all();
+	this.mark_targets(list2);
+	return this.bfs(list1);
 }
 
 Graph.prototype.unvisit_all = function() {
@@ -220,11 +221,8 @@ Graph.prototype.mark_targets = function(list_of_target_ports) {
 	}
 }
 
-Graph.prototype.bfs = function(list1, list2, search_limits) {
+Graph.prototype.bfs = function(list1, search_limits) {
 	arbitrary_depth_limit = 100000000;
-
-	this.untarget_all();
-	this.mark_targets(list2);
 
 	this.unvisit_all();
 
@@ -274,6 +272,9 @@ Graph.prototype.bfs = function(list1, list2, search_limits) {
 			} else {
 				answers.push({"distance":distance,"path":next.path, "source_id":next.source_id,"target_id":next.target_id});
 			}
+		}
+		if (j == arbitrary_depth_limit) {
+			console.log("DEPTH LIMIT REACHED IN SplitThreader.js");
 		}
 	}
 	if (answers.length == 0) {
@@ -509,7 +510,10 @@ Graph.prototype.gene_fusion = function(gene1,gene2, max_distance) {
 	var list1 = this.port_list_by_interval(gene1);
 	var list2 = this.port_list_by_interval(gene2);
 
-	var results = this.bfs(list1,list2,{"distance":max_distance});
+	this.untarget_all();
+	this.mark_targets(list2);
+
+	var results = this.bfs(list1,{"distance":max_distance});
 	if (results == null || results.length == 0) {
 		return null;
 	}
@@ -561,20 +565,37 @@ Graph.prototype.port_list_from_interval_list = function(interval_list) {
 	}
 	return list1;
 }
-Graph.prototype.search = function(interval_list_1, interval_list_2) {
-	var list1 = this.port_list_from_interval_list(interval_list_1);
+Graph.prototype.search = function(interval_list_1, interval_list_2,run_starts_individually) {
 	var list2 = this.port_list_from_interval_list(interval_list_2);
-
-	if (list1.length == 0 || list2.length == 0) {
-		// if (list1.length == 0) {
-		// 	console.log("No valid intervals in group 1");
-		// }
-		// if (list2.length == 0) {
-		// 	console.log("No valid intervals in group 2");
-		// }
+	if (list2.length == 0) {
 		return null;
-	} else { 
-		var results = this.bfs(list1,list2);
+	}
+	this.untarget_all();
+	this.mark_targets(list2);
+
+	if (run_starts_individually === true) {
+		var result_list = [];
+		for (var i in interval_list_1) {
+			var list1 = this.port_list_from_interval_list([interval_list_1[i]]);
+			if (list1.length == 0) {
+				result_list.push(null);
+			}
+			var results = this.bfs(list1);
+			if (results != null) {
+				var details = this.details_from_path(results);
+				details.num_variants = details.variant_names.length;
+				result_list.push(details);
+			} else {
+				result_list.push(results);
+			}
+		}
+		return result_list;
+	} else {
+		var list1 = this.port_list_from_interval_list(interval_list_1);
+		if (list1.length == 0) {
+			return null;
+		}
+		var results = this.bfs(list1);
 		if (results != null) {
 			var details = this.details_from_path(results);
 			details.num_variants = details.variant_names.length;
@@ -583,7 +604,6 @@ Graph.prototype.search = function(interval_list_1, interval_list_2) {
 			return results;
 		}
 	}
-	
 }
 
 
