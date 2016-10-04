@@ -158,7 +158,6 @@ d3.superTable = function() {
 	};
 	
 	my.typing_advanced_filter = function(d) {
-		console.log("typing advanced_filter");
 		my.filter_rows(d, d3.event.target.value);
 
 	};

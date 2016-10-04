@@ -304,8 +304,9 @@
 								<input type="radio" name="search_from" value="genes">Genes
 							</label>
 							<label class="radio-inline">
-								<input type="radio" name="search_from" value="features">Features
+								<input type="radio" name="search_from" value="features">Bed file
 							</label>
+							<p>Number of starting points: <span id="search_from_item_count"></span></p>
 							<div class="table_landing" id="search_from_table_landing">
 
 							</div>
@@ -324,8 +325,9 @@
 								<input type="radio" name="search_to" value="genes">Genes
 							</label>
 							<label class="radio-inline">
-								<input type="radio" name="search_to" value="features">Features
+								<input type="radio" name="search_to" value="features">Bed file
 							</label>
+							<p>Number of target end-points: <span id="search_to_item_count"></span></p>
 							<div class="table_landing" id="search_to_table_landing">
 							</div>
 						</div>
@@ -373,7 +375,7 @@
 			<div class="panel panel-default">
 				<div class="panel-heading">
 					<h4 class="panel-title">
-						Upload features
+						Upload a bed file
 					</h4>
 				</div>
 				<div class="panel-body">

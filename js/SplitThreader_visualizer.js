@@ -35,7 +35,7 @@ _static.spansplit_bar_length = 10;
 _static.foot_spacing_from_axis = 5;
 _static.foot_length = 15;
 _static.annotations_available = [{"name":"Human hg19 Gencode","ucsc":"hg19", "path":"resources/annotation/Human_hg19.genes.csv"}, {"name":"Human GRCh38 Gencode","ucsc":"hg38", "path":"resources/annotation/Human_GRCh38.genes.csv"}];
-
+_static.max_variants_to_show = 10000;
 
 
 var _settings = {};
@@ -352,7 +352,7 @@ function update_variants() {
 	draw_histogram(_Filtered_variant_data);
 	draw_connections();
 	draw_circos_connections();
-	if (_Filtered_variant_data.length > 5000) {
+	if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 		user_message("Warning", "Too many variants to run SplitThreader graph computations (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
 		return;
 	} else {
@@ -462,7 +462,7 @@ function wait_then_run_when_all_data_loaded() {
 		scale_to_new_chrom("bottom");
 		draw_everything(); 
 		
-		if (_Filtered_variant_data.length > 5000) {
+		if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 			user_message("Warning", "Too many variants to run SplitThreader graph computations (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
 			return;
 		} else {
@@ -730,14 +730,14 @@ function draw_circos() {
 			})
 			.attr("text-anchor", "middle")
 			.attr("dominant-baseline","middle")
-			.style("font-size",_settings.font_size)
+			.style("font-size",_settings.font_size*0.8)
 			.attr("class","chromosome_label")
 			.text(function(d, i) { return d.chromosome; });
 }
 
 ///////////    Add connections to the circos plot   /////////////////////
 function draw_circos_connections() {
-	if (_Filtered_variant_data.length > 5000) {
+	if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 		user_message("Warning", "Too many variants to draw (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
 		return;
 	} else {
@@ -1176,7 +1176,7 @@ function top_plus_bottom_minus(chromosome) {
 
 function draw_connections() {
 
-	if (_Filtered_variant_data.length > 5000) {
+	if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 		user_message("Warning", "Too many variants to draw (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
 		return;
 	} else {
@@ -1547,9 +1547,9 @@ function draw_features(top_or_bottom) {
 				.attr("x",function(d) {return _scales.zoom_plots[top_or_bottom].x(d.start)})
 				.attr("y", function(d) {
 					if (top_or_bottom == "top") {
-						return _padding.gene_offset*1.5;
+						return _padding.gene_offset*1.2;
 					} else {
-						return _layout.zoom_plot.height-_padding.gene_offset*1.5;
+						return _layout.zoom_plot.height-_padding.gene_offset*1.2;
 					}
 				})
 				.attr("width",function(d) {return _scales.zoom_plots[top_or_bottom].x(d.end) - _scales.zoom_plots[top_or_bottom].x(d.start)})
@@ -1557,6 +1557,9 @@ function draw_features(top_or_bottom) {
 				.style("fill",function(d) {if (d.highlighted == true) {return "black"} else {return "gray"}})
 				.on('mouseover', function(d) {
 						var text = d.name + " (" + d.type + ")";
+						if (d.type == "") {
+							text = d.name;
+						}
 						var x = _layout.zoom_plot.x + _scales.zoom_plots[top_or_bottom].x((d.start+d.end)/2);
 						var y = (top_or_bottom == "top") ? (_padding.top + _padding.gene_offset/2 - _padding.tooltip) : (_layout.zoom_plot.bottom_y + _layout.zoom_plot.height-_padding.gene_offset/2 + _padding.tooltip);
 						show_tooltip(text,x,y,_svg);
@@ -1744,6 +1747,8 @@ function highlight_feature(d) {
 }
 
 function highlight_gene_fusion(d) {
+
+
 	$('.nav-tabs a[href="#visualizer_tab"]').tab('show');
 
 	hide_all_genes();
@@ -1758,8 +1763,11 @@ function highlight_gene_fusion(d) {
 	user_message("Info", "Highlighting gene fusion: " + d.gene1 + " - " + d.gene2)
 
 	update_genes();
-
-	highlight_variants(d.variant_names);
+	if (d.distance == -1) {
+		user_message("Warning", "No path was found connecting these two genes");
+	} else {
+		highlight_variants(d.variant_names);
+	}
 }
 
 
@@ -1912,11 +1920,13 @@ function populate_ribbon_link() {
 function update_fusions_for_Ribbon_and_CSV() {
 	var variants_for_Ribbon = [];
 	for (var j in _Gene_fusions) {
-		for (var i in _Filtered_variant_data) {
-			if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
-				var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
-				fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
-				variants_for_Ribbon.push(fusion_variant);
+		if (_Gene_fusions[j].distance != -1) {
+			for (var i in _Filtered_variant_data) {
+				if (_Gene_fusions[j].variant_names.indexOf(_Filtered_variant_data[i].variant_name) != -1) {
+					var fusion_variant = JSON.parse(JSON.stringify(_Filtered_variant_data[i]));
+					fusion_variant.variant_name = _Gene_fusions[j].gene1 + "-" + _Gene_fusions[j].gene2 + ": " + fusion_variant.variant_name;
+					variants_for_Ribbon.push(fusion_variant);
+				}
 			}
 		}
 	}
@@ -2232,12 +2242,14 @@ set_search_intervals["from"] = function(data) {
 	for (var i=0; i < _Starting_intervals_for_search.length; i++) {
 		_Starting_intervals_for_search[i].id = i;
 	}
+	d3.select("#search_from_item_count").html(_Starting_intervals_for_search.length);
 }
 set_search_intervals["to"] = function(data) {
 	_Ending_intervals_for_search = data;
 	for (var i=0; i < _Ending_intervals_for_search.length; i++) {
 		_Ending_intervals_for_search[i].id = i;
 	}
+	d3.select("#search_to_item_count").html(_Ending_intervals_for_search.length);
 }
 
 function update_search_input_table(to_or_from, data_type) {
@@ -2255,7 +2267,7 @@ function update_search_input_table(to_or_from, data_type) {
 	} else if (data_type == "features") {
 
 		if (_Features.length == 0) {
-			d3.select("#search_" + to_or_from + "_table_landing").html("Add features by going to the 'Upload features' panel below, then click this features button again to refresh");
+			d3.select("#search_" + to_or_from + "_table_landing").html("Add a bed file by going to the 'Upload a bed file' panel below, then click this 'Bed file' button again to refresh");
 		} else {
 			d3.select("#search_" + to_or_from + "_table_landing").call(
 				d3.superTable()
@@ -2306,8 +2318,8 @@ function open_bed_file(event) {
 	var raw_data;
 	var reader = new FileReader();
 
-	if (this.files[0].size > 1000000) {
-		user_message("Error","This file is larger than 1 MB. Please choose a smaller file. ");
+	if (this.files[0].size > 10000000) {
+		user_message("Error","This file is larger than 10 MB. Please choose a smaller file. ");
 		return;
 	}
 
@@ -2322,13 +2334,11 @@ d3.select("#feature_bed_file").on("change",open_bed_file);
 
 function run_graph_search() {
 	console.log("Running graph search");
-	console.log(_Starting_intervals_for_search);
 	if (_Starting_intervals_for_search.length == 0) {
 		user_message("Error", 'Select a dataset in the "From" column');
 		return;
 	}
 
-	console.log(_Ending_intervals_for_search);
 	if (_Ending_intervals_for_search.length == 0) {
 		user_message("Error", 'Select a dataset in the "To" column');
 		return;
@@ -2337,7 +2347,6 @@ function run_graph_search() {
 	user_message("Info", "Running graph search");
 
 	_Feature_search_results = [];
-
 	var run_starts_individually = true;
 	if (run_starts_individually) {
 		for (var i in _Starting_intervals_for_search) {
@@ -2419,15 +2428,19 @@ function search_graph_for_fusion() {
 
 		_current_fusion_genes[1].name = _current_fusion_genes[1].gene;
 		_current_fusion_genes[2].name = _current_fusion_genes[2].gene;
-		if (_Filtered_variant_data.length > 5000) {
+		if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 			user_message("Warning", "Too many variants to run SplitThreader graph computations (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
 			return;
 		} else {
 			user_message("");
 		}
 		var results = _SplitThreader_graph.gene_fusion(_current_fusion_genes[1],_current_fusion_genes[2],_settings.max_fusion_distance);
-		for (var i in results) {
-			_Gene_fusions.push(results[i]);	
+		if (results == null) {
+			_Gene_fusions.push({"gene1":_current_fusion_genes[1].name, "gene2":_current_fusion_genes[2].name,"annotation1":_current_fusion_genes[1],"annotation2":_current_fusion_genes[2], "distance":-1, "num_variants": -1, "path_chromosomes":["no path found"]})
+		} else {
+			for (var i in results) {
+				_Gene_fusions.push(results[i]);	
+			}	
 		}
 		
 		user_message("Instructions","Click on table to highlight the gene fusion path found through the SplitThreader graph.");
@@ -2596,18 +2609,33 @@ function analyze_variants() {
 
 	for (var i in _Filtered_variant_data) {
 		// CNV nearby
-		if (_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) {
-			if (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0) {
-				_Filtered_variant_data[i].CNV_category = "good";
-			} else if (_Filtered_variant_data[i].CNV_diff1 < 0 && _Filtered_variant_data[i].CNV_diff2 < 0) {
-				_Filtered_variant_data[i].CNV_category = "opposite";
-			} else {
-				_Filtered_variant_data[i].CNV_category = "inconsistent";
-			}
-		} else { // No CNV nearby
-			_Filtered_variant_data[i].CNV_category = "none";
+		if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) && (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0)) {
+			_Filtered_variant_data[i].CNV_category = "matching";
+		} else if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_diff1 > 0) || (_Filtered_variant_data[i].CNV_distance2 < margin && _Filtered_variant_data[i].CNV_diff2 > 0)) {
+			_Filtered_variant_data[i].CNV_category = "partial";
+		} else if (_Filtered_variant_data[i].CNV_distance1 > margin && _Filtered_variant_data[i].CNV_distance2 > margin) {
+			_Filtered_variant_data[i].CNV_category = "neutral";
+		} else {
+			_Filtered_variant_data[i].CNV_category = "non-matching";
 		}
+
+		// if (_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) {
+		// 	if (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0) {
+		// 		_Filtered_variant_data[i].CNV_category = "matching";
+		// 	} else if (_Filtered_variant_data[i].CNV_diff1 < 0 && _Filtered_variant_data[i].CNV_diff2 < 0) {
+		// 		_Filtered_variant_data[i].CNV_category = "non-matching";
+		// 	} else {
+		// 		_Filtered_variant_data[i].CNV_category = "partial";
+		// 	}
+		// } else { // No CNV nearby
+		// 	if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_diff1 > 0) || (_Filtered_variant_data[i].CNV_distance2 < margin && _Filtered_variant_data[i].CNV_diff2 > 0)) {
+		// 		_Filtered_variant_data[i].CNV_category = "partial";
+		// 	} else {
+		// 		_Filtered_variant_data[i].CNV_category = "neutral";	
+		// 	}
+		// }
 	}
+
 
 	// Categorize variants by whether other variants are nearby
 
@@ -2646,7 +2674,11 @@ function analyze_variants() {
 			while ((walker >= 0) && (break_list_by_chrom[chrom][walker].pos >= (break_list_by_chrom[chrom][current].pos - margin))) {
 				// Check variant is not other side of self
 				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
-					variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;	
+					if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
+						variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
+					}
+					variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
+					// variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;	
 				} else if (Math.abs(walker - current) == 1) {
 					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
 				}
@@ -2657,7 +2689,10 @@ function analyze_variants() {
 			while ((walker < list_length) && (break_list_by_chrom[chrom][walker].pos <= (break_list_by_chrom[chrom][current].pos + margin))) {
 				// Check variant is not other side of self
 				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
-					variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;
+					if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
+						variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
+					}
+					variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
 				} else if (Math.abs(walker - current) == 1) {
 					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
 				}
@@ -2674,21 +2709,23 @@ function analyze_variants() {
 	var margin_for_paired = 10000;
 
 	for (var i in _Filtered_variant_data) {
+
 		_Filtered_variant_data[i].paired = "none";
-		if (_Filtered_variant_data[i].size != -1 && _Filtered_variant_data[i].size < margin_for_paired) {
-			_Filtered_variant_data[i].paired = "small";
-		} else {
-			for (var var_index_1 in _Filtered_variant_data[i].nearby_variants[1]) {
-				if (_Filtered_variant_data[i].nearby_variants[2][var_index_1] != undefined && _Filtered_variant_data[i].nearby_variants[2][var_index_1] != _Filtered_variant_data[i].nearby_variants[1][var_index_1]) {
-					// Check for stricter margin than neighborhood variant counting:
-					// _Filtered_variant_data[i].nearby_variants[1][var_index_1] means side 1/2 of other variant (var_index_1) that matches with side 1 of this variant (i)
-					if ((Math.abs(_Filtered_variant_data[var_index_1]["pos" + _Filtered_variant_data[i].nearby_variants[1][var_index_1]] - _Filtered_variant_data[i].pos1) < margin_for_paired) && (Math.abs(_Filtered_variant_data[var_index_1]["pos" + _Filtered_variant_data[i].nearby_variants[2][var_index_1]] - _Filtered_variant_data[i].pos2) < margin_for_paired)) {
-						// if (_Filtered_variant_data[i].paired == "none") {
-							// _Filtered_variant_data[i].paired = "nonreciprocal strands";
-						// }
-						if ((_Filtered_variant_data[var_index_1]["strand" + _Filtered_variant_data[i].nearby_variants[1][var_index_1]] != _Filtered_variant_data[i].strand1) && (_Filtered_variant_data[var_index_1]["strand" + _Filtered_variant_data[i].nearby_variants[2][var_index_1]] != _Filtered_variant_data[i].strand2)) {
-							// Both are opposite strands
-							_Filtered_variant_data[i].paired = "reciprocal";
+
+		for (var var_index_1 in _Filtered_variant_data[i].nearby_variants[1]) {
+			if (_Filtered_variant_data[i].nearby_variants[2][var_index_1] != undefined) {
+				for (var s1 in _Filtered_variant_data[i].nearby_variants[1][var_index_1]) {
+					var side1 = _Filtered_variant_data[i].nearby_variants[1][var_index_1][s1];
+					for (var s2 in _Filtered_variant_data[i].nearby_variants[2][var_index_1]) {
+						var side2 = _Filtered_variant_data[i].nearby_variants[2][var_index_1][s2];
+						if (side1 != side2) {
+							// Strands must be opposites:
+							if ((_Filtered_variant_data[var_index_1]["strand"+side1] != _Filtered_variant_data[i].strand1) && (_Filtered_variant_data[var_index_1]["strand" + side2] != _Filtered_variant_data[i].strand2)) {
+								// and positions are within the stricter reciprocal threshold:
+								if ((Math.abs(_Filtered_variant_data[var_index_1]["pos" + side1] - _Filtered_variant_data[i].pos1) < margin_for_paired) && (Math.abs(_Filtered_variant_data[var_index_1]["pos" + side2] - _Filtered_variant_data[i].pos2) < margin_for_paired)) {
+									_Filtered_variant_data[i].paired = "reciprocal";
+								}
+							}
 						}
 					}
 				}
@@ -2715,19 +2752,16 @@ function analyze_variants() {
 		// }
 	}
 
-
 	for (var i in _Filtered_variant_data) {
 		if (_Filtered_variant_data[i].paired === "reciprocal") {
 			_Filtered_variant_data[i].category = "reciprocal";
 		} else if (_Filtered_variant_data[i].simple === true) {
 			_Filtered_variant_data[i].category = "simple";
-		} else if (_Filtered_variant_data[i].nearby_variant_count === 1) {
-			_Filtered_variant_data[i].category = "alone";
+		} else if (_Filtered_variant_data[i].nearby_variant_count === 0) {
+			_Filtered_variant_data[i].category = "solo";
 		} else {
-			_Filtered_variant_data[i].category = "other";
+			_Filtered_variant_data[i].category = "crowded";
 		}
-		
-		// ADD MORE COMPLEX CATEGORIES HERE, just testing the table with paired for now
 	}
 	
 	summarize_variants();
@@ -2756,11 +2790,11 @@ function summarize_variants() {
 	var column_key = "category";
 	var row_key = "CNV_category";
 	var my_list = _Filtered_variant_data;
-	var column_title = "Neighborhood of other variants";
-	var row_title = "Matching copy number changes";
+	var column_title = "Variant neighborhood category";
+	var row_title = "Copy number concordance category";
 
-	var row_names = {};
-	var column_names = {};
+	// var row_names = {};
+	// var column_names = {};
 
 	var type_counts = {};
 	for (var i in my_list) {
@@ -2770,15 +2804,13 @@ function summarize_variants() {
 		if (type_counts[my_list[i][row_key]][my_list[i][column_key]] == undefined) {
 			type_counts[my_list[i][row_key]][my_list[i][column_key]] = 0;
 		}
-		row_names[my_list[i][row_key]] = true;
-		column_names[my_list[i][column_key]] = true;
+		// row_names[my_list[i][row_key]] = true;
+		// column_names[my_list[i][column_key]] = true;
 		type_counts[my_list[i][row_key]][my_list[i][column_key]]++;
 	}
 	
-	// console.log(type_counts);
-	
-	var column_names = d3.keys(column_names);
-	var row_names = d3.keys(row_names);
+	var column_names = ["simple","reciprocal","solo","crowded"]; //d3.keys(column_names);
+	var row_names = ["matching","partial","non-matching","neutral"]; //d3.keys(row_names);
 
 	var table = d3.select("#variant_category_tables_landing").html("").append("table"); // set up table
 	var title_row = table.append("tr");
