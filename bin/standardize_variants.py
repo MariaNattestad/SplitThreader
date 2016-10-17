@@ -229,7 +229,8 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
                     for num in strand_info:
                         strand1 = num[0]
                         strand2 = num[1]
-                        num_reads = int(num[3:])
+                        if len(num) > 2:
+                            num_reads = int(num[3:])
                         fields[8] = strand1
                         fields[9] = strand2
                         fields[11] = num_reads
