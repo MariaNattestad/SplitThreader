@@ -440,6 +440,7 @@ function run(){
 	read_genome_file();
 	read_spansplit_file();
 	
+	set_download_urls();
 	user_message("Info","Loading data");
 	wait_then_run_when_all_data_loaded(); 
 }
@@ -647,6 +648,11 @@ function read_annotation_file() {
 	} else {
 		console.log("No annotation chosen");
 	}
+}
+
+function set_download_urls() {
+	d3.select("#download_coverage_data").attr("href",_input_file_prefix+".copynumber.csv");
+	d3.select("#download_variant_data").attr("href",_input_file_prefix+".variants.csv");
 }
 
 //////////////  Handle dragging chromosomes from circos onto zoom plots to select chromosomes to show /////////////////
@@ -2371,7 +2377,6 @@ function run_graph_search() {
 			_Feature_search_results.push(result);
 		}
 	}
-
 
 
 	// if (run_starts_individually) {

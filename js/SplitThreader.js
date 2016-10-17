@@ -226,12 +226,97 @@ Graph.prototype.bfs = function(list1, search_limits) {
 
 	this.unvisit_all();
 
-
 	var answers = [];
 
 	// Enqueue the distance to the start port:
 	var priority_queue = new PriorityQueue({ comparator: function(a, b) { return a.distance - b.distance; }});
+
+	var list1_partners = {};
 	for (var i = 0; i < list1.length; i++) {
+		// if list1[i] is on a node that already has a target mark, calculate linear distance and check for direct overlaps to add these to the priority queue
+		if (list1[i][1].targets != undefined && list1[i][1].targets.length > 0) {
+			// console.log("source:");
+			// console.log(list1[i]);
+			if (list1_partners[list1[i][1].glide.id] == undefined) {
+				list1_partners[list1[i][1].id] = list1[i];
+				// console.log(list1[i][1].id, "added");
+			} else {
+				// console.log("pair found: ", list1[i][1].id, "and", list1[i][1].glide.id);
+				// console.log(list1[i]);
+				// console.log(list1_partners[list1[i][1].glide.id]);
+
+				var node_length = list1[i][1].node.length;
+
+				var source_mark1 = list1[i];
+				var source_mark2 = list1_partners[list1[i][1].glide.id];
+
+				var start_port = null;
+				var end_port = null;
+
+				var source_start_pos = 0;
+				var source_end_pos = 0;
+				if (source_mark1[1].id[source_mark1[1].id.length-1] == "s" && source_mark2[1].id[source_mark2[1].id.length-1] == "e") {
+					// source_mark1 is on the start port of this node, pos = distance
+					source_start_pos = source_mark1[0];
+					start_port = source_mark1[1];
+					// source mark2 is on the end port of this node, pos = node_length - distance
+					source_end_pos = node_length - source_mark2[0];
+					end_port = source_mark2[1];
+				} else if (source_mark1[1].id[source_mark1[1].id.length-1] == "e" && source_mark2[1].id[source_mark2[1].id.length-1] == "s") {
+					// source_mark2 is on the start port of this node, pos = distance
+					source_start_pos = source_mark2[0];
+					start_port = source_mark2[1];
+					// source mark1 is on the end port of this node, pos = node_length - distance
+					source_end_pos = node_length - source_mark1[0];
+					end_port = source_mark1[1];
+				}
+				// console.log("source_start_pos: ", source_start_pos);
+				// console.log("source_end_pos: ", source_end_pos);
+				if (source_start_pos > source_end_pos) {
+					console.log("ERROR: start greater than end for source positions");
+				}
+				// console.log(start_port.targets.length);
+
+				for (var t in start_port.targets) {
+					// console.log("target:");
+					// console.log(start_port.targets[t]);
+					// for (var s in end_port.targets) {
+					var s = t; 
+					if (end_port.targets[s][2] == start_port.targets[t][2]) {
+						// console.log("matching targets: ", t, s);
+						var target_start_pos = start_port.targets[t][0];
+						var target_end_pos = node_length - end_port.targets[s][0];
+
+						// console.log("target_start_pos: ", target_start_pos);
+						// console.log("target_end_pos: ", target_end_pos);
+						if (target_start_pos > target_end_pos) {
+							console.log("ERROR: start greater than end for target positions");
+						}
+
+						if (target_start_pos > source_end_pos) {
+							// Target is after source
+							// console.log("target is after source");
+							priority_queue.queue({"distance":target_start_pos-source_end_pos,"next_port":0,"path":[], "source_id":list1[i][2], "target_id":start_port.targets[t][2]});
+						} else if (source_start_pos > target_end_pos) {
+							// Source is after target
+							// console.log("source is after target");
+							priority_queue.queue({"distance":source_start_pos-target_end_pos,"next_port":0,"path":[], "source_id":list1[i][2], "target_id":start_port.targets[t][2]});
+						} else {
+							// Overlap
+							// console.log("overlap");
+							if (search_limits == undefined) {
+								return {"distance":0,"path":[], "source_id":list1[i][2],"target_id":start_port.targets[t][2]};
+							}
+							priority_queue.queue({"distance":0,"next_port":0,"path":[], "source_id":list1[i][2], "target_id":start_port.targets[t][2]});
+						}
+					} else {
+						console.log("NOT MATCHING");
+					}
+				}
+
+			}
+		}
+
 		priority_queue.queue({"distance":list1[i][0],"next_port":list1[i][1],"path":[list1[i][1]], "source_id":list1[i][2]});	
 		// console.log("PUSH:");
 		// console.log({"distance":list1[i][0],"next_port":list1[i][1],"path":[list1[i][1]]});
@@ -456,6 +541,13 @@ Graph.prototype.port_list_by_interval = function(interval) {
 }
 
 Graph.prototype.details_from_path = function(results) {
+	if (results == null) {
+		return results;
+	}
+	if (results.path.length == 0) {
+		results.variant_names = [];
+		return results;
+	}
 	var current_port = results.path[0];
 	var output = results;
 	output.edges = [];

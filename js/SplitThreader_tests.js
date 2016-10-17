@@ -217,15 +217,32 @@ QUnit.test ( "general graph search", function(assert) {
 	var g = new Graph();
 	g.from_genomic_variants(test_gf_1,test_gf_1_genome);
 
+	// var gene1 = {"name":"test1","chromosome":"1","start":50080,"end":50370};
+
 	var fusion_output = g.search([gene1],[gene2]);
 	assert.equal(fusion_output.distance, 0);
 	assert.equal(fusion_output.path.length, 2, "path has length 2");
 	assert.equal(fusion_output.variant_names.length, 1, "Correct number of variants");
 	assert.equal(fusion_output.variant_names[0],"variant2", "Correct variant name");
 
-	var fusion_output = g.search([gene1],[gene1]);
-	assert.equal(fusion_output.distance, 0);
-	assert.equal(fusion_output.path.length, 0, "path has length 0");
+	var fusion_output = g.search([gene1],[{"name":"test1","chromosome":"1","start":50000,"end":50070}]);
+	assert.equal(fusion_output.distance, 10, "Linear distance 10 from start of gene");
+	assert.equal(fusion_output.variant_names.length, 0, "No variants");
+
+	var fusion_output = g.search([gene1],[{"name":"test1","chromosome":"1","start":50390,"end":50500}]);
+	assert.equal(fusion_output.distance, 20, "Linear distance 20 from end of gene");
+	assert.equal(fusion_output.variant_names.length, 0, "No variants");
+
+	var fusion_output = g.search([gene1],[{"name":"test1","chromosome":"1","start":50000,"end":50090}]);
+	assert.equal(fusion_output.distance, 0, "Overlap detected (start of gene)");
+	assert.equal(fusion_output.variant_names.length, 0, "No variants");
+
+	var fusion_output = g.search([gene1],[{"name":"test1","chromosome":"1","start":50110,"end":50150}]);
+	assert.equal(fusion_output.distance, 0, "Overlap detected (inside gene)");
+	assert.equal(fusion_output.variant_names.length, 0, "No variants");
+
+	var fusion_output = g.search([gene1],[{"name":"test1","chromosome":"1","start":50210,"end":50430}]);
+	assert.equal(fusion_output.distance, 0, "Overlap detected (end of gene)");
 	assert.equal(fusion_output.variant_names.length, 0, "No variants");
 
 });

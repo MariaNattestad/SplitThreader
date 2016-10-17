@@ -121,6 +121,13 @@
 												<td>Minimum split reads:</td>
 												<td><input id="min_split_reads" type="number"></td>
 											</tr>
+											<tr><td colspan="2"><hr><label>Downloads:</label></td></tr>
+											<tr>
+												<td colspan="2"><a id="download_coverage_data" download>Download coverage data (.csv)</a></td>
+											</tr>
+											<tr>
+												<td colspan="2"><a id="download_variant_data" download>Download variant data (.csv)</a></td>
+											</tr>
 										</table>
 									</div>
 
