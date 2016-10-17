@@ -378,7 +378,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     pass
                 else:
                     print "strand2 not matching:", strand2, num[1]
-                numreads = int(num[3:])
+                if len(numreads) > 2:
+                    numreads = int(num[3:])
                 if overwrite_ID_names:
                     ID_field = ID_counter
 
