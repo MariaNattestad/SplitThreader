@@ -170,7 +170,7 @@
 				</div>
 				<div class="col-md-2">
 					<div id="statistics_landing">
-						<p><label>Average copy number: </label><span id="mean_copynumber"></span></p>
+						<p><label>Average segmented copy number: </label><span id="mean_copynumber"></span></p>
 						<p><label>Total number of variants: </label><span class="number_of_variants"></span></p>
 						<p><label>Number of variants after filtering in table below: </label> <span class="filtered_number_of_variants"></span></p>
 					</div>

@@ -2566,7 +2566,7 @@ function binary_search_closest(search_list,b,e,pos) {
 
 function show_statistics() {
 
-	d3.select("#mean_copynumber").html(" " + Math.round(_Statistics.mean_copynumber,4) + "X");
+	d3.select("#mean_copynumber").html(" " + _Statistics.mean_copynumber.toFixed(2) + "X");
 	d3.selectAll(".number_of_variants").html(" " + _Statistics.number_of_variants);
 
 	// d3.select("#statistics_landing").selectAll("p").data(d3.keys(_Statistics)).enter().append("p").html(function(d) {return d + ": " + Math.round(_Statistics[d])});
@@ -2596,7 +2596,9 @@ function analyze_copynumber() {
 	}
 
 	// _Statistics.copynumber_by_chrom = mean_by_chrom;
+
 	_Statistics.mean_copynumber = weighted_total_copynumber/total_bases;
+	console.log(_Statistics.mean_copynumber);
 }
 
 function dict_length(dictionary) {
