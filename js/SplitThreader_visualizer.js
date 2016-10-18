@@ -2574,7 +2574,7 @@ function show_statistics() {
 
 function analyze_copynumber() {
 
-	var cov = _Coverage_by_chromosome["unsegmented"];
+	var cov = _Coverage_by_chromosome["segmented"];
 
 
 	var weighted_total_copynumber = 0;
