@@ -2566,7 +2566,7 @@ function binary_search_closest(search_list,b,e,pos) {
 
 function show_statistics() {
 
-	d3.select("#mean_copynumber").html(" " + Math.round(_Statistics.mean_copynumber,2) + "X");
+	d3.select("#mean_copynumber").html(" " + Math.round(_Statistics.mean_copynumber,4) + "X");
 	d3.selectAll(".number_of_variants").html(" " + _Statistics.number_of_variants);
 
 	// d3.select("#statistics_landing").selectAll("p").data(d3.keys(_Statistics)).enter().append("p").html(function(d) {return d + ": " + Math.round(_Statistics[d])});
@@ -2574,7 +2574,7 @@ function show_statistics() {
 
 function analyze_copynumber() {
 
-	var cov = _Coverage_by_chromosome["segmented"];
+	var cov = _Coverage_by_chromosome["unsegmented"];
 
 
 	var weighted_total_copynumber = 0;
