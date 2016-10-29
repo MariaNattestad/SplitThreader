@@ -261,7 +261,7 @@ h1#title {
   border: 0px;
 }
 
-#gene_fusions_tab, #variant_analysis_tab, #feature_search_tab {
+#gene_fusions_tab, #variant_analysis_tab, #feature_search_tab, #help_tab {
   padding: 2vmin;
 }
 #show_when_fusions_submitted {

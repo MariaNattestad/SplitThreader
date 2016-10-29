@@ -24,6 +24,7 @@
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
 		<li><a data-toggle="tab" href="#gene_fusions_tab">Gene fusions</a></li>
 		<li><a data-toggle="tab" href="#feature_search_tab">Graph search</a></li>
+		<li><a data-toggle="tab" href="#help_tab">Help</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -395,6 +396,19 @@
 				</div>
 			</div>
 		</div> <!-- end of feature search tab -->
+		<div id="help_tab" class="tab-pane fade">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Navigation
+					</h4>
+				</div>
+				<div class="panel-body">
+					<p>Switch chromosomes by dragging chromosome names from the circos plot onto either the top or bottom coverage bar charts to switch that plot to the new chromosome.</p>
+					<p>Zoom by double-clicking the coverage bar charts and move around by dragging when you are zoomed in. Also click the + and - buttons to zoom in and out.</p>
+				</div>
+			</div>
+		</div> <!-- end of help tab -->
 	</div> <!-- end tab content class -->
 </div> <!-- end of main body container -->
 
