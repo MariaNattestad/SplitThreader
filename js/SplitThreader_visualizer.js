@@ -2598,7 +2598,6 @@ function analyze_copynumber() {
 	// _Statistics.copynumber_by_chrom = mean_by_chrom;
 
 	_Statistics.mean_copynumber = weighted_total_copynumber/total_bases;
-	console.log(_Statistics.mean_copynumber);
 }
 
 function dict_length(dictionary) {
