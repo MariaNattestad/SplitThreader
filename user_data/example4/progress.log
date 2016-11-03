@@ -1,5 +1,5 @@
-MCF7_Illumina_data_with_variants_filtered_to_10kb_min_size_and_20_min_reads
+MCF7_Illumina_data_with_variants_filtered_to_10kb_min_size_with_5_split_and_5_paired_end_reads
 1. Reading input files
-CSV file
+Sniffles bedpe file
 2. Segmenting copy number
 done
