@@ -707,7 +707,7 @@ function draw_circos() {
 					select_chrom_for_zoom_plot(_dragging_chromosome,_hover_plot);	
 				}
 				_dragging_chromosome = null;
-			})
+			});
 
 		var chromosome_labels = _circos_canvas.selectAll("g.circos_chromosome")
 			.data(_Genome_data)
@@ -715,7 +715,12 @@ function draw_circos() {
 				.append("g")
 					.attr("class","circos_chromosome")
 					.attr("transform","translate(0,0)")
-					.call(drag);
+					.call(drag)
+					.on('mouseover', function(d) {
+						var text = "drag onto coverage plot to show";
+						show_tooltip(text,0,0,_circos_canvas);
+					})
+					.on('mouseout', function(d) {_circos_canvas.selectAll("g.tip").remove();});
 
 		var arc = d3.svg.arc()
 				.outerRadius(_layout.circos.radius)
