@@ -44,8 +44,12 @@ def run(args):
     if is_csv_file:
         f.readline()
 
+
+    header_count = 0
+
     for line in f:
         if line[0] == "#":
+            header_count += 1
             if line.find("VCF") != -1:
                 is_vcf_file = True
                 print "NOTE: Contains 'VCF' in a header row (starting with #), so treating it like a VCF file."
@@ -58,9 +62,12 @@ def run(args):
 
         # fields[1] is a position, check it's a number
         if not is_digit(fields[1]):
-            print "ERROR: Column 2 must be a genomic position, but it is not a number:", fields[1]
-            print line
-            return
+            header_count += 1
+            if header_count > 1:
+                print "ERROR: Column 2 must be a genomic position, but it is not a number:", fields[1]
+                print line
+                return
+            continue
 
         if is_vcf_file: # For VCF files only
             ID_names.add(fields[2])
