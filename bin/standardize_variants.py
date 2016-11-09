@@ -46,7 +46,7 @@ def run(args):
         f = gzip.open(args.input)
     else:
         # print "Variant file is not gzipped"
-        if header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n":
+        if header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n" or header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,PE,total_reads\n":
             is_csv_file = True
         f.close()
         f = open(args.input)
@@ -170,10 +170,9 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
         f = open(args.input)
 
     fout = open(args.out,"w")
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
-    f.readline()
-
+    fout.write(f.readline())
+    
     filtered_count = 0
     ID_counter = 1
     for line in f:
@@ -183,7 +182,7 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
         if overwrite_ID_names:
             fields[6] = ID_counter
         ID_counter += 1
-        fields_to_output = fields[0:12]
+        fields_to_output = fields#[0:12]
         if filter_variant(fields_to_output, args) == True:
             ID_counter += 1
             fout.write(",".join(map(str,fields_to_output)) + "\n")
