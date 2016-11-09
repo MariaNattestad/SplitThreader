@@ -12,6 +12,16 @@ def is_digit(number):
     except ValueError:
         return False
 
+def filter_variant(fields_to_output, args):
+    if fields_to_output[0] == fields_to_output[3]:
+        if abs((int(fields_to_output[1])+int(fields_to_output[2]))/2-(int(fields_to_output[4])+int(fields_to_output[5]))/2) >= args.min_size:
+            return True
+        else:
+            return False
+    else:
+        # interchromosomal
+        return True
+
 def run(args):
 
     is_vcf_file = False
@@ -164,6 +174,7 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
 
     f.readline()
 
+    filtered_count = 0
     ID_counter = 1
     for line in f:
         fields = line.strip().split(",")
@@ -173,9 +184,15 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
             fields[6] = ID_counter
         ID_counter += 1
         fields_to_output = fields[0:12]
-        fout.write(",".join(map(str,fields_to_output)) + "\n")
+        if filter_variant(fields_to_output, args) == True:
+            ID_counter += 1
+            fout.write(",".join(map(str,fields_to_output)) + "\n")
+        else:
+            filtered_count += 1
     f.close()
     fout.close()
+
+    print "Number of variants filtered out due to small size:", filtered_count
 
 
 def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
@@ -188,6 +205,7 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
     fout = open(args.out,"w")
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
+    filtered_count = 0
     ID_counter = 1
     for line in f:
         if line[0] == "#":
@@ -199,9 +217,15 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
             fields[6] = ID_counter
         ID_counter += 1
         fields_to_output = fields[0:12]
-        fout.write(",".join(map(str,fields_to_output)) + "\n")
+        if filter_variant(fields_to_output, args) == True:
+            ID_counter += 1
+            fout.write(",".join(map(str,fields_to_output)) + "\n")
+        else:
+            filtered_count += 1
     f.close()
     fout.close()
+
+    print "Number of variants filtered out due to small size:", filtered_count
 
 
 def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
@@ -216,6 +240,7 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
 
     fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
+    filtered_count = 0
     ID_counter = 1
     for line in f:
         if line[0] == "#":
@@ -247,9 +272,15 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
                             fields[6] = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
                         fields_to_output = fields[0:12]
                         ID_counter += 1
-                        fout.write(",".join(map(str,fields_to_output)) + "\n")
+                        if filter_variant(fields_to_output, args) == True:
+                            ID_counter += 1
+                            fout.write(",".join(map(str,fields_to_output)) + "\n")
+                        else:
+                            filtered_count += 1
     f.close()
     fout.close()
+
+    print "Number of variants filtered out due to small size:", filtered_count
 
 
 def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
@@ -262,12 +293,15 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
+    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,PE,total_reads\n")
 
 
     variant_type_list = set()
     ID_counter = 1
     strand_fail_list = []
+
+    filtered_count = 0
+
     for line in f:
         if line[0] == "#":
             continue
@@ -296,19 +330,39 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         strand2 = ""
         variant_type = fields[4]
         strand_info = None
-        numreads = -1
+        numreads_from_STRANDS_tag = -1
+        numreads_from_SR_tag = -1
+        numreads_from_RE_tag = -1 # In Sniffles means split reads
+        numreads_from_PE_tag = -1
+        numreads_from_BND_DEPTH_tag = -1
         special_inversion_flag = None
         special_CT_strand_code = None
         
         if fields[4].find("]") != -1 or fields[4].find("[") != -1:
+            if fields[4].find("]") != -1 and fields[4].find("[") != -1:
+                print "WARNING: Incorrect breakend notation in ALT field:", fields[4]
+                # continue
             # print "_________________________________"
             # print fields[4]
+
+
             # Find index of first bracket
-            bracket1 = fields[4].find("]")
-            strand2 = "+"
+
+            strand2 = "-"
+            if fields[4].find("]") != -1:
+                strand2 = "+"
+
+
+            start_bracket_index = fields[4].find("[")
+            end_bracket_index = fields[4].find("]")
+
+            bracket1 = end_bracket_index
             if bracket1 == -1:
-                bracket1 = fields[4].find("[")
-                strand2 = "-"
+                bracket1 = start_bracket_index
+            elif start_bracket_index != -1 and start_bracket_index < end_bracket_index:
+                bracket1 = start_bracket_index
+
+
             
             # Find index of second bracket
             bracket2 = fields[4][bracket1+1:].find("]")
@@ -325,7 +379,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
             elif bracket2 == len(fields[4])-1:
                 strand1 = "+"
             else:
-                print "Not sure"
+                print "WARNING: Incorrect breakend notation in ALT field:", fields[4]
 
 
             chrom2 = remove_chr(remainder.split(":")[0])
@@ -343,9 +397,13 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 if name == "SVTYPE":
                     variant_type = value
                 if name == "SR":
-                    numreads = value
+                    numreads_from_SR_tag = value
+                if name == "PE":
+                    numreads_from_PE_tag = value
+                if name == "RE":
+                    numreads_from_RE_tag = value
                 if name == "BND_DEPTH":
-                    numreads = value
+                    numreads_from_BND_DEPTH_tag = value
                 if name == "CT":
                     special_CT_strand_code = value
             else:
@@ -355,6 +413,22 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     special_inversion_flag = "INV5"
 
         variant_type_list.add(variant_type)
+        num_split_reads = -1
+        if numreads_from_SR_tag != -1:
+            num_split_reads = numreads_from_SR_tag
+        else:
+            num_split_reads = numreads_from_RE_tag
+        
+        num_discordant_pairs = -1
+        if numreads_from_PE_tag != -1:
+            num_discordant_pairs = numreads_from_PE_tag
+
+        total_read_evidence = -1
+        if numreads_from_BND_DEPTH_tag != -1:
+            total_read_evidence = numreads_from_BND_DEPTH_tag
+        elif num_split_reads != -1 and num_discordant_pairs != -1:
+            total_read_evidence = num_split_reads + num_discordant_pairs
+
 
         if strand_info != None:
             strand_info_list = []
@@ -376,7 +450,10 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     # print "strand1 okay"
                     pass
                 else:
-                    print "strand1 not matching:", strand1, num[0]
+                    strand1 = num[0]
+                    print "WARNING: strand1 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent"
+                    print "STRANDS tag:", strand_info_list, "vs ALT text:", fields[4]
+
                 
                 if strand2 == "" or len(strand_info_list)>1:
                     strand2 = num[1]
@@ -384,18 +461,29 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     # print "strand2 okay"
                     pass
                 else:
-                    print "strand2 not matching:", strand2, num[1]
+                    strand2 = num[1]
+                    print "WARNING: strand2 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent"
+                    print "STRANDS tag:", strand_info_list, "vs ALT text:", fields[4]
+
                 if len(num) > 2:
-                    numreads = int(num[3:])
+                    numreads_from_STRANDS_tag = int(num[3:])
+
+                if numreads_from_STRANDS_tag != -1:
+                    total_read_evidence = numreads_from_STRANDS_tag
                 if overwrite_ID_names:
                     ID_field = ID_counter
+
 
                 new_ID = ID_field
                 if len(strand_info_list) > 1:
                     new_ID = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
-                fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,numreads]
-                ID_counter += 1
-                fout.write(",".join(map(str,fields_to_output)) + "\n")
+
+                fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,total_read_evidence]
+                if filter_variant(fields_to_output, args) == True:
+                    ID_counter += 1
+                    fout.write(",".join(map(str,fields_to_output)) + "\n")
+                else:
+                    filtered_count += 1
         else:
             if strand1 == "" and strand2 == "":
                 if special_CT_strand_code != None:
@@ -427,9 +515,13 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                         
             if overwrite_ID_names:
                 ID_field = ID_counter
-            fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,numreads]
-            ID_counter += 1
-            fout.write(",".join(map(str,fields_to_output)) + "\n")
+
+            fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,total_read_evidence]
+            if filter_variant(fields_to_output, args) == True:
+                ID_counter += 1
+                fout.write(",".join(map(str,fields_to_output)) + "\n")
+            else:
+                filtered_count += 1
 
     if len(strand_fail_list) > 0:
         print "WARNING: No strand info for records. Variants will be ignored by visualizer:"
@@ -441,11 +533,15 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
 
     print "All variant types:", ",".join(variant_type_list)
+    print "Number of variants filtered out due to small size:", filtered_count
+
+
 
 def main():
     parser=argparse.ArgumentParser(description="Standardize variant bedpe file to fit for SplitThreader input")
     parser.add_argument("-input",help="Variant calls in bedpe or vcf format",dest="input",required=True)
     parser.add_argument("-out",help="Output filename",dest="out",required=True)
+    parser.add_argument("-min_size",help="Minimum size for variant filter",dest="min_size",default=10000,type=int)
     parser.set_defaults(func=run)
     args=parser.parse_args()
     args.func(args)
