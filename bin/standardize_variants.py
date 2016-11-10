@@ -172,7 +172,7 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
     fout = open(args.out,"w")
 
     fout.write(f.readline())
-    
+
     filtered_count = 0
     ID_counter = 1
     for line in f:
@@ -309,7 +309,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         info_fields = fields[7].split(";")
 
         chrom1 = remove_chr(fields[0])
-        start1 = stop1 = fields[1]
+        start1 = int(fields[1])
+        stop1 = start1 + 1
 
         chrom2 = chrom1
         start2 = stop2 = 0
@@ -382,7 +383,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
 
             chrom2 = remove_chr(remainder.split(":")[0])
-            start2 = stop2 = remainder.split(":")[1]
+            start2 = int(remainder.split(":")[1])
 
         for field in info_fields:
             if len(field.split("=")) == 2:
@@ -390,7 +391,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 if name == "CHR2":
                     chrom2 = remove_chr(value)
                 if name == "END":
-                    start2 = stop2 = value
+                    start2 = int(value)
                 if name == "STRANDS":
                     strand_info = value
                 if name == "SVTYPE":
@@ -411,6 +412,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 elif field == "INV5":
                     special_inversion_flag = "INV5"
 
+        stop2 = start2 + 1
         variant_type_list.add(variant_type)
         num_split_reads = -1
         if numreads_from_SR_tag != -1:
