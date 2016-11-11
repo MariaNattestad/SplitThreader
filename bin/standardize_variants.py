@@ -46,7 +46,7 @@ def run(args):
         f = gzip.open(args.input)
     else:
         # print "Variant file is not gzipped"
-        if header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n" or header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,PE,total_reads\n":
+        if header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n" or header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support\n":
             is_csv_file = True
         f.close()
         f = open(args.input)
@@ -237,7 +237,7 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
+    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,other_read_support\n")
 
     filtered_count = 0
     ID_counter = 1
@@ -292,8 +292,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,PE,total_reads\n")
-
+    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support\n")
 
     variant_type_list = set()
     ID_counter = 1
@@ -417,19 +416,16 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         num_split_reads = -1
         if numreads_from_SR_tag != -1:
             num_split_reads = numreads_from_SR_tag
-        else:
+        elif numreads_from_RE_tag != -1:
             num_split_reads = numreads_from_RE_tag
+        
+        other_read_support = -1
+        if numreads_from_BND_DEPTH_tag != -1:
+            other_read_support = numreads_from_BND_DEPTH_tag
         
         num_discordant_pairs = -1
         if numreads_from_PE_tag != -1:
             num_discordant_pairs = numreads_from_PE_tag
-
-        total_read_evidence = -1
-        if numreads_from_BND_DEPTH_tag != -1:
-            total_read_evidence = numreads_from_BND_DEPTH_tag
-        elif num_split_reads != -1 and num_discordant_pairs != -1:
-            total_read_evidence = num_split_reads + num_discordant_pairs
-
 
         if strand_info != None:
             strand_info_list = []
@@ -469,17 +465,22 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 if len(num) > 2:
                     numreads_from_STRANDS_tag = int(num[3:])
 
+                
                 if numreads_from_STRANDS_tag != -1:
-                    total_read_evidence = numreads_from_STRANDS_tag
+                    other_read_support = numreads_from_STRANDS_tag
+                    # if different strands exist, then we are separating them so we have to use only the STRANDS field for the number of reads to get them separated properly
+                    if len(strand_info_list)>1:
+                        num_discordant_pairs = -1 # clear both PE and SR because they are aggregated for multiple strands and no longer accurate
+                        num_split_reads = -1
+
                 if overwrite_ID_names:
                     ID_field = ID_counter
-
 
                 new_ID = ID_field
                 if len(strand_info_list) > 1:
                     new_ID = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
 
-                fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,total_read_evidence]
+                fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
                 if filter_variant(fields_to_output, args) == True:
                     ID_counter += 1
                     fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -517,7 +518,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
             if overwrite_ID_names:
                 ID_field = ID_counter
 
-            fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,total_read_evidence]
+            fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
             if filter_variant(fields_to_output, args) == True:
                 ID_counter += 1
                 fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -534,15 +535,13 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
 
     print "All variant types:", ",".join(variant_type_list)
-    print "Number of variants filtered out due to small size:", filtered_count
-
-
+    print "Number of variants filtered out due to small size (minimum is 1 kb):", filtered_count
 
 def main():
     parser=argparse.ArgumentParser(description="Standardize variant bedpe file to fit for SplitThreader input")
     parser.add_argument("-input",help="Variant calls in bedpe or vcf format",dest="input",required=True)
     parser.add_argument("-out",help="Output filename",dest="out",required=True)
-    parser.add_argument("-min_size",help="Minimum size for variant filter",dest="min_size",default=10000,type=int)
+    parser.add_argument("-min_size",help="Minimum size for variant filter",dest="min_size",default=1000,type=int)
     parser.set_defaults(func=run)
     args=parser.parse_args()
     args.func(args)

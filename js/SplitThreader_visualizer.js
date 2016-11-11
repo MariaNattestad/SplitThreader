@@ -45,8 +45,10 @@ _settings.show_local_gene_names = true;
 _settings.color_index = 0;
 _settings.segment_copy_number = "segmented";
 _settings.adaptive_coverage_scaling = true;
-_settings.min_variant_size = -1;
+_settings.min_variant_size = 1000;
 _settings.min_split_reads = -1;
+_settings.min_discordant_pairs = -1;
+_settings.min_other_read_evidence = -1;
 _settings.annotation_path = "resources/annotation/Human_hg19.genes.csv";
 _settings.ucsc_database = "hg19";
 _settings.coverage_divisor = 1;
@@ -348,7 +350,10 @@ set_ribbon_path("http://genomeribbon.com");
 
 function update_variants() {
 
+	analyze_variants();
 	make_variant_table();
+	show_statistics();
+
 	draw_histogram(_Filtered_variant_data);
 	draw_connections();
 	draw_circos_connections();
@@ -361,22 +366,41 @@ function update_variants() {
 	_SplitThreader_graph = new Graph();
 	_SplitThreader_graph.from_genomic_variants(_Filtered_variant_data,_Genome_data);
 }
-d3.select("#min_variant_size").on("change",function() {
-	_settings.min_variant_size = parseInt(this.value);
+function submit_filters() {
+
+	_settings.min_variant_size = parseInt(d3.select("#min_variant_size").property("value"));
 	if (isNaN(_settings.min_variant_size)) {
-		_settings.min_variant_size = -1;
+		_settings.min_variant_size = 1000;
 	}
-	apply_variant_filters();
-	update_variants();
-	
-});
-d3.select("#min_split_reads").on("change",function() {
-	_settings.min_split_reads = parseInt(this.value);
+	if (_settings.min_variant_size < 1000) {
+		_settings.min_variant_size = 1000;
+		user_message("The minimum variant size is 1 kb, variants smaller than that are better suited for other tools like IGV");
+	}
+
+	_settings.min_split_reads = parseInt(d3.select("#min_split_reads").property("value"));
 	if (isNaN(_settings.min_split_reads)) {
 		_settings.min_split_reads = -1;
 	}
+
+	_settings.min_discordant_pairs = parseInt(d3.select("#min_discordant_pairs").property("value"));
+	if (isNaN(_settings.min_discordant_pairs)) {
+		_settings.min_discordant_pairs = -1;
+	}
+	
+	_settings.min_other_read_evidence = parseInt(d3.select("#min_other_read_evidence").property("value"));
+	if (isNaN(_settings.min_other_read_evidence)) {
+		_settings.min_other_read_evidence = -1;
+	}
+
 	apply_variant_filters();
 	update_variants();
+}
+
+d3.select("#submit_filters").on("click", submit_filters);
+d3.selectAll(".filter_input").on("keyup", function() {
+	if (d3.event.keyCode == 13) {
+		submit_filters();
+	}
 });
 
 d3.select("#submit_fusion").on("click",submit_fusion);
@@ -438,7 +462,7 @@ function show_tooltip(text,x,y,parent_object) {
 function run(){
 	read_annotation_file();
 	read_genome_file();
-	read_spansplit_file();
+	read_variant_file();
 	
 	set_download_urls();
 	user_message("Info","Loading data");
@@ -462,6 +486,9 @@ function wait_then_run_when_all_data_loaded() {
 		scale_to_new_chrom("top");
 		scale_to_new_chrom("bottom");
 		draw_everything(); 
+		analyze_copynumber();
+		_Statistics.number_of_variants = _Filtered_variant_data.length;
+		show_statistics();
 		
 		if (_Filtered_variant_data.length > _static.max_variants_to_show) {
 			user_message("Warning", "Too many variants to run SplitThreader graph computations (" + _Filtered_variant_data.length + ") Use the 'Settings' tab to filter them down by minimum split reads and variant size, and they will be drawn when there are 5000 variants or less.")
@@ -470,10 +497,9 @@ function wait_then_run_when_all_data_loaded() {
 			// for SplitThreader.js graph the variants should be: {"variant_name":"variant1","chrom1":"1","pos1":50100,"strand1":"-","chrom2":"2","pos2":1000,"strand2":"-"},
 			_SplitThreader_graph.from_genomic_variants(_Filtered_variant_data,_Genome_data);	
 
-			analyze_copynumber();
+
 			analyze_variants();
 			make_variant_table();
-			show_statistics();
 			user_message("Info","Loading data is complete")
 		}
 	} else {
@@ -487,7 +513,7 @@ function apply_variant_filters() {
 	for (var i in _Variant_data) {
 		var d = _Variant_data[i];
 		var variant_size = Math.abs(d.pos2-d.pos1);
-		if ((_Chromosome_start_positions[d.chrom1] != undefined && _Chromosome_start_positions[d.chrom2] != undefined) && d.split >= _settings.min_split_reads && (variant_size >= _settings.min_variant_size || d.chrom1 != d.chrom2)) {
+		if ((_Chromosome_start_positions[d.chrom1] != undefined && _Chromosome_start_positions[d.chrom2] != undefined) && d.split >= _settings.min_split_reads && d.pairs >= _settings.min_discordant_pairs && d.other_read_support >= _settings.min_other_read_evidence && (variant_size >= _settings.min_variant_size || d.chrom1 != d.chrom2)) {
 			_Filtered_variant_data.push(d);
 		}
 	}
@@ -568,34 +594,45 @@ function load_coverage(chromosome,top_or_bottom) {
 			for (var i=0;i<coverage_input.length;i++) {
 				// Make columns numerical:
 				_Coverage_by_chromosome["unsegmented"][chromosome].push({});
-				_Coverage_by_chromosome["unsegmented"][chromosome][i].start = +coverage_input[i].start
-				_Coverage_by_chromosome["unsegmented"][chromosome][i].end = +coverage_input[i].end
-				_Coverage_by_chromosome["unsegmented"][chromosome][i].coverage = +coverage_input[i].coverage
+				_Coverage_by_chromosome["unsegmented"][chromosome][i].start = +coverage_input[i].start;
+				_Coverage_by_chromosome["unsegmented"][chromosome][i].end = +coverage_input[i].end;
+				_Coverage_by_chromosome["unsegmented"][chromosome][i].coverage = +coverage_input[i].coverage;
 			}
-
 			_data_ready.coverage["unsegmented"][top_or_bottom] = true;
-		
 	});
 }
 
-function read_spansplit_file() {
+function read_variant_file() {
 	console.log("reading variant file");
 	d3.csv(_input_file_prefix + ".variants.csv?id=" + Math.random(), function(error,spansplit_input) {
 		// chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
 		if (error) throw error;
 		_Variant_data = [];
 		for (var i=0;i<spansplit_input.length;i++) {
-			spansplit_input[i].start1 = +spansplit_input[i].start1 
-			spansplit_input[i].start2 = +spansplit_input[i].start2
-			spansplit_input[i].stop1 = +spansplit_input[i].stop1 
-			spansplit_input[i].stop2 = +spansplit_input[i].stop2
-			spansplit_input[i].pos1 = Math.floor(spansplit_input[i].start1+spansplit_input[i].stop1)/2
-			spansplit_input[i].pos2 = Math.floor(spansplit_input[i].start2+spansplit_input[i].stop2)/2
-			spansplit_input[i].split = +spansplit_input[i].split
+			spansplit_input[i].start1 = +spansplit_input[i].start1;
+			spansplit_input[i].start2 = +spansplit_input[i].start2;
+			spansplit_input[i].stop1 = +spansplit_input[i].stop1;
+			spansplit_input[i].stop2 = +spansplit_input[i].stop2;
+			spansplit_input[i].pos1 = Math.floor(spansplit_input[i].start1+spansplit_input[i].stop1)/2;
+			spansplit_input[i].pos2 = Math.floor(spansplit_input[i].start2+spansplit_input[i].stop2)/2;
+			spansplit_input[i].split = +spansplit_input[i].split;
+			spansplit_input[i].pairs = +spansplit_input[i].pairs;
+			spansplit_input[i].other_read_support = +spansplit_input[i].other_read_support;
 			spansplit_input[i].size = parseInt(Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2));
 			if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
 				spansplit_input[i].size = -1;
 			}
+			if (isNaN(spansplit_input[i].pairs)) {
+				spansplit_input[i].pairs = -1;
+			}
+			if (isNaN(spansplit_input[i].split)) {
+				spansplit_input[i].split = -1;
+			}
+			if (isNaN(spansplit_input[i].other_read_support)) {
+				spansplit_input[i].other_read_support = -1;
+			}
+			
+
 			if (spansplit_input[i].strand1 != "" && spansplit_input[i].strand2 != "") {
 				_Variant_data.push(spansplit_input[i]);
 			} else {
@@ -1908,7 +1945,7 @@ function make_variant_table() {
 	d3.select("#variant_table_landing").call(
 		_variant_superTable = d3.superTable()
 			.table_data(_Filtered_variant_data)
-			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","split","size", "CNV_category", "category","nearby_variant_count"]) // , "paired","neighborhood","simple"])
+			.table_header(["chrom1","pos1","strand1","chrom2","pos2","strand2","variant_name","variant_type","size","split","pairs","other_read_support", "CNV_category", "category","nearby_variant_count"]) // , "paired","neighborhood","simple"])
 			// .table_header(["chrom1","pos1","strand1","CNV_distance1","CNV_diff1","chrom2","pos2","strand2","CNV_distance2","CNV_diff2","variant_name","variant_type","split","size", "CNV_category", "category"]) // , "paired","neighborhood","simple"])
 			.num_rows_to_show(15)
 			.show_advanced_filters(true)
@@ -2507,11 +2544,24 @@ function submit_fusion() {
 }
 
 function variant_tooltip_text(d) {
-	if (d.chrom1 == d.chrom2) {
-		return d.split + " reads, " + Mb_format(d.size) + " " + d.variant_type;	
-	} else {
-		return d.split + " reads, interchromosomal";
+
+	var text = "";
+	if (d.split != -1) {
+		text += "SR: " + d.split + ", ";
 	}
+	if (d.pairs != -1) {
+		text += "PE: " + d.pairs + ", ";
+	}
+	if (d.other_read_support != -1) {
+		text += "Read support: " + d.other_read_support + ", ";
+	}
+
+	if (d.chrom1 == d.chrom2) {
+		text += "Size: " + Mb_format(d.size) + " " + d.variant_type;	
+	} else {
+		text += "interchromosomal " + d.variant_type;
+	}
+	return text;
 }
 
 function Mb_format(x) {
@@ -2570,10 +2620,19 @@ function binary_search_closest(search_list,b,e,pos) {
 }
 
 function show_statistics() {
+	_Statistics.number_of_variants = _Filtered_variant_data.length;
+
+	_Statistics.num_interchromosomal = 0;
+	for (var i in _Filtered_variant_data) {
+		if (_Filtered_variant_data[i].size == -1) {
+			_Statistics.num_interchromosomal += 1;
+		}
+	}
 
 	d3.select("#mean_copynumber").html(" " + _Statistics.mean_copynumber.toFixed(2) + "X");
 	d3.selectAll(".number_of_variants").html(" " + _Statistics.number_of_variants);
-
+	d3.select("#num_interchromosomal").html(" " + _Statistics.num_interchromosomal + " (" + (_Statistics.num_interchromosomal*100./_Statistics.number_of_variants).toFixed(2) + "%)");
+	
 	// d3.select("#statistics_landing").selectAll("p").data(d3.keys(_Statistics)).enter().append("p").html(function(d) {return d + ": " + Math.round(_Statistics[d])});
 }
 
@@ -2612,8 +2671,6 @@ function dict_length(dictionary) {
 }
 
 function analyze_variants() {
-
-	_Statistics.number_of_variants = _Filtered_variant_data.length;
 
 	// Calculate distance to nearest CNV
 	// where CNV is defined as a change in segmented coverage of at least _settings.cov_diff_for_CNV

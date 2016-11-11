@@ -116,11 +116,24 @@
 											<tr><td colspan="2"><hr><label>Filter variants:</label></td></tr>
 											<tr>
 												<td>Minimum variant size: </td>
-												<td><input id="min_variant_size" type="number"></td>
+												<td><input id="min_variant_size" class="filter_input" type="number"></td>
 											</tr>
 											<tr>
 												<td>Minimum split reads:</td>
-												<td><input id="min_split_reads" type="number"></td>
+												<td><input id="min_split_reads" class="filter_input" type="number"></td>
+											</tr>
+											<tr>
+												<td>Minimum discordant pairs:</td>
+												<td><input id="min_discordant_pairs" class="filter_input" type="number"></td>
+											</tr>
+											<tr>
+												<td>Minimum miscellaneous read evidence:</td>
+												<td><input id="min_other_read_evidence" class="filter_input" type="number"></td>
+											</tr>
+											<tr>
+												<td>
+													<button id="submit_filters">Submit</button>
+												</td>
 											</tr>
 											<tr><td colspan="2"><hr><label>Downloads:</label></td></tr>
 											<tr>
@@ -173,6 +186,9 @@
 					<div id="statistics_landing">
 						<p><label>Average segmented copy number: </label><span id="mean_copynumber"></span></p>
 						<p><label>Total number of variants: </label><span class="number_of_variants"></span></p>
+						<p><label>Number of interchromosomal variants: </label><span id="num_interchromosomal"></span></p>
+						
+
 						<p><label>Number of variants after filtering in table below: </label> <span class="filtered_number_of_variants"></span></p>
 					</div>
 				</div>
