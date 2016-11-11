@@ -441,6 +441,16 @@ d3.select("#ribbon_path").property("value","http://genomeribbon.com").
 		set_ribbon_path(d3.event.target.value);
 });
 
+
+d3.select("#max_fusion_distance").on("change", function() {
+	_settings.max_fusion_distance = parseInt(this.value);
+	if (isNaN(_settings.max_fusion_distance) || _settings.max_fusion_distance < 0) {
+		_settings.max_fusion_distance = 1000000;
+		this.value = _settings.max_fusion_distance;
+	}
+});
+
+
 ////////// Calculate polar coordinates ///////////
 
 function genome_to_angle(chromosome,position) {

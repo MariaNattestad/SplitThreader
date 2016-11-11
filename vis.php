@@ -336,6 +336,26 @@
 					</div>
 				</div>
 			</div>
+
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Parameters
+					</h4>
+				</div>
+				<div class="panel-body">
+					<table class="settings_table">
+						<col width="70%">
+						<col width="30%">
+						<tr>
+							<td>Max bp distance to search:</td>
+							<td><input id="max_fusion_distance" type="number" value=1000000></td>
+						</tr>
+					</table>
+				</div>
+			</div>
+
 		</div> <!-- end of gene fusions tab -->
 		<div id="feature_search_tab" class="tab-pane fade">
 			<div class="row">
