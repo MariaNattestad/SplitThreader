@@ -197,6 +197,29 @@
 					<div id="variant_category_tables_landing">
 						<!-- <table id="variant_category_table"></table> -->
 					</div>
+					<div id="variant_category_matrix_settings">
+					<table class="settings_table">
+						<col width="70%">
+						<col width="30%">
+						<tr><td colspan="2"><hr><label>Categorization parameters</label></td></tr>
+						<tr>
+							<td>Distance threshold for solo variant: </td>
+							<td><input id="margin_for_nearby" class="categorization_parameter_input" type="number" value="100000"></td>
+						</tr>
+						<tr>
+							<td>Distance threshold for reciprocal pair of variants: </td>
+							<td><input id="margin_for_reciprocal" class="categorization_parameter_input" type="number" value="10000"></td>
+						</tr>
+
+
+
+						<tr>
+							<td>
+								<button id="submit_category_parameters">Submit</button>
+							</td>
+						</tr>
+					</table>
+					</div>
 				</div>
 			</div> <!-- end of row -->
 			<p>Showing <span id="table_row_count"></span> variants out of <span class="filtered_number_of_variants"></span>. Unfiltered, there are <span class="number_of_variants"></span> variants</p>

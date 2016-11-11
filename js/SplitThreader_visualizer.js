@@ -62,6 +62,9 @@ _settings.show_features = true;
 _settings.max_fusion_distance = 1000000;
 _settings.circos_padding_in_bp = 10000000;
 
+_settings.margin_for_reciprocal = 10000;
+_settings.margin_for_nearby = 100000;
+
 var _scales = {};
 _scales.zoom_plots = {"top":{"x":d3.scale.linear(), "y":d3.scale.linear()}, "bottom":{"x":d3.scale.linear(), "y":d3.scale.linear()}};
 _scales.chromosome_colors = d3.scale.ordinal().range(_static.color_collections[_settings.color_index]);
@@ -402,6 +405,34 @@ d3.selectAll(".filter_input").on("keyup", function() {
 		submit_filters();
 	}
 });
+
+
+function update_categorization_parameters() {
+	
+	_settings.margin_for_nearby = parseInt(d3.select("#margin_for_nearby").property("value"));
+	if (isNaN(_settings.margin_for_nearby)) {
+		_settings.margin_for_nearby = 100000;
+		d3.select("#margin_for_nearby").property("value",_settings.margin_for_nearby);
+	}
+
+	_settings.margin_for_reciprocal = parseInt(d3.select("#margin_for_reciprocal").property("value"));
+	if (isNaN(_settings.margin_for_reciprocal)) {
+		_settings.margin_for_reciprocal = 10000;
+	}
+	
+	d3.select("#margin_for_reciprocal").property("value",_settings.margin_for_reciprocal);
+
+	analyze_variants();
+}
+
+
+d3.select("#submit_category_parameters").on("click", update_categorization_parameters);
+d3.selectAll(".categorization_parameter_input").on("keyup", function() {
+	if (d3.event.keyCode == 13) {
+		update_categorization_parameters();
+	}
+});
+
 
 d3.select("#submit_fusion").on("click",submit_fusion);
 
@@ -2698,125 +2729,119 @@ function analyze_variants() {
 		}
 	}
 
-	var margin = 100000; // distance within which variants can create or cancel out each other's CNVs
+	var margin = _settings.margin_for_nearby; // distance within which variants can create or cancel out each other's CNVs
 
 	for (var i in _Filtered_variant_data) {
-		// CNV nearby
-		if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) && (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0)) {
-			_Filtered_variant_data[i].CNV_category = "matching";
-		} else if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_diff1 > 0) || (_Filtered_variant_data[i].CNV_distance2 < margin && _Filtered_variant_data[i].CNV_diff2 > 0)) {
-			_Filtered_variant_data[i].CNV_category = "partial";
-		} else if (_Filtered_variant_data[i].CNV_distance1 > margin && _Filtered_variant_data[i].CNV_distance2 > margin) {
-			_Filtered_variant_data[i].CNV_category = "neutral";
-		} else {
-			_Filtered_variant_data[i].CNV_category = "non-matching";
-		}
-
-		// if (_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) {
-		// 	if (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0) {
-		// 		_Filtered_variant_data[i].CNV_category = "matching";
-		// 	} else if (_Filtered_variant_data[i].CNV_diff1 < 0 && _Filtered_variant_data[i].CNV_diff2 < 0) {
-		// 		_Filtered_variant_data[i].CNV_category = "non-matching";
-		// 	} else {
-		// 		_Filtered_variant_data[i].CNV_category = "partial";
-		// 	}
-		// } else { // No CNV nearby
-		// 	if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_diff1 > 0) || (_Filtered_variant_data[i].CNV_distance2 < margin && _Filtered_variant_data[i].CNV_diff2 > 0)) {
-		// 		_Filtered_variant_data[i].CNV_category = "partial";
-		// 	} else {
-		// 		_Filtered_variant_data[i].CNV_category = "neutral";	
-		// 	}
-		// }
-	}
-
-
-	// Categorize variants by whether other variants are nearby
-
-	// Especially identify paired variants (like reciprocal translocations)
-
-	// Identify all variants within a 100kb distance of each variant
-
-	// 1. Add all individual breakpoints to a list, mark each with its original index in _Filtered_variant_data
-	
-	var break_list_by_chrom = [];
-
-	for (var i in _Filtered_variant_data) {
-		_Filtered_variant_data[i].nearby_variants = {}; // set as object so we can add side1/side2 to it later
 		_Filtered_variant_data[i].simple = false;
-
-		if (break_list_by_chrom[_Filtered_variant_data[i].chrom1] == undefined) {
-			break_list_by_chrom[_Filtered_variant_data[i].chrom1] = [];
-		}
-		if (break_list_by_chrom[_Filtered_variant_data[i].chrom2] == undefined) {
-			break_list_by_chrom[_Filtered_variant_data[i].chrom2] = [];
-		}
-		break_list_by_chrom[_Filtered_variant_data[i].chrom1].push({"idx":i, "pos":_Filtered_variant_data[i].pos1, "side":1});
-		break_list_by_chrom[_Filtered_variant_data[i].chrom2].push({"idx":i, "pos":_Filtered_variant_data[i].pos2, "side":2});
 	}
 
-	// 2. For each variant in the list, walk to the left and to the right 100kb, recording other variants
-	// 3. Do this for both breakpoints
-	for (var chrom in break_list_by_chrom) {
-		break_list_by_chrom[chrom].sort(function(a,b) {return a.pos-b.pos});
-		var list_length = break_list_by_chrom[chrom].length;
-		for (var current = 0; current < list_length; current++) {
-			
-			var walker = current - 1;
-			var variants_within_margin = {};
-			// Walk left
-			while ((walker >= 0) && (break_list_by_chrom[chrom][walker].pos >= (break_list_by_chrom[chrom][current].pos - margin))) {
-				// Check variant is not other side of self
-				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
-					if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
-						variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
-					}
-					variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
-					// variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;	
-				} else if (Math.abs(walker - current) == 1) {
-					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
-				}
-				walker -= 1;
-			}
-			walker = current + 1;
-			// Walk right
-			while ((walker < list_length) && (break_list_by_chrom[chrom][walker].pos <= (break_list_by_chrom[chrom][current].pos + margin))) {
-				// Check variant is not other side of self
-				if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
-					if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
-						variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
-					}
-					variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
-				} else if (Math.abs(walker - current) == 1) {
-					_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
-				}
-				walker += 1;
-			}
-			_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].nearby_variants[break_list_by_chrom[chrom][current].side] = variants_within_margin;
+	var options_far_reaching = [true,false];
+	for (var far in options_far_reaching) {
+		console.log(far);
+		var far_reaching_run = options_far_reaching[far];
+		console.log(far_reaching_run);
+		if (far_reaching_run == true) {
+			margin = 100000000000;
+			// Look for reciprocal variants and simple variants very far out
+		} else {
+			margin = _settings.margin_for_nearby;
 		}
-	}
+		console.log(margin);
 
-	// Look for putative reciprocals, that is variants where both breakpoints share a variant
-	// For relatively small variants, it may be that both breakpoints are close to the same side of the other variant, so we check for this
-	// We also check for whether the strands are the exact opposite
+		for (var i in _Filtered_variant_data) {
+			// CNV nearby
+			if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_distance2 < margin) && (_Filtered_variant_data[i].CNV_diff1 > 0 && _Filtered_variant_data[i].CNV_diff2 > 0)) {
+				_Filtered_variant_data[i].CNV_category = "matching";
+			} else if ((_Filtered_variant_data[i].CNV_distance1 < margin && _Filtered_variant_data[i].CNV_diff1 > 0) || (_Filtered_variant_data[i].CNV_distance2 < margin && _Filtered_variant_data[i].CNV_diff2 > 0)) {
+				_Filtered_variant_data[i].CNV_category = "partial";
+			} else if (_Filtered_variant_data[i].CNV_distance1 > margin && _Filtered_variant_data[i].CNV_distance2 > margin) {
+				_Filtered_variant_data[i].CNV_category = "neutral";
+			} else {
+				_Filtered_variant_data[i].CNV_category = "non-matching";
+			}
+		}
 
-	var margin_for_paired = 10000;
+		// Categorize variants by whether other variants are nearby
 
-	for (var i in _Filtered_variant_data) {
+		// 1. Add all individual breakpoints to a list, mark each with its original index in _Filtered_variant_data
+		
+		var break_list_by_chrom = [];
 
-		_Filtered_variant_data[i].paired = "none";
+		for (var i in _Filtered_variant_data) {
+			_Filtered_variant_data[i].nearby_variants = {}; // set as object so we can add side1/side2 to it later
 
-		for (var var_index_1 in _Filtered_variant_data[i].nearby_variants[1]) {
-			if (_Filtered_variant_data[i].nearby_variants[2][var_index_1] != undefined) {
-				for (var s1 in _Filtered_variant_data[i].nearby_variants[1][var_index_1]) {
-					var side1 = _Filtered_variant_data[i].nearby_variants[1][var_index_1][s1];
-					for (var s2 in _Filtered_variant_data[i].nearby_variants[2][var_index_1]) {
-						var side2 = _Filtered_variant_data[i].nearby_variants[2][var_index_1][s2];
-						if (side1 != side2) {
-							// Strands must be opposites:
-							if ((_Filtered_variant_data[var_index_1]["strand"+side1] != _Filtered_variant_data[i].strand1) && (_Filtered_variant_data[var_index_1]["strand" + side2] != _Filtered_variant_data[i].strand2)) {
-								// and positions are within the stricter reciprocal threshold:
-								if ((Math.abs(_Filtered_variant_data[var_index_1]["pos" + side1] - _Filtered_variant_data[i].pos1) < margin_for_paired) && (Math.abs(_Filtered_variant_data[var_index_1]["pos" + side2] - _Filtered_variant_data[i].pos2) < margin_for_paired)) {
-									_Filtered_variant_data[i].paired = "reciprocal";
+			if (break_list_by_chrom[_Filtered_variant_data[i].chrom1] == undefined) {
+				break_list_by_chrom[_Filtered_variant_data[i].chrom1] = [];
+			}
+			if (break_list_by_chrom[_Filtered_variant_data[i].chrom2] == undefined) {
+				break_list_by_chrom[_Filtered_variant_data[i].chrom2] = [];
+			}
+			break_list_by_chrom[_Filtered_variant_data[i].chrom1].push({"idx":i, "pos":_Filtered_variant_data[i].pos1, "side":1});
+			break_list_by_chrom[_Filtered_variant_data[i].chrom2].push({"idx":i, "pos":_Filtered_variant_data[i].pos2, "side":2});
+		}
+
+		// 2. For each variant in the list, walk to the left and to the right 100kb, recording other variants
+		// 3. Do this for both breakpoints
+		for (var chrom in break_list_by_chrom) {
+			break_list_by_chrom[chrom].sort(function(a,b) {return a.pos-b.pos});
+			var list_length = break_list_by_chrom[chrom].length;
+			for (var current = 0; current < list_length; current++) {
+				
+				var walker = current - 1;
+				var variants_within_margin = {};
+				// Walk left
+				while ((walker >= 0) && (break_list_by_chrom[chrom][walker].pos >= (break_list_by_chrom[chrom][current].pos - margin))) {
+					// Check variant is not other side of self
+					if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
+						if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
+							variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
+						}
+						variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
+						// variants_within_margin[break_list_by_chrom[chrom][walker].idx] = break_list_by_chrom[chrom][walker].side;	
+					} else if (Math.abs(walker - current) == 1) {
+						_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
+					}
+					walker -= 1;
+				}
+				walker = current + 1;
+				// Walk right
+				while ((walker < list_length) && (break_list_by_chrom[chrom][walker].pos <= (break_list_by_chrom[chrom][current].pos + margin))) {
+					// Check variant is not other side of self
+					if (break_list_by_chrom[chrom][walker].idx != break_list_by_chrom[chrom][current].idx) {
+						if (variants_within_margin[break_list_by_chrom[chrom][walker].idx] == undefined) {
+							variants_within_margin[break_list_by_chrom[chrom][walker].idx] = [];
+						}
+						variants_within_margin[break_list_by_chrom[chrom][walker].idx].push(break_list_by_chrom[chrom][walker].side);
+					} else if (Math.abs(walker - current) == 1) {
+						_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].simple = true;
+					}
+					walker += 1;
+				}
+				_Filtered_variant_data[break_list_by_chrom[chrom][current].idx].nearby_variants[break_list_by_chrom[chrom][current].side] = variants_within_margin;
+			}
+		}
+
+		// Look for putative reciprocals, that is variants where both breakpoints share a variant
+		// For relatively small variants, it may be that both breakpoints are close to the same side of the other variant, so we check for this
+		// We also check for whether the strands are the exact opposite
+
+		for (var i in _Filtered_variant_data) {
+
+			_Filtered_variant_data[i].paired = "none";
+
+			for (var var_index_1 in _Filtered_variant_data[i].nearby_variants[1]) {
+				if (_Filtered_variant_data[i].nearby_variants[2][var_index_1] != undefined) {
+					for (var s1 in _Filtered_variant_data[i].nearby_variants[1][var_index_1]) {
+						var side1 = _Filtered_variant_data[i].nearby_variants[1][var_index_1][s1];
+						for (var s2 in _Filtered_variant_data[i].nearby_variants[2][var_index_1]) {
+							var side2 = _Filtered_variant_data[i].nearby_variants[2][var_index_1][s2];
+							if (side1 != side2) {
+								// Strands must be opposites:
+								if ((_Filtered_variant_data[var_index_1]["strand"+side1] != _Filtered_variant_data[i].strand1) && (_Filtered_variant_data[var_index_1]["strand" + side2] != _Filtered_variant_data[i].strand2)) {
+									// and positions are within the stricter reciprocal threshold:
+									if ((Math.abs(_Filtered_variant_data[var_index_1]["pos" + side1] - _Filtered_variant_data[i].pos1) < _settings.margin_for_reciprocal) && (Math.abs(_Filtered_variant_data[var_index_1]["pos" + side2] - _Filtered_variant_data[i].pos2) < _settings.margin_for_reciprocal)) {
+										_Filtered_variant_data[i].paired = "reciprocal";
+									}
 								}
 							}
 						}
@@ -2889,7 +2914,17 @@ function summarize_variants() {
 	// var row_names = {};
 	// var column_names = {};
 
+	
+	var row_names = ["matching","partial","non-matching","neutral"]; //d3.keys(row_names);
+	var column_names = ["simple","reciprocal","solo","crowded"]; //d3.keys(column_names);
+
 	var type_counts = {};
+	for (var i in row_names) {
+		type_counts[row_names[i]] = {};
+		for (var j in column_names) {
+			type_counts[row_names[i]][column_names[j]] = 0;
+		}
+	}
 	for (var i in my_list) {
 		if (type_counts[my_list[i][row_key]] == undefined) {
 			type_counts[my_list[i][row_key]] = {};
@@ -2902,9 +2937,7 @@ function summarize_variants() {
 		type_counts[my_list[i][row_key]][my_list[i][column_key]]++;
 	}
 	
-	var column_names = ["simple","reciprocal","solo","crowded"]; //d3.keys(column_names);
-	var row_names = ["matching","partial","non-matching","neutral"]; //d3.keys(row_names);
-
+	
 	var table = d3.select("#variant_category_tables_landing").html("").append("table"); // set up table
 	var title_row = table.append("tr");
 	title_row.append("th").attr("class","no_border");
