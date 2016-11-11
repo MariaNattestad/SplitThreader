@@ -203,7 +203,7 @@
 						<col width="30%">
 						<tr><td colspan="2"><hr><label>Categorization parameters</label></td></tr>
 						<tr>
-							<td>Distance threshold for solo variant: </td>
+							<td>Distance threshold for CNV matching and nearby variant count: </td>
 							<td><input id="margin_for_nearby" class="categorization_parameter_input" type="number" value="100000"></td>
 						</tr>
 						<tr>
