@@ -8,17 +8,17 @@
  
 
 <!-- GITHUB LINK -->
-<!-- <div class="panel panel-default">
+<div class="panel panel-default">
   <div class="panel-heading"><h3 class="panel-title">Code</h3></div>
   <div class="panel-body">
-      <p>The code is open-source at <a href="https://github.com/MariaNattestad/splitthreader" target="_blank">https://github.com/MariaNattestad/splitthreader</a></p>
+      <p>The code is open-source at <a href="https://github.com/MariaNattestad/SplitThreader" target="_blank">https://github.com/MariaNattestad/SplitThreader</a></p>
   </div>
-</div> -->
+</div>
 
 
 <!-- PAPER LINK -->
-<!-- 
-<div class="panel panel-default">
+
+<!-- <div class="panel panel-default">
     <div class="panel-heading"><h3 class="panel-title">How to cite SplitThreader</h3></div>
     <div class="panel-body">
         <p>Please cite our pre-print on the bioRxiv: <a href="" target="_blank">link text</a></p>
