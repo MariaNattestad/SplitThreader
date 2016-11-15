@@ -12,6 +12,12 @@ def is_digit(number):
     except ValueError:
         return False
 
+def get_size(fields_to_output):
+    if fields_to_output[0] != fields_to_output[3]:
+        return -1
+    else:
+        return abs((int(fields_to_output[1])+int(fields_to_output[2]))/2-(int(fields_to_output[4])+int(fields_to_output[5]))/2)
+
 def filter_variant(fields_to_output, args):
     if fields_to_output[0] == fields_to_output[3]:
         if abs((int(fields_to_output[1])+int(fields_to_output[2]))/2-(int(fields_to_output[4])+int(fields_to_output[5]))/2) >= args.min_size:
@@ -46,7 +52,7 @@ def run(args):
         f = gzip.open(args.input)
     else:
         # print "Variant file is not gzipped"
-        if header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n" or header == "chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support\n":
+        if "chrom1,start1,stop1,chrom2,start2,stop2,variant_name" in header:
             is_csv_file = True
         f.close()
         f = open(args.input)
@@ -292,7 +298,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support\n")
+    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support,size\n")
 
     variant_type_list = set()
     ID_counter = 1
@@ -334,6 +340,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         numreads_from_RE_tag = -1 # In Sniffles means split reads
         numreads_from_PE_tag = -1
         numreads_from_BND_DEPTH_tag = -1
+        num_evidence_from_SUPP_tag = -1
         special_inversion_flag = None
         special_CT_strand_code = None
         
@@ -403,6 +410,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     numreads_from_RE_tag = value
                 if name == "BND_DEPTH":
                     numreads_from_BND_DEPTH_tag = value
+                if name == "SUPP":
+                    num_evidence_from_SUPP_tag = value
                 if name == "CT":
                     special_CT_strand_code = value
             else:
@@ -422,6 +431,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         other_read_support = -1
         if numreads_from_BND_DEPTH_tag != -1:
             other_read_support = numreads_from_BND_DEPTH_tag
+        elif num_evidence_from_SUPP_tag != -1:
+            other_read_support = num_evidence_from_SUPP_tag
         
         num_discordant_pairs = -1
         if numreads_from_PE_tag != -1:
@@ -481,6 +492,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     new_ID = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
 
                 fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
+                fields_to_output.append(get_size(fields_to_output))
+                
                 if filter_variant(fields_to_output, args) == True:
                     ID_counter += 1
                     fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -518,7 +531,10 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
             if overwrite_ID_names:
                 ID_field = ID_counter
 
+
             fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
+            fields_to_output.append(get_size(fields_to_output))
+
             if filter_variant(fields_to_output, args) == True:
                 ID_counter += 1
                 fout.write(",".join(map(str,fields_to_output)) + "\n")
