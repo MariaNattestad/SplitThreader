@@ -62,6 +62,14 @@
                   </div>
           </div>
           <div class="col-md-5"> 
+
+                   <div class="panel panel-default">
+                      <div class="panel-heading"> <h3 class="panel-title">Tutorial</h3></div>
+                      <div class="panel-body">
+                        <iframe width="450" height="253" src="https://www.youtube.com/embed/cn1aSCBqVVE?rel=0" frameborder="0" allowfullscreen></iframe>
+                      </div>
+                  </div>
+
                   <div class="panel panel-default">
                       <div class="panel-heading"> <h3 class="panel-title">Instructions</h3></div>
                       <div class="panel-body">
@@ -72,8 +80,8 @@
                         </ol>
                       </div>
                   </div>
+
           </div>
-          
   </div>
 <!-- </div> -->
 
