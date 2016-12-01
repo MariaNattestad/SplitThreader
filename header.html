@@ -75,7 +75,11 @@
                         $my_datasets = json_decode($_COOKIE["splitthreader"], true);
 
                         $arrlength = count($my_datasets);
-                        for($x = 0; $x < $arrlength; $x++) {
+                        $start_at = 0;
+                        if ($arrlength > 20) {
+                          $start_at = $arrlength - 20;
+                        }
+                        for($x = $start_at; $x < $arrlength; $x++) {
                           $seconds_ago = time() - $my_datasets[$x]["date"];
                           
                           $time_ago = $seconds_ago;
