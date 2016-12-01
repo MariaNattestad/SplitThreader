@@ -654,8 +654,8 @@ function read_variant_file() {
 			spansplit_input[i].start2 = +spansplit_input[i].start2;
 			spansplit_input[i].stop1 = +spansplit_input[i].stop1;
 			spansplit_input[i].stop2 = +spansplit_input[i].stop2;
-			spansplit_input[i].pos1 = Math.floor(spansplit_input[i].start1+spansplit_input[i].stop1)/2;
-			spansplit_input[i].pos2 = Math.floor(spansplit_input[i].start2+spansplit_input[i].stop2)/2;
+			spansplit_input[i].pos1 = Math.floor((spansplit_input[i].start1+spansplit_input[i].stop1)/2);
+			spansplit_input[i].pos2 = Math.floor((spansplit_input[i].start2+spansplit_input[i].stop2)/2);
 			spansplit_input[i].split = +spansplit_input[i].split;
 			spansplit_input[i].pairs = +spansplit_input[i].pairs;
 			spansplit_input[i].other_read_support = +spansplit_input[i].other_read_support;
