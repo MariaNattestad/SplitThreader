@@ -48,7 +48,7 @@
           <div id="code" class="panel-body">
             <?php
                 $code=$_GET["code"];
-                $url="http://qb.cshl.edu/splitthreader/analysis.php?code=$code";
+                $url="http://splitthreader.com/analysis.php?code=$code";
     
                 echo "Return to view your results at any time: <input type=\"text\" class=\"form-control\" value=\"$url\"></input>";
             ?>
