@@ -126,10 +126,8 @@ def run(args):
             
             #########################  see if we can find the number of split reads  ########################
 
-            # fields[11] should be num_reads, we can fill this in from a Lumpy file through fields[12] (see next step)
-            if not fields[11].isdigit():
-                contains_possible_numreads_column = False
-
+            # fields[11] can be num_reads
+           
             # fields[12] contains info about STRANDS (including number of reads of support for each one) if this is a Lumpy output file
             if len(fields) < 13:
                 is_a_lumpy_file = False
@@ -156,12 +154,9 @@ def run(args):
     elif is_a_lumpy_file:
         print "Lumpy bedpe file"
         clean_lumpy(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
-    elif contains_possible_numreads_column:
+    else:
         print "Sniffles bedpe file"
         clean_sniffles(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
-    else:
-        print "ERROR: This file needs column 12 to have the number of split reads supporting each variant, or it can be a Lumpy output file with the STRANDS tag included within column 13. This file has neither."
-        return
 
 def remove_chr(chromosome):
     if chromosome[0:3] in ["chr","Chr","CHR"]:
