@@ -7,7 +7,7 @@ import gzip
 
 def is_digit(number):
     try:
-        int(number)
+        float(number)
         return True
     except ValueError:
         return False
@@ -208,7 +208,7 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
     fout = open(args.out,"w")
     if args.output_bedpe == False:
         fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
-
+    
     filtered_count = 0
     ID_counter = 1
     for line in f:
@@ -216,11 +216,19 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
             continue
         fields = line.strip().split()
         fields[0] = remove_chr(fields[0])
+        fields[1] = int(float(fields[1]))
+        fields[2] = int(float(fields[2]))
         fields[3] = remove_chr(fields[3])
+        fields[4] = int(float(fields[4]))
+        fields[5] = int(float(fields[5]))
         if overwrite_ID_names:
             fields[6] = ID_counter
         ID_counter += 1
+        if len(fields) == 11:
+            fields.append("-1")
+
         fields_to_output = fields[0:12]
+
         if filter_variant(fields_to_output, args) == True:
             ID_counter += 1
             if args.output_bedpe == False:
