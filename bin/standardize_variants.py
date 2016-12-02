@@ -89,8 +89,8 @@ def run(args):
             ID_names.add(fields[2])
         else:
             # For bedpe files only:
-            if len(fields) < 12:
-                print "ERROR: Variant file (except vcf) must have at least 12 columns. Use output from Lumpy or Sniffles"
+            if len(fields) < 10:
+                print "ERROR: Variant file (except vcf) must have at least 10 columns, check the BEDPE format specifications for details"
                 return
 
             # fields[0] is a chromosome name
@@ -191,13 +191,16 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
         fields_to_output = fields#[0:12]
         if filter_variant(fields_to_output, args) == True:
             ID_counter += 1
-            fout.write(",".join(map(str,fields_to_output)) + "\n")
+            if args.output_bedpe == False:
+                fout.write(",".join(map(str,fields_to_output)) + "\n")
+            else:
+                fout.write("\t".join(map(str,fields_to_output)) + "\n")
         else:
             filtered_count += 1
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size:", filtered_count
+    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
 
 
 def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
@@ -208,7 +211,8 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
         f = open(args.input)
 
     fout = open(args.out,"w")
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
+    if args.output_bedpe == False:
+        fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split\n")
 
     filtered_count = 0
     ID_counter = 1
@@ -224,13 +228,16 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
         fields_to_output = fields[0:12]
         if filter_variant(fields_to_output, args) == True:
             ID_counter += 1
-            fout.write(",".join(map(str,fields_to_output)) + "\n")
+            if args.output_bedpe == False:
+                fout.write(",".join(map(str,fields_to_output)) + "\n")
+            else:
+                fout.write("\t".join(map(str,fields_to_output)) + "\n")
         else:
             filtered_count += 1
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size:", filtered_count
+    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
 
 
 def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
@@ -243,7 +250,8 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,other_read_support\n")
+    if args.output_bedpe == False:
+        fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,other_read_support\n")
 
     filtered_count = 0
     ID_counter = 1
@@ -279,13 +287,16 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
                         ID_counter += 1
                         if filter_variant(fields_to_output, args) == True:
                             ID_counter += 1
-                            fout.write(",".join(map(str,fields_to_output)) + "\n")
+                            if args.output_bedpe == False:
+                                fout.write(",".join(map(str,fields_to_output)) + "\n")
+                            else:
+                                fout.write("\t".join(map(str,fields_to_output)) + "\n")
                         else:
                             filtered_count += 1
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size:", filtered_count
+    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
 
 
 def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
@@ -298,7 +309,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     fout = open(args.out,"w")
 
-    fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support,size\n")
+    if args.output_bedpe == False:
+        fout.write("chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split,pairs,other_read_support,size\n")
 
     variant_type_list = set()
     ID_counter = 1
@@ -496,7 +508,10 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 
                 if filter_variant(fields_to_output, args) == True:
                     ID_counter += 1
-                    fout.write(",".join(map(str,fields_to_output)) + "\n")
+                    if args.output_bedpe == False:
+                        fout.write(",".join(map(str,fields_to_output)) + "\n")
+                    else:
+                        fout.write("\t".join(map(str,fields_to_output)) + "\n")
                 else:
                     filtered_count += 1
         else:
@@ -537,7 +552,10 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
             if filter_variant(fields_to_output, args) == True:
                 ID_counter += 1
-                fout.write(",".join(map(str,fields_to_output)) + "\n")
+                if args.output_bedpe == False:
+                    fout.write(",".join(map(str,fields_to_output)) + "\n")
+                else:
+                    fout.write("\t".join(map(str,fields_to_output)) + "\n")
             else:
                 filtered_count += 1
 
@@ -550,14 +568,15 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         print "Visualizer will ignore these variants where it could not guess the strands from the variant types"
 
 
-    print "All variant types:", ",".join(variant_type_list)
-    print "Number of variants filtered out due to small size (minimum is 1 kb):", filtered_count
+    print "All variant types:", ", ".join(variant_type_list)
+    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
 
 def main():
-    parser=argparse.ArgumentParser(description="Standardize variant bedpe file to fit for SplitThreader input")
+    parser=argparse.ArgumentParser(description="Standardize variant vcf or bedpe file to fit for SplitThreader input")
     parser.add_argument("-input",help="Variant calls in bedpe or vcf format",dest="input",required=True)
     parser.add_argument("-out",help="Output filename",dest="out",required=True)
     parser.add_argument("-min_size",help="Minimum size for variant filter",dest="min_size",default=1000,type=int)
+    parser.add_argument("-bedpe",help="Output file in bedpe format with tabs and no header",dest="output_bedpe",action='store_true')
     parser.set_defaults(func=run)
     args=parser.parse_args()
     args.func(args)
