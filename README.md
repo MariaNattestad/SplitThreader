@@ -25,11 +25,17 @@ If you need to deploy SplitThreader locally, here are the steps:
    ```
    git clone https://github.com/marianattestad/splitthreader
    ```
+4. Open up permissions for user_data and user_uploads so new files can be created in those directories
 
-4. Then go to a web browser such as Chrome, Firefox, or Safari (Not tested on IE) and type into the url box:
+   ```
+   chmod 777 user_uploads
+   chmod 777 user_data
+   ```
+
+5. Then go to a web browser such as Chrome, Firefox, or Safari (Not tested on IE) and type into the url box:
 
    ```
    localhost/splitthreader
    ```
 
-5. You may have to change the Python path for apache in order to be able to run SplitThreader
+6. You may have to change the Python path for apache in order to be able to run SplitThreader
