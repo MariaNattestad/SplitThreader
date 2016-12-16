@@ -45,7 +45,7 @@ _settings.show_local_gene_names = true;
 _settings.color_index = 0;
 _settings.segment_copy_number = "segmented";
 _settings.adaptive_coverage_scaling = true;
-_settings.min_variant_size = 1000;
+_settings.min_variant_size = -1;
 _settings.min_split_reads = -1;
 _settings.min_discordant_pairs = -1;
 _settings.min_other_read_evidence = -1;
@@ -373,13 +373,9 @@ function submit_filters() {
 
 	_settings.min_variant_size = parseInt(d3.select("#min_variant_size").property("value"));
 	if (isNaN(_settings.min_variant_size)) {
-		_settings.min_variant_size = 1000;
+		_settings.min_variant_size = -1;
 	}
-	if (_settings.min_variant_size < 1000) {
-		_settings.min_variant_size = 1000;
-		user_message("The minimum variant size is 1 kb, variants smaller than that are better suited for other tools like IGV");
-	}
-
+	
 	_settings.min_split_reads = parseInt(d3.select("#min_split_reads").property("value"));
 	if (isNaN(_settings.min_split_reads)) {
 		_settings.min_split_reads = -1;
