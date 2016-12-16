@@ -184,7 +184,7 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
             fields[6] = ID_counter
         ID_counter += 1
         fields_to_output = fields#[0:12]
-        if filter_variant(fields_to_output, args) == True:
+        if filter_variant(fields_to_output, args) == True or fields[10] == "INVDUP":
             ID_counter += 1
             if args.output_bedpe == False:
                 fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -229,7 +229,7 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
 
         fields_to_output = fields[0:12]
 
-        if filter_variant(fields_to_output, args) == True:
+        if filter_variant(fields_to_output, args) == True or fields[10] == "INVDUP":
             ID_counter += 1
             if args.output_bedpe == False:
                 fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -288,7 +288,7 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
                             fields[6] = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
                         fields_to_output = fields[0:12]
                         ID_counter += 1
-                        if filter_variant(fields_to_output, args) == True:
+                        if filter_variant(fields_to_output, args) == True or fields[10] == "INVDUP":
                             ID_counter += 1
                             if args.output_bedpe == False:
                                 fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -358,6 +358,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         num_evidence_from_SUPP_tag = -1
         special_inversion_flag = None
         special_CT_strand_code = None
+        SVLEN = -1
         
         if fields[4].find("]") != -1 or fields[4].find("[") != -1:
             if fields[4].find("]") != -1 and fields[4].find("[") != -1:
@@ -429,12 +430,16 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     num_evidence_from_SUPP_tag = value
                 if name == "CT":
                     special_CT_strand_code = value
+                if name == "SVLEN":
+                    SVLEN = int(value)
             else:
                 if field == "INV3":
                     special_inversion_flag = "INV3"
                 elif field == "INV5":
                     special_inversion_flag = "INV5"
 
+        if chrom1 != chrom2:
+            SVLEN = -1
         stop2 = start2 + 1
         variant_type_list.add(variant_type)
         num_split_reads = -1
@@ -452,6 +457,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         num_discordant_pairs = -1
         if numreads_from_PE_tag != -1:
             num_discordant_pairs = numreads_from_PE_tag
+
+
 
         if strand_info != None:
             strand_info_list = []
@@ -507,9 +514,13 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     new_ID = ID_field + strand1 + strand2 # add strands to make the variants unique after splitting a variant into multiple lines with different strands
 
                 fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,new_ID,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
-                fields_to_output.append(get_size(fields_to_output))
+                if SVLEN == -1:
+                    SVLEN = get_size(fields_to_output)
+                fields_to_output.append(SVLEN)
+                if args.print_info == True:
+                    fields_to_output.append(fields[7])
                 
-                if filter_variant(fields_to_output, args) == True:
+                if filter_variant(fields_to_output, args) == True or variant_type == "INVDUP":
                     ID_counter += 1
                     if args.output_bedpe == False:
                         fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -551,9 +562,14 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
 
             fields_to_output = [chrom1,start1,stop1,chrom2,start2,stop2,ID_field,0,strand1,strand2,variant_type,num_split_reads,num_discordant_pairs,other_read_support]
-            fields_to_output.append(get_size(fields_to_output))
+            if SVLEN == -1:
+                SVLEN = get_size(fields_to_output)
+            fields_to_output.append(SVLEN)
 
-            if filter_variant(fields_to_output, args) == True:
+            if args.print_info == True:
+                fields_to_output.append(fields[7])
+
+            if filter_variant(fields_to_output, args) == True or variant_type == "INVDUP":
                 ID_counter += 1
                 if args.output_bedpe == False:
                     fout.write(",".join(map(str,fields_to_output)) + "\n")
@@ -580,6 +596,7 @@ def main():
     parser.add_argument("-out",help="Output filename",dest="out",required=True)
     parser.add_argument("-min_size",help="Minimum size for variant filter",dest="min_size",default=1000,type=int)
     parser.add_argument("-bedpe",help="Output file in bedpe format with tabs and no header",dest="output_bedpe",action='store_true')
+    parser.add_argument("-info",help="Print entire info field in last column",dest="print_info",action='store_true')
     parser.set_defaults(func=run)
     args=parser.parse_args()
     args.func(args)
