@@ -2020,7 +2020,7 @@ function update_fusions_for_Ribbon_and_CSV() {
 	d3.select("#send_fusion_to_ribbon_form").style("display","block");
 
 	// Export to CSV
-	var csv_content = dataset_to_csv(_Gene_fusions, ["gene1","gene2","distance","num_variants","path_chromosomes"]);
+	var csv_content = dataset_to_csv(_Gene_fusions, ["gene1","gene2","distance","num_variants","path_chromosomes","variant_names"]);
 	var encodedUri = encodeURI(csv_content);
 	d3.select("#export_gene_fusions_to_csv").attr("href",encodedUri).attr("download","gene_fusions.csv");
 
@@ -2036,7 +2036,7 @@ function update_filtered_variants_for_Ribbon_and_CSV(data) {
 }
 
 function update_graph_search_results_for_CSV(data) {
-	var csv_content = dataset_to_csv(data, ["from","from_type","to","to_type","distance","num_variants","path_chromosomes"]);
+	var csv_content = dataset_to_csv(data, ["from","from_type","to","to_type","distance","num_variants","path_chromosomes","variant_names"]);
 	var encodedUri = encodeURI(csv_content);
 	d3.select("#export_search_results_to_csv").attr("href",encodedUri).attr("download","graph_search_results.csv");	
 }
@@ -2566,7 +2566,7 @@ function update_fusion_table() {
 	d3.select("#gene_fusion_table_landing").call(
 		d3.superTable()
 			.table_data(_Gene_fusions)
-			.table_header(["gene1","gene2","distance","num_variants","path_chromosomes"])
+			.table_header(["gene1","gene2","distance","num_variants","path_chromosomes","variant_names"])
 			// .show_advanced_filters(true)
 			.click_function(highlight_gene_fusion)
 	);
