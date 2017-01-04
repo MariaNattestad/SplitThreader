@@ -321,8 +321,11 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
 
     filtered_count = 0
 
+    file_is_lumpy = False
     for line in f:
         if line[0] == "#":
+            if line.find("source=LUMPY") != -1:
+                file_is_lumpy = True
             continue
         fields = line.strip().split()
 
@@ -337,15 +340,15 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         
         ID_field = fields[2]
 
-        # Lumpy VCF files end variant names in _1 and _2 to separate out the two breakpoints, so since we are using a bedpe style format, we consolidate the two breakpoints into a single entry
-        if ID_field[-2:] == "_2":
-            # print "Ignoring", ID_field
-            continue
-        elif ID_field[-2:] == "_1":
-            ID_field = ID_field[:-2]
-            # Cut off _1 suffix
+        if file_is_lumpy == True:
+            # Lumpy VCF files end variant names in _1 and _2 to separate out the two breakpoints, so since we are using a bedpe style format, we consolidate the two breakpoints into a single entry
+            if ID_field[-2:] == "_2":
+                # print "Ignoring", ID_field
+                continue
+            elif ID_field[-2:] == "_1":
+                ID_field = ID_field[:-2]
+                # Cut off _1 suffix
 
-        
         strand1 = ""
         strand2 = ""
         variant_type = fields[4]
