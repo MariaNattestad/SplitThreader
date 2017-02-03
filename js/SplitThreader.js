@@ -122,17 +122,28 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 	for (var chrom in positions_by_chrom) {
 		var positions = positions_by_chrom[chrom];
 		positions.sort(function(a, b){return a-b});
-		this.genomic_sorted_positions[chrom] = positions;
+
+
+		// Find unique positions in case of exact duplicate breakpoints
+		var unique_positions = [];
+		unique_positions.push(positions[0]);
+		for (var i = 1; i < positions.length; i++) {
+			if (positions[i] != positions[i-1]) {
+				unique_positions.push(positions[i])
+			}
+		}
+
+		this.genomic_sorted_positions[chrom] = unique_positions;
 
 		var previous_position = 0;
-		for (var i = 0; i < positions.length; i++) {
+		for (var i = 0; i < unique_positions.length; i++) {
 			var node_name = chrom + "|" + i;
 			this.nodes[node_name] = new Node(node_name);
-			this.nodes[node_name].genomic_coordinates = {"chrom":chrom,"start":previous_position,"end":positions[i]};
-			this.nodes[node_name].length = positions[i]-previous_position;
+			this.nodes[node_name].genomic_coordinates = {"chrom":chrom,"start":previous_position,"end":unique_positions[i]};
+			this.nodes[node_name].length = unique_positions[i]-previous_position;
 			this.genomic_node_lookup[[chrom,previous_position,"s"]] = node_name;
-			this.genomic_node_lookup[[chrom,positions[i],"e"]] = node_name;
-			previous_position = positions[i];
+			this.genomic_node_lookup[[chrom,unique_positions[i],"e"]] = node_name;
+			previous_position = unique_positions[i];
 		}
 	}
 
@@ -157,10 +168,6 @@ Graph.prototype.from_genomic_variants = function(variants,chromosome_sizes) {
 
 		}
 	}
-
-	// console.log("this.edges:");
-	// console.log(this.edges);
-
 }
 
 Graph.prototype.create_edge = function(edge_name,node1,port1,node2,port2) {

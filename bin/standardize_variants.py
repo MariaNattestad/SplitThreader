@@ -433,7 +433,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     num_evidence_from_SUPP_tag = value
                 if name == "CT":
                     special_CT_strand_code = value
-                if name == "SVLEN":
+                if name == "SVLEN" and is_digit(value):
                     SVLEN = int(value)
             else:
                 if field == "INV3":
