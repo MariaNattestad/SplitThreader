@@ -4,10 +4,10 @@
 <?php
 
     if( !isset($_POST['code']) ) { echo shell_exec('echo ERROR: No code passed to run_algorithm.php >> user_data/ERRORS/run_algorithm.log');}
-    $code=$_POST["code"];
+    $code=escapeshellarg($_POST["code"]);
 
     if( !isset($_POST['nickname']) ) { echo shell_exec('echo ERROR: No nickname passed to run_algorithm.php >> user_data/$code/run_algorithm.log');}
-    $nickname = $_POST["nickname"];
+    $nickname = escapeshellarg($_POST["nickname"]);
 
     $url="analysis.php?code=$code";
     $filename="user_uploads/$code";
@@ -74,5 +74,3 @@
 ?>
     </body>
 </html>
-
-<!-- <form name="input_code_form" action="run.php" id="analysis_form" method="post"> -->
