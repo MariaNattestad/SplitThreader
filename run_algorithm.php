@@ -4,7 +4,7 @@
 <?php
 
     if( !isset($_POST['code']) ) { echo shell_exec('echo ERROR: No code passed to run_algorithm.php >> user_data/ERRORS/run_algorithm.log');}
-    $code=escapeshellarg($_POST["code"]);
+    $code=preg_replace('/[^A-Za-z0-9]/', '', $_POST["code"]);
 
     if( !isset($_POST['nickname']) ) { echo shell_exec('echo ERROR: No nickname passed to run_algorithm.php >> user_data/$code/run_algorithm.log');}
     $nickname = escapeshellarg($_POST["nickname"]);
