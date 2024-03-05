@@ -68,7 +68,7 @@ def run(args):
             header_count += 1
             if line.find("VCF") != -1:
                 is_vcf_file = True
-                print "NOTE: Contains 'VCF' in a header row (starting with #), so treating it like a VCF file."
+                print("NOTE: Contains 'VCF' in a header row (starting with #), so treating it like a VCF file.")
             continue
         fields = line.strip().split()
         if is_csv_file:
@@ -80,8 +80,8 @@ def run(args):
         if not is_digit(fields[1]):
             header_count += 1
             if header_count > 1:
-                print "ERROR: Column 2 must be a genomic position, but it is not a number:", fields[1]
-                print line
+                print("ERROR: Column 2 must be a genomic position, but it is not a number:", fields[1])
+                print(line)
                 return
             continue
 
@@ -90,7 +90,7 @@ def run(args):
         else:
             # For bedpe files only:
             if len(fields) < 10:
-                print "ERROR: Variant file (except vcf) must have at least 10 columns, check the BEDPE format specifications for details"
+                print("ERROR: Variant file (except vcf) must have at least 10 columns, check the BEDPE format specifications for details")
                 return
 
             # fields[0] is a chromosome name
@@ -98,17 +98,17 @@ def run(args):
             # fields[2] is a position, check it's a number
             
             if not is_digit(fields[2]):
-                print "ERROR: Column 3 must be a genomic position, but it is not a number:", fields[2]
+                print("ERROR: Column 3 must be a genomic position, but it is not a number:", fields[2])
                 return
 
             # fields[3] is a chromosome name
             
             # fields[4] and fields[5] are positions, check they are numbers        
             if not is_digit(fields[4]):
-                print "ERROR: Column 5 must be a genomic position, but it is not a number:", fields[4]
+                print("ERROR: Column 5 must be a genomic position, but it is not a number:", fields[4])
                 return
             if not is_digit(fields[5]):
-                print "ERROR: Column 6 must be a genomic position, but it is not a number:", fields[5]
+                print("ERROR: Column 6 must be a genomic position, but it is not a number:", fields[5])
                 return
 
             # fields[6] is the ID name, this is standardized as a count in each of the clean_* functions
@@ -118,7 +118,7 @@ def run(args):
 
             # fields[8] and fields[9] are strands, so check they are + and -
             if fields[8] not in ["+","-"] or fields[9] not in ["+","-"]:
-                print "ERROR: Columns 9 and 10 must only contain + or -"
+                print("ERROR: Columns 9 and 10 must only contain + or -")
                 return
 
             # fields[10] is a variant type, ignore this for now
@@ -143,19 +143,19 @@ def run(args):
     overwrite_ID_names = False
     if len(ID_names) != line_counter:
         overwrite_ID_names = True
-        print "NOTE: IDs are not unique, replacing with numbers"
+        print("NOTE: IDs are not unique, replacing with numbers")
 
     if is_csv_file:
-        print "CSV file"
+        print("CSV file")
         parse_csv_file(args,overwrite_ID_names=overwrite_ID_names,is_gzipped = is_gzipped)
     elif is_vcf_file:
-        print "VCF file"
+        print("VCF file")
         clean_vcf(args,overwrite_ID_names=overwrite_ID_names,is_gzipped = is_gzipped)
     elif is_a_lumpy_file:
-        print "Lumpy bedpe file"
+        print("Lumpy bedpe file")
         clean_lumpy(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
     else:
-        print "Sniffles bedpe file"
+        print("Sniffles bedpe file")
         clean_sniffles(args,overwrite_ID_names=overwrite_ID_names, is_gzipped = is_gzipped)
 
 def remove_chr(chromosome):
@@ -195,7 +195,7 @@ def parse_csv_file(args,overwrite_ID_names,is_gzipped):
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
+    print("Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count)
 
 
 def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
@@ -240,7 +240,7 @@ def clean_sniffles(args,overwrite_ID_names,is_gzipped = False):
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
+    print("Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count)
 
 
 def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
@@ -299,7 +299,7 @@ def clean_lumpy(args,overwrite_ID_names, is_gzipped = False):
     f.close()
     fout.close()
 
-    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
+    print("Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count)
 
 
 def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
@@ -365,7 +365,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
         
         if fields[4].find("]") != -1 or fields[4].find("[") != -1:
             if fields[4].find("]") != -1 and fields[4].find("[") != -1:
-                print "WARNING: Incorrect breakend notation in ALT field:", fields[4]
+                print("WARNING: Incorrect breakend notation in ALT field:", fields[4])
                 # continue
             # print "_________________________________"
             # print fields[4]
@@ -404,7 +404,7 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
             elif bracket2 == len(fields[4])-1:
                 strand1 = "+"
             else:
-                print "WARNING: Incorrect breakend notation in ALT field:", fields[4]
+                print("WARNING: Incorrect breakend notation in ALT field:", fields[4])
 
 
             chrom2 = remove_chr(remainder.split(":")[0])
@@ -484,8 +484,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     pass
                 else:
                     strand1 = num[0]
-                    print "WARNING: strand1 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent"
-                    print "STRANDS tag:", strand_info_list, "vs ALT text:", fields[4]
+                    print("WARNING: strand1 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent")
+                    print("STRANDS tag:", strand_info_list, "vs ALT text:", fields[4])
 
                 
                 if strand2 == "" or len(strand_info_list)>1:
@@ -495,8 +495,8 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                     pass
                 else:
                     strand2 = num[1]
-                    print "WARNING: strand2 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent"
-                    print "STRANDS tag:", strand_info_list, "vs ALT text:", fields[4]
+                    print("WARNING: strand2 not matching between ALT bracket notation and STRANDS tag in INFO field. STRANDS tag takes precedent")
+                    print("STRANDS tag:", strand_info_list, "vs ALT text:", fields[4])
 
                 if len(num) > 2:
                     numreads_from_STRANDS_tag = int(num[3:])
@@ -582,16 +582,16 @@ def clean_vcf(args,overwrite_ID_names, is_gzipped = False):
                 filtered_count += 1
 
     if len(strand_fail_list) > 0:
-        print "WARNING: No strand info for records. Variants will be ignored by visualizer:"
-        for i in xrange(min(5,len(strand_fail_list))):
-            print strand_fail_list[i]
-        print "Total variants affected:", len(strand_fail_list), " out of " , ID_counter , " total variants"
-        print "You can specify strands among the other tags in the vcf file's info field, for example: STRANDS=+-:5; where 5 is the number of split reads"
-        print "Visualizer will ignore these variants where it could not guess the strands from the variant types"
+        print("WARNING: No strand info for records. Variants will be ignored by visualizer:")
+        for i in range(min(5,len(strand_fail_list))):
+            print(strand_fail_list[i])
+        print("Total variants affected:", len(strand_fail_list), " out of " , ID_counter , " total variants")
+        print("You can specify strands among the other tags in the vcf file's info field, for example: STRANDS=+-:5; where 5 is the number of split reads")
+        print("Visualizer will ignore these variants where it could not guess the strands from the variant types")
 
 
-    print "All variant types:", ", ".join(variant_type_list)
-    print "Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count
+    print("All variant types:", ", ".join(variant_type_list))
+    print("Number of variants filtered out due to small size (minimum size is", str(args.min_size) + "):", filtered_count)
 
 def main():
     parser=argparse.ArgumentParser(description="Standardize variant vcf or bedpe file to fit for SplitThreader input")

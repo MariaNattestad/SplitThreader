@@ -17,47 +17,47 @@ def run(args):
     delim = ","
     header_fields = header.split(",")
     if len(header_fields)<4 and len(header.split()) >= 4:
-        print "NOTE: Found not enough comma-separated column names in header: treating file as whitespace delimited instead"
+        print("NOTE: Found not enough comma-separated column names in header: treating file as whitespace delimited instead")
         delim = "whitespace"
         header_fields = header.split()
     
     if len(header_fields) < 4:
-        print "ERROR: Copy number file needs at least 4 columns named: chromosome,start,end,coverage"
-        print header_fields
-        print header
+        print("ERROR: Copy number file needs at least 4 columns named: chromosome,start,end,coverage")
+        print(header_fields)
+        print(header)
 
         return
 
-    for i in xrange(len(header_fields)):
+    for i in range(len(header_fields)):
         name = header_fields[i]
         if name in ["chromosome","chrom"]:
             if column_index.get("chromosome",None) == None:
                 column_index["chromosome"] = i
             else:
-                print "ERROR: multiple columns named chromosome/chrom. Copy number file must only have 1"
+                print("ERROR: multiple columns named chromosome/chrom. Copy number file must only have 1")
                 return
         if name in ["start","beg","beginning","begin"]:
             if column_index.get("start",None) == None:
                 column_index["start"] = i
             else:
-                print "ERROR: multiple columns named start/beg/begin/beginning. Copy number file must only have 1"
+                print("ERROR: multiple columns named start/beg/begin/beginning. Copy number file must only have 1")
                 return
         if name in ["stop","end"]:
             if column_index.get("end",None) == None:
                 column_index["end"] = i
             else:
-                print "ERROR: multiple columns named stop/end. Copy number file must only have 1"
+                print("ERROR: multiple columns named stop/end. Copy number file must only have 1")
                 return
         if name.find("copy") > -1 or name.find("cov") > -1:
             if column_index.get("coverage",None) == None:
                 column_index["coverage"] = i
             else:
-                print "ERROR: multiple columns containing cov/coverage/copy related substring. Copy number file must only have 1"
+                print("ERROR: multiple columns containing cov/coverage/copy related substring. Copy number file must only have 1")
                 return
 
     for name in ["chromosome","start","end","coverage"]:
         if column_index.get(name,None) == None:
-            print "ERROR: header must include", name
+            print("ERROR: header must include", name)
             return
 
     # Start writing new coverage file
