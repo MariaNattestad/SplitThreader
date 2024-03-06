@@ -24,13 +24,13 @@ if [ -z "$3" ]
 fi
 
 # Author: Maria Nattestad
-# Email: mnattest@cshl.edu
+# Email: maria.nattestad@gmail.com
 
 VARIANTS=${1?"$USAGE"}
 COPYNUMBER=${2?"$USAGE"}
 OUTPUT_PREFIX=${3?"$USAGE"}
 
-source python_env/bin/activate
+# source python_env/bin/activate
 
 PATH=$PATH:/usr/local/bin/
 
