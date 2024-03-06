@@ -16,7 +16,8 @@
     umask($oldmask);
 
     // Run the job:
-    echo shell_exec("./bin/web_pipeline $filename.variants $filename.copynumber user_data/$code/$nickname &> user_data/$code/run_algorithm_errors.log &"); 
+    shell_exec("chmod 666 user_data/$code/run_algorithm_errors.log 2>/dev/null");
+    shell_exec("./bin/web_pipeline $filename.variants $filename.copynumber user_data/$code/$nickname > user_data/$code/run_algorithm_errors.log 2>&1 &"); 
 
     // Add cookie:
     function get_client_ip() {
