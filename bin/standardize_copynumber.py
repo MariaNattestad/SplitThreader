@@ -1,20 +1,20 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import argparse
 import gzip
 
 def run(args):
 
-
-    f = open(args.csv)
-    header = f.readline()
-    # If file is gzipped, close it and open using gzip, then reread the header
-    if header[0:4]=="\x1f\x8b\x08\x08":
-        f.close()
+    try:
         f = gzip.open(args.csv)
-        header = f.readline().strip()
+        header = f.readline()
+    except OSError:
+        f = open(args.csv)
+        header = f.readline()
 
     column_index = {}
     delim = ","
+    header = header.decode()  # Decode the header from bytes to string
+    print('header', header)
     header_fields = header.split(",")
     if len(header_fields)<4 and len(header.split()) >= 4:
         print("NOTE: Found not enough comma-separated column names in header: treating file as whitespace delimited instead")
@@ -67,6 +67,7 @@ def run(args):
 
     fout.write("chromosome,start,end,coverage\n")
     for line in f:
+        line = line.decode()
         fields = line.strip().split(delim)
         if delim == "whitespace":
             fields = line.strip().split()

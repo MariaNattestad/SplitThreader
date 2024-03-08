@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import argparse
 import gzip
 
@@ -33,33 +33,24 @@ def run(args):
     is_vcf_file = False
     is_csv_file = False
     is_a_lumpy_file = True
-    contains_possible_numreads_column = True
 
     ID_names = set()
 
     line_counter = 0
 
-    is_gzipped = False
-    
-    f = open(args.input)
-    header = f.readline()
-    # If file is gzipped, close it and open using gzip
-    # if header[0:4]=="\x1f\x8b\x08\x08":
-    if header[0:2]=="\x1f\x8b":
-        # print "Variant file is gzipped"
-        f.close()
-        is_gzipped = True
+    try:
         f = gzip.open(args.input)
-    else:
-        # print "Variant file is not gzipped"
-        if "chrom1,start1,stop1,chrom2,start2,stop2,variant_name" in header:
-            is_csv_file = True
-        f.close()
+        header = f.readline()
+        is_gzipped = True
+    except gzip.BadGzipFile:
         f = open(args.input)
-    
-    if is_csv_file:
-        f.readline()
+        header = f.readline()
+        is_gzipped = False
 
+    if "chrom1,start1,stop1,chrom2,start2,stop2,variant_name" in header:
+        is_csv_file = True
+        extra_header = f.readline() # skip the header line
+        print("extra_header:", extra_header)
 
     header_count = 0
 
