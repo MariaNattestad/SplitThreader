@@ -3,12 +3,76 @@
 <html>
 
 
-<!--    NAVIGATION BAR-->
-<?php include "header.html";?>
+<head>
+    <title>SplitThreader</title>
+    <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link rel="icon" type="image/png" href="images/favicon-32x32.png" sizes="32x32">
+        <link rel="icon" type="image/png" href="images/favicon-16x16.png" sizes="16x16">
+    
+        <title>SplitThreader</title>
+        <!--Dropzone-->
+        <link href="css/lib/dropzone.css" rel="stylesheet">
+        
+        <!-- Bootstrap core CSS -->
+        <link href="css/lib/bootstrap.min.css" rel="stylesheet">
+        <!-- Bootstrap theme -->
+        <link href="css/lib/bootstrap-theme.min.css" rel="stylesheet">
 
-<link href="css/splitthreader_visualizer.css" rel="stylesheet">
-<link href="css/d3-livesearch.css" rel="stylesheet">
-<link href="css/d3-superTable.css" rel="stylesheet">
+        <link href="css/index.css" rel="stylesheet">
+        <link href="css/d3-livesearch.css" rel="stylesheet">
+        <link href="css/d3-superTable.css" rel="stylesheet">
+</head>
+
+<body role="document">
+
+<!--    NAVIGATION BAR-->
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href=".">        SplitThreader</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav" id="navbar">
+            <li><a href="./">Home</a></li>
+            <li><a href="./info.php">Info</a></li> 
+            <li class="dropdown">
+              <a href="" class="dropdown-toggle" data-toggle="dropdown">Examples <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="?code=example1&nickname=SK_BR_3_breast_cancer_cell_line____PacBio_sequencing">SK-BR-3 (Breast cancer cell line) PacBio+Sniffles</a></li>
+                <li><a href="?code=example4&nickname=MCF7_Illumina_data_with_variants_filtered_to_10kb_min_size_with_5_split_and_5_paired_end_reads">MCF7 (breast cancer cell line) Illumina+Lumpy</a></li>
+                <li><a href="?code=example3&nickname=A549_Illumina_data_with_variants_filtered_to_10kb_min_size_with_3_split_and_3_paired_end_reads">A549 (NSCLC cell line) Illumina+Lumpy</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+<!--  END NAVIGATION BAR -->
+
+<!-- ABOUT PAGE -->
+<div class="panel panel-default" id="about_page" hidden="true">
+  <div class="panel-heading"><h3 class="panel-title">About SplitThreader</h3></div>
+  <div class="panel-body">
+      <p>The code is open-source at <a href="https://github.com/MariaNattestad/SplitThreader" target="_blank">https://github.com/MariaNattestad/SplitThreader</a></p>
+      <p>Please cite our pre-print on the bioRxiv: <a href="https://www.biorxiv.org/content/10.1101/087981v1" target="_blank">SplitThreader paper on BioRxiv</a></p>
+    <p>For questions, make an issue on GitHub: <a href="https://github.com/MariaNattestad/SplitThreader" target="_blank">github.com/MariaNattestad/SplitThreader</a></p>
+        <p>SplitThreader was created by <a href="https://marianattestad.com/connect.html">Maria Nattestad.</a>
+        as part of <a href="https://schatz-lab.org" target="_blank">Mike Schatz</a>'s lab.</p>
+        
+  </div>
+</div>
+<!-- END ABOUT PAGE -->
 
 <div class="row">
 	<div class="col-md-8">
@@ -484,7 +548,7 @@
 
 <script src="js/SplitThreader.js"></script>
 <script src="js/saveSvgAsPng.js"></script>
-<script src="js/SplitThreader_visualizer.js"></script>
+<script src="js/index.js"></script>
 
 
 
