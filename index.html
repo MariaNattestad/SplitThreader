@@ -111,6 +111,30 @@ mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
 					</p>
 				</div>
 			</div>
+
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Upload structural variants
+					</h4>
+				</div>
+				<div class="panel-body">
+					<p>Temporarily, only a special bedpe format is allowed. VCF will be supported soon.</p>
+					<input type="file" id="input_variants_file" />
+					<p>
+					<label>Instructions: </label>
+						There's a python script in the github that may help convert a VCF from a structural variant caller
+						to this bedpe-like format.
+
+						The bedpe file should have the following columns (comma separated). Here's an example:
+<pre>
+chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
+1,168186489,168186572,1,182274072,182274331,540,-1,+,+,INV,15
+1,152555137,152555830,1,152587256,152588236,671,-1,+,-,DEL,34
+</pre>
+					</p>
+				</div>
+			</div>
 		</div>
 		
 	<!-- Variant settings -->
@@ -173,10 +197,10 @@ mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
 										<table class="settings_table">
 											<col width="50%">
 											<col width="50%">
-											<tr>
+											<!-- <tr>
 												<td>Show segmented coverage:</td>
 												<td><input id="show_segmented_coverage" type="checkbox" checked></td>
-											</tr>
+											</tr> -->
 											<tr>
 												<td>Divide coverage by:</td>
 												<td><input id="coverage_divisor" type="number" value="1"></td>
@@ -269,7 +293,7 @@ mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
 				</div>
 				<div class="col-md-2">
 					<div id="statistics_landing">
-						<p><label>Average segmented copy number: </label><span id="mean_copynumber"></span></p>
+						<p><label>Mean coverage: </label><span id="mean_copynumber"></span></p>
 						<p><label>Total number of variants: </label><span class="number_of_variants"></span></p>
 						<p><label>Number of interchromosomal variants: </label><span id="num_interchromosomal"></span></p>
 						
@@ -556,13 +580,11 @@ mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
 	</div> <!-- end tab content class -->
 </div> <!-- end of main body container -->
 
-
-
-
 <script src="js/lib/d3.v3.min.js"></script>
 <script src="js/lib/jquery.min.js"></script>
 <script src="js/lib/bootstrap.min.js"></script>
 <script src="js/lib/priority-queue.min.js"></script>
+<script src="js/lib/papaparse.min.js"></script>
 
 <script src="js/d3-superTable.js?version=1"></script>
 <script src="js/d3-livesearch.js"></script>
@@ -570,8 +592,3 @@ mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
 <script src="js/SplitThreader.js"></script>
 <script src="js/saveSvgAsPng.js"></script>
 <script src="js/index.js"></script>
-
-
-
-
-

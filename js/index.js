@@ -357,33 +357,33 @@ d3.select("#show_features").on("change", function () {
   draw_features("bottom");
 });
 
-d3.select("#show_segmented_coverage").on("change", function () {
-  if (d3.event.target.checked) {
-    _settings.segment_copy_number = "segmented";
-  } else {
-    _settings.segment_copy_number = "unsegmented";
-  }
+// d3.select("#show_segmented_coverage").on("change", function () {
+//   if (d3.event.target.checked) {
+//     _settings.segment_copy_number = "segmented";
+//   } else {
+//     _settings.segment_copy_number = "unsegmented";
+//   }
 
-  var signs = ["top", "bottom"];
-  for (var i in signs) {
-    var top_or_bottom = signs[i];
-    if (
-      _Coverage_by_chromosome[_settings.segment_copy_number][
-        _chosen_chromosomes[top_or_bottom]
-      ] == undefined
-    ) {
-      _data_ready.coverage[_settings.segment_copy_number][
-        top_or_bottom
-      ] = false;
-      if (_settings.segment_copy_number == "unsegmented") {
-        load_coverage(_chosen_chromosomes[top_or_bottom], top_or_bottom);
-      }
-      wait_then_update(top_or_bottom);
-    } else {
-      update_coverage(top_or_bottom);
-    }
-  }
-});
+//   var signs = ["top", "bottom"];
+//   for (var i in signs) {
+//     var top_or_bottom = signs[i];
+//     if (
+//       _Coverage_by_chromosome[_settings.segment_copy_number][
+//         _chosen_chromosomes[top_or_bottom]
+//       ] == undefined
+//     ) {
+//       _data_ready.coverage[_settings.segment_copy_number][
+//         top_or_bottom
+//       ] = false;
+//       if (_settings.segment_copy_number == "unsegmented") {
+//         load_coverage(_chosen_chromosomes[top_or_bottom], top_or_bottom);
+//       }
+//       wait_then_update(top_or_bottom);
+//     } else {
+//       update_coverage(top_or_bottom);
+//     }
+//   }
+// });
 
 d3.select("#publication_style_plot_checkbox").on("change", function () {
   _settings.publication_style_plot = d3.event.target.checked;
@@ -666,7 +666,7 @@ function show_tooltip(text, x, y, parent_object) {
 function run() {
   read_annotation_file();
   // read_genome_file();
-  read_variant_file();
+  // read_variant_file();
 
   set_download_urls();
   user_message("Info", "Loading data");
@@ -806,66 +806,61 @@ function load_coverage(chromosome, top_or_bottom) {
   );
 }
 
-function read_variant_file() {
-  console.log("read_variant_file variants.csv");
-  d3.csv(
-    _input_file_prefix + ".variants.csv?id=" + Math.random(),
-    function (error, spansplit_input) {
-      // chrom1,start1,stop1,chrom2,start2,stop2,variant_name,score,strand1,strand2,variant_type,split
-      if (error) throw error;
-      _Variant_data = [];
-      for (var i = 0; i < spansplit_input.length; i++) {
-        spansplit_input[i].start1 = +spansplit_input[i].start1;
-        spansplit_input[i].start2 = +spansplit_input[i].start2;
-        spansplit_input[i].stop1 = +spansplit_input[i].stop1;
-        spansplit_input[i].stop2 = +spansplit_input[i].stop2;
-        spansplit_input[i].pos1 = Math.floor(
-          (spansplit_input[i].start1 + spansplit_input[i].stop1) / 2
-        );
-        spansplit_input[i].pos2 = Math.floor(
-          (spansplit_input[i].start2 + spansplit_input[i].stop2) / 2
-        );
-        spansplit_input[i].split = +spansplit_input[i].split;
-        spansplit_input[i].pairs = +spansplit_input[i].pairs;
-        spansplit_input[i].other_read_support =
-          +spansplit_input[i].other_read_support;
-        spansplit_input[i].size = parseInt(
-          Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2)
-        );
-        if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
-          spansplit_input[i].size = -1;
-        }
-        if (isNaN(spansplit_input[i].pairs)) {
-          spansplit_input[i].pairs = -1;
-        }
-        if (isNaN(spansplit_input[i].split)) {
-          spansplit_input[i].split = -1;
-        }
-        if (isNaN(spansplit_input[i].other_read_support)) {
-          spansplit_input[i].other_read_support = -1;
-        }
-
-        if (
-          spansplit_input[i].strand1 != "" &&
-          spansplit_input[i].strand2 != ""
-        ) {
-          _Variant_data.push(spansplit_input[i]);
-        } else {
-          console.warn(
-            "Ignoring variant in input file because strands are not set"
-          );
-          user_message(
-            "Warning",
-            "Ignoring variant in input file because strands are not set"
-          );
-        }
-      }
-
-      apply_variant_filters();
-      populate_ribbon_link();
-      _data_ready.spansplit = true;
+function parse_variant_data(spansplit_input) {
+  let variant_data = [];
+  for (var i = 0; i < spansplit_input.length; i++) {
+    spansplit_input[i].start1 = +spansplit_input[i].start1;
+    spansplit_input[i].start2 = +spansplit_input[i].start2;
+    spansplit_input[i].stop1 = +spansplit_input[i].stop1;
+    spansplit_input[i].stop2 = +spansplit_input[i].stop2;
+    spansplit_input[i].pos1 = Math.floor(
+      (spansplit_input[i].start1 + spansplit_input[i].stop1) / 2
+    );
+    spansplit_input[i].pos2 = Math.floor(
+      (spansplit_input[i].start2 + spansplit_input[i].stop2) / 2
+    );
+    spansplit_input[i].split = +spansplit_input[i].split;
+    spansplit_input[i].pairs = +spansplit_input[i].pairs;
+    spansplit_input[i].other_read_support =
+      +spansplit_input[i].other_read_support;
+    spansplit_input[i].size = parseInt(
+      Math.abs(spansplit_input[i].pos1 - spansplit_input[i].pos2)
+    );
+    if (spansplit_input[i].chrom1 != spansplit_input[i].chrom2) {
+      spansplit_input[i].size = -1;
     }
-  );
+    if (isNaN(spansplit_input[i].pairs)) {
+      spansplit_input[i].pairs = -1;
+    }
+    if (isNaN(spansplit_input[i].split)) {
+      spansplit_input[i].split = -1;
+    }
+    if (isNaN(spansplit_input[i].other_read_support)) {
+      spansplit_input[i].other_read_support = -1;
+    }
+
+    if (spansplit_input[i].strand1 != "" && spansplit_input[i].strand2 != "") {
+      variant_data.push(spansplit_input[i]);
+    } else {
+      console.warn(
+        "Ignoring variant in input file because strands are not set"
+      );
+      user_message(
+        "Warning",
+        "Ignoring variant in input file because strands are not set"
+      );
+    }
+  }
+  return variant_data;
+}
+
+function read_variant_file(variants_input) {
+  console.log("read_variant_file", variants_input);
+
+  _Variant_data = parse_variant_data(variants_input);
+  apply_variant_filters();
+  populate_ribbon_link();
+  _data_ready.spansplit = true;
 }
 
 function read_annotation_file() {
@@ -4227,16 +4222,48 @@ function open_coverage_file() {
     raw_data = event.target.result;
     let bed_data = read_coverage_file(raw_data);
     assign_coverage_bed_to_chromosomes(bed_data);
-    wait_then_run_when_all_data_loaded();
 
     let genome_input = genome_input_from_coverage(_Coverage_by_chromosome);
     // genome_input in the future can come from a .fai or a .bam header perhaps.
     // That would allow using SplitThreader with only variants if there's no coverage file available.
     // For now we depend on the coverage file to figure out the chromosome sizes.
     read_genome_file(genome_input);
+    wait_then_run_when_all_data_loaded();
+  };
+}
+
+function open_variants_file() {
+  var raw_data;
+  var reader = new FileReader();
+
+  if (this.files[0].size > 100000000) {
+    user_message(
+      "Error",
+      "This file is larger than 100 MB. Please choose a smaller file."
+    );
+    return;
+  }
+
+  reader.readAsText(this.files[0]);
+  reader.onload = function (event) {
+    raw_data = event.target.result;
+    let variant_input = Papa.parse(raw_data, {
+      header: true,
+      skipEmptyLines: true,
+    });
+    if (variant_input.errors.length > 0) {
+      user_message(
+        "Error",
+        "Error reading CSV file: " + variant_input.errors[0].message
+      );
+      return;
+    }
+    read_variant_file(variant_input.data);
+    wait_then_run_when_all_data_loaded();
   };
 }
 
 d3.select("#input_coverage_file").on("change", open_coverage_file);
+d3.select("#input_variants_file").on("change", open_variants_file);
 
 run();
