@@ -400,10 +400,7 @@ d3.select("#publication_style_plot_checkbox").on("change", function () {
 });
 
 d3.select("#take_screenshot").on("click", function () {
-  saveSvgAsPng(
-    "SplitThreader_image",
-    { scale: 4 }
-  );
+  saveSvgAsPng("SplitThreader_image", { scale: 4 });
 });
 
 d3.select("#adaptive_coverage_scaling").on("change", function () {
@@ -482,7 +479,7 @@ function set_ribbon_path(path) {
   d3.select("#send_filtered_table_to_ribbon_form").property("action", path);
 }
 
-set_ribbon_path("http://genomeribbon.com");
+set_ribbon_path("https://genomeribbon.com");
 
 function update_variants() {
   analyze_variants();
@@ -668,7 +665,7 @@ function show_tooltip(text, x, y, parent_object) {
 
 function run() {
   read_annotation_file();
-  read_genome_file();
+  // read_genome_file();
   read_variant_file();
 
   set_download_urls();
@@ -740,90 +737,46 @@ function apply_variant_filters() {
   }
 }
 
-function read_genome_file() {
-  console.log("read_genome_file --- .genome.csv");
-  d3.csv(_input_file_prefix + ".genome.csv", function (error, genome_input) {
-    if (error) throw error;
+function read_genome_file(genome_input) {
+  var sum_genome_size = 0;
+  for (var i = 0; i < genome_input.length; i++) {
+    genome_input[i].size = +genome_input[i].size;
+    sum_genome_size += genome_input[i].size;
+  }
+  _settings.circos_padding_in_bp = sum_genome_size / 400;
 
-    var sum_genome_size = 0;
-    for (var i = 0; i < genome_input.length; i++) {
-      genome_input[i].size = +genome_input[i].size;
-      sum_genome_size += genome_input[i].size;
+  _Genome_data = []; // set global variable for accessing this elsewhere
+  var cumulative_genome_size = 0;
+  _Chromosome_start_positions = {};
+  for (var i = 0; i < genome_input.length; i++) {
+    if (genome_input[i].size > sum_genome_size * 0.01) {
+      // Only include chromosomes accounting for at least 1% of the total genome sequence
+      _Genome_data.push({
+        chromosome: genome_input[i].chromosome,
+        size: genome_input[i].size,
+        cum_pos: cumulative_genome_size,
+      });
+      _Chromosome_start_positions[genome_input[i].chromosome] =
+        cumulative_genome_size;
+      cumulative_genome_size +=
+        genome_input[i].size + _settings.circos_padding_in_bp;
     }
-    _settings.circos_padding_in_bp = sum_genome_size / 400;
+  }
+  _Chromosome_start_positions["total"] = cumulative_genome_size;
 
-    _Genome_data = []; // set global variable for accessing this elsewhere
-    var cumulative_genome_size = 0;
-    _Chromosome_start_positions = {};
-    for (var i = 0; i < genome_input.length; i++) {
-      if (genome_input[i].size > sum_genome_size * 0.01) {
-        //only include chromosomes accounting for at least 1% of the total genome sequence
-        _Genome_data.push({
-          chromosome: genome_input[i].chromosome,
-          size: genome_input[i].size,
-          cum_pos: cumulative_genome_size,
-        });
-        _Chromosome_start_positions[genome_input[i].chromosome] =
-          cumulative_genome_size;
-        cumulative_genome_size +=
-          genome_input[i].size + _settings.circos_padding_in_bp;
-      }
-    }
-    _Chromosome_start_positions["total"] = cumulative_genome_size;
+  draw_circos();
 
-    draw_circos();
+  if (_Genome_data.length == 0) {
+    user_message("Error", "No genome file");
+  } else {
+    _chosen_chromosomes["top"] = _Genome_data[0].chromosome;
 
-    if (_Genome_data.length == 0) {
-      user_message("Error", "No genome file");
+    if (_Genome_data.length > 1) {
+      _chosen_chromosomes["bottom"] = _Genome_data[1].chromosome;
     } else {
-      _chosen_chromosomes["top"] = _Genome_data[0].chromosome;
-
-      load_consolidated_coverage();
-
-      // load_coverage(_Genome_data[0].chromosome,top_or_bottom="top")
-      if (_Genome_data.length > 1) {
-        _chosen_chromosomes["bottom"] = _Genome_data[1].chromosome;
-        // load_coverage(_Genome_data[1].chromosome,top_or_bottom="bottom")
-      } else {
-        _chosen_chromosomes["bottom"] = _Genome_data[0].chromosome;
-        // load_coverage(_Genome_data[0].chromosome,top_or_bottom="bottom")
-      }
+      _chosen_chromosomes["bottom"] = _Genome_data[0].chromosome;
     }
-  });
-}
-
-///////////////////   Load coverage  ////////////////////////////////
-function load_consolidated_coverage() {
-  d3.csv(
-    _input_file_prefix +
-      ".copynumber.segmented.consolidated.csv?id=" +
-      Math.random(),
-    function (error, coverage_input) {
-      if (error) throw error;
-
-      _Coverage_by_chromosome["segmented"] = {};
-      for (var i = 0; i < coverage_input.length; i++) {
-        // Create an entry for this chromosome if there isn't one already
-        if (
-          _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome] ==
-          undefined
-        ) {
-          _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome] =
-            [];
-        }
-        _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome].push(
-          {
-            chrom: coverage_input[i].chromosome,
-            start: parseInt(coverage_input[i].start),
-            end: parseInt(coverage_input[i].end),
-            coverage: coverage_input[i].segmented_coverage,
-          }
-        );
-      }
-      _data_ready.coverage["segmented"]["top"] = true;
-      _data_ready.coverage["segmented"]["bottom"] = true;
-    }
-  );
+  }
 }
 
 function load_coverage(chromosome, top_or_bottom) {
@@ -948,7 +901,6 @@ function read_annotation_file() {
       user_message("Info", "Finished reading annotation");
 
       _Annotation_to_highlight = [];
-
     });
   }
 }
@@ -2230,7 +2182,6 @@ function variant_click(d) {
 }
 
 function arrow_path_generator(d, top_or_bottom) {
-
   var arrowhead_size = 5;
   var arrow_head = d.start;
   var arrow_butt = d.end;
@@ -4183,5 +4134,109 @@ function resizeWindow() {
   responsive_sizing();
   draw_everything();
 }
+
+function assign_coverage_bed_to_chromosomes(coverage_input) {
+  _Coverage_by_chromosome["segmented"] = {};
+  for (var i = 0; i < coverage_input.length; i++) {
+    // Create an entry for this chromosome if there isn't one already
+    if (
+      _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome] ==
+      undefined
+    ) {
+      _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome] = [];
+    }
+    _Coverage_by_chromosome["segmented"][coverage_input[i].chromosome].push({
+      chrom: coverage_input[i].chromosome,
+      start: parseInt(coverage_input[i].start),
+      end: parseInt(coverage_input[i].end),
+      coverage: coverage_input[i].coverage,
+    });
+  }
+  _data_ready.coverage["segmented"]["top"] = true;
+  _data_ready.coverage["segmented"]["bottom"] = true;
+}
+
+function read_coverage_file(raw_data) {
+  var input_text = raw_data.split("\n");
+
+  let bed_data = [];
+  for (var i in input_text) {
+    var columns = input_text[i].split(/\s+/);
+    if (columns.length > 2) {
+      var start = parseInt(columns[1]);
+      var end = parseInt(columns[2]);
+      var coverage = parseFloat(columns[3]);
+      if (isNaN(coverage)) {
+        score = 0;
+      }
+      if (isNaN(start) || isNaN(end)) {
+        user_message(
+          "Error",
+          "Bed file must contain numbers in columns 2 and 3. Found: <pre>" +
+            columns[1] +
+            " and " +
+            columns[2] +
+            "</pre>."
+        );
+        return;
+      }
+      bed_data.push({
+        chromosome: columns[0],
+        start: start,
+        end: end,
+        coverage: coverage,
+      });
+    }
+  }
+  return bed_data;
+}
+
+function genome_input_from_coverage(coverage_by_chromosome) {
+  console.log("coverage_by_chromosome:", coverage_by_chromosome);
+
+  let chromosome_sizes = {};
+  for (let chrom in coverage_by_chromosome["segmented"]) {
+    let coverage_data = coverage_by_chromosome["segmented"][chrom];
+    chromosome_sizes[chrom] = Math.max(...coverage_data.map((d) => d.end));
+  }
+
+  let genome_input = [];
+  for (let chrom in chromosome_sizes) {
+    genome_input.push({
+      chromosome: chrom,
+      size: chromosome_sizes[chrom],
+    });
+  }
+  return genome_input;
+}
+
+function open_coverage_file() {
+  var raw_data;
+  var reader = new FileReader();
+
+  if (this.files[0].size > 100000000) {
+    user_message(
+      "Error",
+      "This file is larger than 100 MB. Please choose a smaller file. Try increasing the bin size in mosdepth."
+    );
+    return;
+  }
+
+  reader.readAsText(this.files[0]);
+  reader.onload = function (event) {
+    raw_data = event.target.result;
+    let bed_data = read_coverage_file(raw_data);
+    assign_coverage_bed_to_chromosomes(bed_data);
+    wait_then_run_when_all_data_loaded();
+
+    let genome_input = genome_input_from_coverage(_Coverage_by_chromosome);
+    // genome_input in the future can come from a .fai or a .bam header perhaps.
+    // That would allow using SplitThreader with only variants if there's no coverage file available.
+    // For now we depend on the coverage file to figure out the chromosome sizes.
+    read_genome_file(genome_input);
+  };
+}
+
+d3.select("#input_coverage_file").on("change", open_coverage_file);
 
 run();

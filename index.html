@@ -83,7 +83,8 @@
 </div>
 <div id="main_body_container">
 	<ul class="nav nav-tabs">
-		<li class="active"><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
+		<li class="active"><a data-toggle="tab" href="#setup_tab">Setup</a></li>
+		<li><a data-toggle="tab" href="#visualizer_tab">Visualizer</a></li>
 		<li><a data-toggle="tab" href="#variant_analysis_tab">Variant analysis</a></li>	
 		<li><a data-toggle="tab" href="#gene_fusions_tab">Gene fusions</a></li>
 		<li><a data-toggle="tab" href="#feature_search_tab">Graph search</a></li>
@@ -91,8 +92,29 @@
 	</ul>
 
 	<div class="tab-content">
+		<div id="setup_tab" class="tab-pane fade in active">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h4 class="panel-title">
+						Upload a coverage file
+					</h4>
+				</div>
+				<div class="panel-body">
+					<p>Upload a bed file of coverage</p>
+					<input type="file" id="input_coverage_file" />
+					<p>
+					<label>Instructions: </label>
+						We recommend using mosdepth to generate a bed file of coverage. The bed file should have the first three columns as chromosome, start, and end, and the fourth column as the coverage.
+<pre>
+mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
+</pre>
+					</p>
+				</div>
+			</div>
+		</div>
+		
 	<!-- Variant settings -->
-		<div id="visualizer_tab" class="tab-pane fade in active">
+		<div id="visualizer_tab" class="tab-pane fade in">
 			<div id="svg_landing"></div>
 
 			<div id="right_panel">

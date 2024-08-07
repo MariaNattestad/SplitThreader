@@ -1,0 +1,15 @@
+
+Converting old files to a basic bed file with tabix-indexing.
+
+```bash
+bgzip coverage.bed
+tabix coverage.bed.gz --zero-based -b 2
+
+```
+
+Example:
+
+```bash
+mosdepth -n --fast-mode --by 10000 output_file_prefix read_alignments.bam
+```
+
