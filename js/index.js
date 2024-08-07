@@ -1,18 +1,4 @@
-function getUrlVars() {
-  var vars = {};
-  var parts = window.location.href.replace(
-    /[?&]+([^=&]+)=([^&]*)/gi,
-    function (m, key, value) {
-      vars[key] = value;
-    }
-  );
-  return vars;
-}
-
-var _input_file_prefix =
-  "user_data/" + getUrlVars()["code"] + "/" + getUrlVars()["nickname"];
-
-d3.select("#title").html(getUrlVars()["nickname"].replace(/_/g, " "));
+var _input_file_prefix = "my_sample";
 
 var _layout = {
   svg: { width: null, height: null },
@@ -415,8 +401,7 @@ d3.select("#publication_style_plot_checkbox").on("change", function () {
 
 d3.select("#take_screenshot").on("click", function () {
   saveSvgAsPng(
-    document.getElementById("svg"),
-    getUrlVars()["nickname"] + "_SplitThreader",
+    "SplitThreader_image",
     { scale: 4 }
   );
 });
@@ -454,7 +439,6 @@ d3.select("select#annotation_dropdown").on("change", function (d) {
       this.options[this.selectedIndex].getAttribute("ucsc");
     d3.select("#ucsc_database").html(_settings.ucsc_database);
     show_positions();
-    console.log("unload annotation");
     read_annotation_file();
   }
 });
@@ -702,13 +686,11 @@ function draw_everything() {
 }
 
 function wait_then_run_when_all_data_loaded() {
-  // console.log("checking")
   if (
     _data_ready.coverage[_settings.segment_copy_number]["top"] &
     _data_ready.coverage[_settings.segment_copy_number]["bottom"] &
     _data_ready.spansplit
   ) {
-    // console.log("ready")
     scale_to_new_chrom("top");
     scale_to_new_chrom("bottom");
     draw_everything();
@@ -736,7 +718,6 @@ function wait_then_run_when_all_data_loaded() {
       user_message("Info", "Loading data is complete");
     }
   } else {
-    // console.log("waiting for data to load")
     window.setTimeout(wait_then_run_when_all_data_loaded, 300);
   }
 }
@@ -760,6 +741,7 @@ function apply_variant_filters() {
 }
 
 function read_genome_file() {
+  console.log("read_genome_file --- .genome.csv");
   d3.csv(_input_file_prefix + ".genome.csv", function (error, genome_input) {
     if (error) throw error;
 
@@ -767,7 +749,6 @@ function read_genome_file() {
     for (var i = 0; i < genome_input.length; i++) {
       genome_input[i].size = +genome_input[i].size;
       sum_genome_size += genome_input[i].size;
-      // console.log(genome_input[i].chromosome);
     }
     _settings.circos_padding_in_bp = sum_genome_size / 400;
 
@@ -846,7 +827,7 @@ function load_consolidated_coverage() {
 }
 
 function load_coverage(chromosome, top_or_bottom) {
-  // console.log("loading chromosome coverage from file");
+  console.log("load_coverage --- .copynumber.segmented. + chromosome + .csv");
   d3.csv(
     _input_file_prefix +
       ".copynumber.segmented." +
@@ -873,7 +854,7 @@ function load_coverage(chromosome, top_or_bottom) {
 }
 
 function read_variant_file() {
-  console.log("reading variant file");
+  console.log("read_variant_file variants.csv");
   d3.csv(
     _input_file_prefix + ".variants.csv?id=" + Math.random(),
     function (error, spansplit_input) {
@@ -917,7 +898,7 @@ function read_variant_file() {
         ) {
           _Variant_data.push(spansplit_input[i]);
         } else {
-          console.log(
+          console.warn(
             "Ignoring variant in input file because strands are not set"
           );
           user_message(
@@ -930,13 +911,12 @@ function read_variant_file() {
       apply_variant_filters();
       populate_ribbon_link();
       _data_ready.spansplit = true;
-      console.log("spansplit ready");
     }
   );
 }
 
 function read_annotation_file() {
-  // console.log("looking for annotation file");
+  console.log("read_annotation_file annotation/genes.csv");
   if (_settings.annotation_path != "none") {
     user_message("Info", "Loading annotation...");
 
@@ -957,7 +937,6 @@ function read_annotation_file() {
         _Annotation_by_chrom[annotation_input[i].chromosome].push(
           annotation_input[i]
         );
-        // annotation_genes_available.push(annotation_input[i].gene)
       }
       _Annotation_data = annotation_input;
       _Annotation_data.sort(function (a, b) {
@@ -970,10 +949,7 @@ function read_annotation_file() {
 
       _Annotation_to_highlight = [];
 
-      // console.log(_Annotation_data[0])
     });
-  } else {
-    console.log("No annotation chosen");
   }
 }
 
@@ -1024,8 +1000,6 @@ function draw_circos() {
       return d;
     })
     .on("dragstart", function (d) {
-      // console.log("dragstart")
-      // console.log(d.chromosome)
       _hover_plot = null; // reset _hover_plot so we only detect mouseover events after the chromosome has been picked up
       _dragging_chromosome = d.chromosome;
       d3.event.sourceEvent.stopPropagation();
@@ -1945,8 +1919,6 @@ function draw_connections() {
           within_view_1_top
         ) {
           categorized_variant_data.top_to_other.push(d);
-          // console.log("top to other")
-          // console.log(d)
         } else if (
           d.chrom2 == _chosen_chromosomes["top"] &&
           within_view_2_top
@@ -1954,16 +1926,12 @@ function draw_connections() {
           categorized_variant_data.top_to_other.push(
             reverse_chrom1_and_chrom2(d)
           );
-          // console.log("top to other reversed")
-          // console.log(reverse_chrom1_and_chrom2(d))
           // Bottom chromosome to another chromosome
         } else if (
           d.chrom1 == _chosen_chromosomes["bottom"] &&
           within_view_1_bottom
         ) {
           categorized_variant_data.bottom_to_other.push(d);
-          // console.log("bottom to other")
-          // console.log(d)
         } else if (
           d.chrom2 == _chosen_chromosomes["bottom"] &&
           within_view_2_bottom
@@ -1971,8 +1939,6 @@ function draw_connections() {
           categorized_variant_data.bottom_to_other.push(
             reverse_chrom1_and_chrom2(d)
           );
-          // console.log("bottom to other reversed")
-          // console.log(reverse_chrom1_and_chrom2(d))
         }
       }
     } // end check that one of chromosomes is visible for this variant
@@ -2264,20 +2230,14 @@ function variant_click(d) {
 }
 
 function arrow_path_generator(d, top_or_bottom) {
-  // console.log("arrow path generator")
 
   var arrowhead_size = 5;
   var arrow_head = d.start;
   var arrow_butt = d.end;
   if (d.strand == "+") {
-    // console.log(d.gene)
-    // console.log("forward")
     arrow_head = d.end;
     arrow_butt = d.start;
     arrowhead_size = -1 * arrowhead_size;
-  } else if (d.strand == "-") {
-    // console.log(d.gene)
-    // console.log("reverse")
   }
 
   var x1 = _scales.zoom_plots[top_or_bottom].x(arrow_butt), // start (arrow butt)
@@ -2539,14 +2499,12 @@ function draw_genes(top_or_bottom) {
 function select_chrom_for_zoom_plot(d, top_or_bottom) {
   _chosen_chromosomes[top_or_bottom] = d;
   if (_Coverage_by_chromosome[_settings.segment_copy_number][d] == undefined) {
-    // console.log("Loading " + d + " from file");
     _data_ready.coverage[_settings.segment_copy_number][top_or_bottom] = false;
     if (_settings.segment_copy_number == "unsegmented") {
       load_coverage(d, top_or_bottom);
     }
     wait_then_draw(top_or_bottom);
   } else {
-    // console.log(d+" already loaded");
     scale_to_new_chrom(top_or_bottom);
     draw_zoom_plot(top_or_bottom);
   }
@@ -2702,7 +2660,6 @@ function search_select_gene(d) {
 
 function search_select_fusion1(d) {
   if (d != undefined) {
-    // console.log("selected gene " + d.gene + " as fusion gene 1");
     _current_fusion_genes[1] = d;
     d3.select("#gene_fusion_input")
       .select("#gene" + 1)
@@ -2712,7 +2669,6 @@ function search_select_fusion1(d) {
 }
 function search_select_fusion2(d) {
   if (d != undefined) {
-    // console.log("selected gene " + d.gene + " as fusion gene 2");
     _current_fusion_genes[2] = d;
     d3.select("#gene_fusion_input")
       .select("#gene" + 2)
@@ -2727,7 +2683,6 @@ function create_gene_search_boxes() {
     .search_list(_Annotation_data)
     .search_key("gene")
     .placeholder("ERBB2");
-  // console.log(gene_livesearch);
   d3.select("#gene_livesearch").call(
     gene_livesearch.selection_function(search_select_gene)
   );
@@ -2878,7 +2833,6 @@ function make_variant_table() {
 }
 
 function populate_ribbon_link() {
-  // console.log(JSON.stringify(d));
   d3.select("#data_to_send_ribbon").html("");
   d3.select("#data_to_send_ribbon")
     .append("input")
@@ -2992,7 +2946,6 @@ function draw_histogram(variant_data_to_use) {
     })
   );
   var bin_size = data_max / num_bins;
-  // console.log(bin_size);
 
   if (isNaN(bin_size)) {
     return;
@@ -3004,9 +2957,7 @@ function draw_histogram(variant_data_to_use) {
     var bin = Math.floor(variant_data_to_use[i].size / bin_size);
     if (hist_data[bin] != undefined) {
       hist_data[bin]++;
-    } //else {
-    // 	hist_data[bin] = 1;
-    // }
+    }
   }
 
   d3.select("#histogram_landing").select("#histogram").remove();
@@ -3028,7 +2979,6 @@ function draw_histogram(variant_data_to_use) {
     .attr("height", _layout.hist.height)
     .style("fill", _settings.plot_background_color);
 
-  // console.log(Math.max.apply(null, hist_data));
   _scales.hist.x.domain([0, data_max]).range([0, 0 + _layout.hist.width]);
   _scales.hist.y
     .domain([0, Math.max.apply(null, hist_data)])
@@ -3302,8 +3252,6 @@ function read_gene_fusion_file(raw_input) {
 }
 
 function open_gene_fusion_file(event) {
-  console.log("in open_gene_fusion_file");
-
   var raw_data;
   var reader = new FileReader();
 
@@ -3328,7 +3276,6 @@ function switch_search_type(to_or_from) {
   var value = d3
     .select("input[name=search_" + to_or_from + "]:checked")
     .node().value;
-  console.log(to_or_from, ":", value);
   _settings.search_dataset[to_or_from] = value;
   update_search_input_table(to_or_from, value);
 }
@@ -3447,8 +3394,6 @@ function read_bed_file(raw_data) {
 }
 
 function open_bed_file(event) {
-  console.log("in open_bed_file");
-
   var raw_data;
   var reader = new FileReader();
 
@@ -3470,7 +3415,6 @@ function open_bed_file(event) {
 d3.select("#feature_bed_file").on("change", open_bed_file);
 
 function run_graph_search() {
-  console.log("Running graph search");
   if (_Starting_intervals_for_search.length == 0) {
     user_message("Error", 'Select a dataset in the "From" column');
     return;
@@ -3741,28 +3685,12 @@ function show_positions() {
 
 function binary_search_closest(search_list, b, e, pos) {
   var mid = Math.floor((b + e) / 2);
-  // console.log("b:",b, " e:", e);
-  // console.log(mid);
-  // console.log(search_list[mid]);
   if (pos == search_list[mid].start) {
-    // console.log("equals");
     return {
       diff: search_list[mid].coverage - search_list[mid - 1].coverage,
       distance: Math.abs(search_list[mid].start - pos),
     };
   } else if (e - b <= 1) {
-    // console.log("e-b <= 1");
-    if (search_list[b] == undefined) {
-      console.log("search_list[b] == undefined");
-      console.log("b = " + b);
-      console.log(search_list);
-    }
-    if (search_list[e] == undefined) {
-      console.log("search_list[e] == undefined");
-      console.log("e = " + e);
-      console.log("total length: " + search_list.length);
-      console.log(search_list);
-    }
     if (
       Math.abs(search_list[b].start - pos) <=
       Math.abs(search_list[e].start - pos)
@@ -3778,10 +3706,8 @@ function binary_search_closest(search_list, b, e, pos) {
       };
     }
   } else if (pos < search_list[mid].start) {
-    // console.log("<");
     return binary_search_closest(search_list, b, mid, pos);
   } else if (pos > search_list[mid].start) {
-    // console.log(">");
     return binary_search_closest(search_list, mid, e, pos);
   }
 }
@@ -3905,16 +3831,13 @@ function analyze_variants() {
 
   var options_far_reaching = [true, false];
   for (var far in options_far_reaching) {
-    console.log(far);
     var far_reaching_run = options_far_reaching[far];
-    console.log(far_reaching_run);
     if (far_reaching_run == true) {
       margin = 100000000000;
       // Look for reciprocal variants and simple variants very far out
     } else {
       margin = _settings.margin_for_nearby;
     }
-    console.log(margin);
 
     for (var i in _Filtered_variant_data) {
       // CNV nearby
