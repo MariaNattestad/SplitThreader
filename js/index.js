@@ -222,7 +222,7 @@ function resize_splitthreader_views() {
     (w.innerHeight || e.clientHeight || g.clientHeight) * 0.95 -
     top_banner_size;
 
-  d3.select("#right_panel")
+  d3.select("#right_panel_splitthreader")
     .style("display", "block")
     .style("width", window_width * panel_width_fraction * 0.9 + "px")
     .style("height", _splitthreader_layout.svg.height + "px")
